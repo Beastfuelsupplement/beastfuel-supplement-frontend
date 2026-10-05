@@ -1,0 +1,13 @@
+project_id = "nkqlgkmbfnpzpkhdyuyh"
+
+[functions.low-stock-notification]
+verify_jwt = false
+
+[functions.new-order-notification]
+verify_jwt = false
+
+[functions.customer-order-confirmation]
+verify_jwt = false
+
+[functions.order-status-notification]
+verify_jwt = false
