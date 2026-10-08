@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Award, Shield, Leaf, Users, Target, Rocket, Heart, Zap } from 'lucide-react';
+import { Award, Shield, Leaf, Users, Target, Rocket, Heart, Zap, Flame, Layers, TrendingUp, Sparkles, Globe, Calendar, CheckCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 
 const About = () => {
@@ -34,10 +34,60 @@ const About = () => {
   ];
 
   const milestones = [
-    { year: '2019', title: 'Founded', description: 'BEASTFUEL was born from a vision to revolutionize sports nutrition.' },
-    { year: '2020', title: 'First Product Launch', description: 'Launched our flagship protein line to overwhelming response.' },
-    { year: '2022', title: '50K Athletes', description: 'Reached a milestone of 50,000 athletes trusting our products.' },
-    { year: '2024', title: 'Global Expansion', description: 'Expanded to serve athletes in over 25 countries worldwide.' },
+    {
+      year: '2019',
+      stage: 'Store Founded',
+      title: 'The Inception of BEASTFUEL',
+      metric: 'Day 1 Vision',
+      icon: Flame,
+      color: 'from-amber-500 to-orange-600',
+      description: 'BEASTFUEL was founded by fitness coaches and athletes frustrated by low-grade fillers and opaque labels. We set out with a relentless mission: uncompromising ingredient purity and scientific dosages.'
+    },
+    {
+      year: '2020',
+      stage: 'First Product Collection',
+      title: 'Flagship Formulation Debut',
+      metric: '5 Core Formulas',
+      icon: Layers,
+      color: 'from-orange-500 to-rose-600',
+      description: 'Introduced our signature Whey Isolate 100% and explosive Pre-Workout Igniter. Each batch was third-party lab-certified for 100% label honesty, quickly gaining cult status among gym enthusiasts.'
+    },
+    {
+      year: '2021',
+      stage: 'First 1,000 Customers',
+      title: 'Building the Iron Community',
+      metric: '1,000+ Dedicated Athletes',
+      icon: Users,
+      color: 'from-rose-500 to-purple-600',
+      description: 'Crossed our first 1,000 verified buyers purely through word-of-mouth. Gyms, crossfit boxes, and personal trainers began adopting BEASTFUEL as their primary athletic nutrition choice.'
+    },
+    {
+      year: '2022',
+      stage: 'Expanded Product Range',
+      title: 'Multi-Weight & Flavor Expansion',
+      metric: '25+ Products & Variants',
+      icon: TrendingUp,
+      color: 'from-purple-500 to-indigo-600',
+      description: 'Rolled out multi-weight selections (500g to 5kg) and gourmet flavor varieties (Double Rich Chocolate, Vanilla, Strawberry, Unflavored). Added German Micronized Creatine and instantized 2:1:1 BCAAs.'
+    },
+    {
+      year: '2024',
+      stage: 'Trusted Supplement Brands',
+      title: 'Global Brand Partnership & Direct Imports',
+      metric: 'Certified Genuine Partner',
+      icon: Award,
+      color: 'from-indigo-500 to-blue-600',
+      description: 'Secured official distribution partnerships with the world’s elite sports nutrition titans—Optimum Nutrition, MuscleTech, Dymatize, and Cellucor—ensuring 100% authentic USA & European imports.'
+    },
+    {
+      year: '2026+',
+      stage: 'Current Growth & Future Vision',
+      title: 'Empowering Champions Worldwide',
+      metric: '50,000+ Athletes Served',
+      icon: Rocket,
+      color: 'from-blue-500 to-emerald-500',
+      description: 'Expanding rapid nationwide logistics, AI-powered supplement guidance, and next-generation athletic formulations to fuel over 50,000 dedicated athletes on their journey to greatness.'
+    }
   ];
 
   const containerVariants = {
@@ -223,40 +273,109 @@ const About = () => {
         </div>
       </section>
 
-      {/* Timeline Section */}
-      <section className="py-16 sm:py-24 md:py-32 bg-secondary/50 dark:bg-card/50">
-        <div className="container mx-auto px-4">
+      {/* Redesigned Milestones & Journey Section */}
+      <section className="py-20 sm:py-28 md:py-36 bg-gradient-to-b from-background via-secondary/30 to-background relative overflow-hidden">
+        {/* Ambient background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
+            className="text-center max-w-2xl mx-auto mb-16 sm:mb-24"
           >
-            <span className="inline-block px-4 py-2 bg-background dark:bg-background rounded-full text-xs sm:text-sm uppercase tracking-widest text-muted-foreground mb-4">
-              Our Journey
-            </span>
-            <h2 className="text-display text-3xl sm:text-4xl md:text-5xl text-foreground">MILESTONES</h2>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs sm:text-sm uppercase tracking-widest text-primary font-bold mb-4 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              Our Evolution & Heritage
+            </div>
+            <h2 className="text-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-foreground font-bold tracking-tight mb-4">
+              STORE MILESTONES
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              From our humble underground origins to becoming a powerhouse destination for certified, world-class athletic performance supplements.
+            </p>
           </motion.div>
 
-          <div className="max-w-4xl mx-auto">
-            {milestones.map((milestone, index) => (
-              <motion.div
-                key={milestone.year}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -40 : 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15 }}
-                className={`flex items-start gap-4 sm:gap-8 mb-8 sm:mb-12 ${index % 2 === 1 ? 'md:flex-row-reverse md:text-right' : ''}`}
-              >
-                <div className="flex-shrink-0 w-16 sm:w-20 h-16 sm:h-20 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground rounded-xl flex items-center justify-center text-lg sm:text-xl font-display font-bold shadow-card">
-                  {milestone.year}
-                </div>
-                <div className="flex-1 p-4 sm:p-6 bg-background dark:bg-background rounded-xl border border-border shadow-card">
-                  <h3 className="text-display text-lg sm:text-xl text-foreground mb-2">{milestone.title}</h3>
-                  <p className="text-sm text-muted-foreground">{milestone.description}</p>
-                </div>
-              </motion.div>
-            ))}
+          {/* Timeline Container */}
+          <div className="relative max-w-5xl mx-auto">
+            {/* Center Timeline Spine (Desktop) */}
+            <div className="hidden lg:block absolute left-1/2 top-4 bottom-4 -translate-x-1/2 w-0.5 bg-gradient-to-b from-amber-500 via-primary to-emerald-500" />
+
+            <div className="space-y-10 sm:space-y-14 lg:space-y-16">
+              {milestones.map((milestone, index) => {
+                const IconComponent = milestone.icon;
+                const isEven = index % 2 === 0;
+
+                return (
+                  <motion.div
+                    key={milestone.year}
+                    initial={{ opacity: 0, y: 35 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-50px' }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className={`relative flex flex-col lg:flex-row items-center gap-6 lg:gap-10 ${
+                      isEven ? 'lg:flex-row-reverse' : ''
+                    }`}
+                  >
+                    {/* Content Card (Half width on desktop) */}
+                    <div className="w-full lg:w-1/2">
+                      <div
+                        className={`p-6 sm:p-8 rounded-2xl bg-card border border-border/70 hover:border-primary/40 shadow-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 group relative overflow-hidden ${
+                          isEven ? 'lg:ml-6' : 'lg:mr-6'
+                        }`}
+                      >
+                        {/* Top Accent Gradient Line */}
+                        <div
+                          className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${milestone.color}`}
+                        />
+
+                        {/* Top Badges */}
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                            <IconComponent className="w-3.5 h-3.5" />
+                            {milestone.stage}
+                          </span>
+                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-secondary text-foreground border border-border/50">
+                            {milestone.metric}
+                          </span>
+                        </div>
+
+                        {/* Card Title & Year */}
+                        <div className="mb-3">
+                          <div className="flex items-baseline gap-2.5">
+                            <span className="text-2xl sm:text-3xl font-display font-extrabold bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
+                              {milestone.year}
+                            </span>
+                            <h3 className="text-lg sm:text-xl font-bold font-display text-foreground group-hover:text-primary transition-colors">
+                              {milestone.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {milestone.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Central Node Beacon */}
+                    <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center justify-center">
+                      <div className="relative flex items-center justify-center">
+                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${milestone.color} text-white shadow-lg flex items-center justify-center z-10 ring-4 ring-background`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <div className="absolute w-16 h-16 rounded-full bg-primary/20 animate-ping pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {/* Spacer for opposite side on desktop */}
+                    <div className="hidden lg:block w-1/2" />
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

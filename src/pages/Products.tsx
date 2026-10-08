@@ -5,20 +5,23 @@ import { Search, Filter, Sparkles, ArrowUpDown, Grid3X3, LayoutGrid, ChevronDown
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { categories } from '@/data/products';
+import { categories, brands, countriesOfOrigin } from '@/data/products';
 import { useProducts } from '@/hooks/useProducts';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryFromUrl = searchParams.get('category');
+  const brandFromUrl = searchParams.get('brand');
   const { data: products = [] } = useProducts();
   
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedBrand, setSelectedBrand] = useState('All');
+  const [selectedOrigin, setSelectedOrigin] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [gridCols, setGridCols] = useState<3 | 4>(4);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Sync URL category param with state
+  // Sync URL params with state
   useEffect(() => {
     if (categoryFromUrl) {
       const matchedCategory = categories.find(
@@ -30,7 +33,18 @@ const Products = () => {
     } else {
       setSelectedCategory('All');
     }
-  }, [categoryFromUrl]);
+
+    if (brandFromUrl) {
+      const matchedBrand = brands.find(
+        (b) => b.toLowerCase() === brandFromUrl.toLowerCase()
+      );
+      if (matchedBrand) {
+        setSelectedBrand(matchedBrand);
+      }
+    } else {
+      setSelectedBrand('All');
+    }
+  }, [categoryFromUrl, brandFromUrl]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -41,15 +55,58 @@ const Products = () => {
     }
     setSearchParams(searchParams);
   };
+
+  const handleBrandChange = (brand: string) => {
+    setSelectedBrand(brand);
+    if (brand === 'All') {
+      searchParams.delete('brand');
+    } else {
+      searchParams.set('brand', brand.toLowerCase());
+    }
+    setSearchParams(searchParams);
+  };
   
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('name');
+
+  // Compute dynamic lists from actual product data to avoid empty/duplicate categories
+  const dynamicCategories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return ['All', ...Array.from(set)];
+  }, [products]);
+
+  const dynamicBrands = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.brand) set.add(p.brand);
+    });
+    return ['All', ...Array.from(set)];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
+    // Filter by brand
+    if (selectedBrand !== 'All') {
+      filtered = filtered.filter(
+        (p) => (p.brand || 'BEASTFUEL').toLowerCase() === selectedBrand.toLowerCase()
+      );
+    }
+
     // Filter by category
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
+      filtered = filtered.filter(
+        (p) => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // Filter by country of origin
+    if (selectedOrigin !== 'All') {
+      filtered = filtered.filter(
+        (p) => (p.countryOfOrigin || '').toLowerCase() === selectedOrigin.toLowerCase()
+      );
     }
 
     // Filter by search
@@ -58,7 +115,11 @@ const Products = () => {
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query)
+          (p.brand && p.brand.toLowerCase().includes(query)) ||
+          (p.category && p.category.toLowerCase().includes(query)) ||
+          (p.countryOfOrigin && p.countryOfOrigin.toLowerCase().includes(query)) ||
+          (p.flavors && p.flavors.some((f) => f.toLowerCase().includes(query))) ||
+          (p.description && p.description.toLowerCase().includes(query))
       );
     }
 
@@ -76,7 +137,7 @@ const Products = () => {
     }
 
     return filtered;
-  }, [products, selectedCategory, searchQuery, sortBy]);
+  }, [products, selectedBrand, selectedCategory, selectedOrigin, searchQuery, sortBy]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -310,61 +371,126 @@ const Products = () => {
             )}
           </AnimatePresence>
 
-          {/* Categories - Horizontal scroll on mobile */}
+          {/* Filters Bar: Brand -> Category Hierarchy */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mb-6 sm:mb-8 lg:mb-10"
+            className="mb-8 space-y-5"
           >
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-              {categories.map((category, index) => (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + index * 0.04 }}
-                  className="flex-shrink-0"
-                >
+            {/* 1. Brands Filter */}
+            <div className="p-4 bg-secondary/40 dark:bg-card/40 rounded-2xl border border-border/50">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  Filter by Brand:
+                </span>
+                {selectedBrand !== 'All' && (
+                  <button
+                    onClick={() => handleBrandChange('All')}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Reset Brand
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {dynamicBrands.map((brand, index) => (
                   <Button
+                    key={brand}
+                    variant={selectedBrand === brand ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleBrandChange(brand)}
+                    className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
+                      selectedBrand === brand 
+                        ? 'shadow-md shadow-primary/20 font-bold' 
+                        : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {brand}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Categories Filter */}
+            <div className="p-4 bg-secondary/20 dark:bg-card/20 rounded-2xl border border-border/40">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Filter by Category:
+                </span>
+                {selectedCategory !== 'All' && (
+                  <button
+                    onClick={() => handleCategoryChange('All')}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Reset Category
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {dynamicCategories.map((category, index) => (
+                  <Button
+                    key={category}
                     variant={selectedCategory === category ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleCategoryChange(category)}
-                    className={`text-xs sm:text-sm px-4 sm:px-5 lg:px-6 py-2 sm:py-2.5 rounded-full transition-all duration-300 whitespace-nowrap ${
+                    className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
                       selectedCategory === category 
-                        ? 'shadow-lg shadow-primary/20' 
-                        : 'hover:bg-secondary/80 dark:hover:bg-card/80 border-border/50'
+                        ? 'shadow-md shadow-primary/20 font-bold' 
+                        : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {category}
                   </Button>
-                </motion.div>
-              ))}
+                ))}
+              </div>
             </div>
           </motion.div>
 
-          {/* Results Count */}
+          {/* Results Count & Active Filters */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
             className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8"
           >
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''}
-            </p>
-            {(selectedCategory !== 'All' || searchQuery) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Showing <span className="font-semibold text-foreground">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''}
+              </p>
+              {selectedBrand !== 'All' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Brand: {selectedBrand}
+                  <button onClick={() => handleBrandChange('All')}><X className="w-3 h-3 hover:text-foreground" /></button>
+                </span>
+              )}
+              {selectedCategory !== 'All' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground border border-border">
+                  Category: {selectedCategory}
+                  <button onClick={() => handleCategoryChange('All')}><X className="w-3 h-3 hover:text-foreground" /></button>
+                </span>
+              )}
+            </div>
+
+            {(selectedCategory !== 'All' || selectedBrand !== 'All' || selectedOrigin !== 'All' || searchQuery) && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => {
                   setSearchQuery('');
-                  handleCategoryChange('All');
+                  setSelectedBrand('All');
+                  setSelectedCategory('All');
+                  setSelectedOrigin('All');
+                  searchParams.delete('brand');
+                  searchParams.delete('category');
+                  setSearchParams(searchParams);
                 }}
                 className="text-xs sm:text-sm gap-1.5"
               >
                 <X className="w-3.5 h-3.5" />
-                Clear All
+                Clear All Filters
               </Button>
             )}
           </motion.div>

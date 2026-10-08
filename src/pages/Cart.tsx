@@ -52,62 +52,105 @@ const Cart = () => {
         <div className="grid lg:grid-cols-3 gap-12">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
-            {items.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex gap-6 p-6 bg-card border border-border rounded-lg hover:border-foreground/20 transition-all"
-              >
-                <Link to={`/products/${item.id}`} className="shrink-0">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-24 h-24 md:w-32 md:h-32 object-cover"
-                  />
-                </Link>
+            {items.map((item, index) => {
+              const itemKey = item.cartItemId || item.id;
+              const weightDisplay = item.selectedWeight || item.weight;
+              const flavorDisplay = item.selectedFlavor || item.flavor;
 
-                <div className="flex-1 flex flex-col">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <Link to={`/products/${item.id}`}>
-                        <h3 className="font-semibold text-lg hover:text-muted-foreground transition-colors">
-                          {item.name}
-                        </h3>
-                      </Link>
-                      <p className="text-sm text-muted-foreground">{item.weight}</p>
-                      {item.flavor && (
-                        <p className="text-sm text-muted-foreground">{item.flavor}</p>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </div>
+              return (
+                <motion.div
+                  key={itemKey}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex gap-6 p-6 bg-card border border-border rounded-xl hover:border-foreground/20 transition-all shadow-sm"
+                >
+                  <Link to={`/products/${item.id}`} className="shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg"
+                    />
+                  </Link>
 
-                  <div className="mt-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        {item.brand && (
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                            {item.brand}
+                          </span>
+                        )}
+                        <Link to={`/products/${item.id}`}>
+                          <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+                            {item.name}
+                          </h3>
+                        </Link>
+                        
+                        {/* Variant Chips */}
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                          {weightDisplay && (
+                            <span className="text-xs px-2.5 py-0.5 bg-secondary text-foreground rounded-md border border-border/60 font-medium">
+                              Weight: <strong>{weightDisplay}</strong>
+                            </span>
+                          )}
+                          {flavorDisplay && (
+                            <span className="text-xs px-2.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20 font-medium">
+                              Flavor: <strong>{flavorDisplay}</strong>
+                            </span>
+                          )}
+                          {item.countryOfOrigin && (
+                            <span className="text-xs px-2 py-0.5 bg-secondary/60 text-muted-foreground rounded-md">
+                              {item.countryOfOrigin}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => removeItem(itemKey)}
                       >
-                        <Minus className="h-4 w-4" />
+                        <Trash2 className="h-5 w-5" />
                       </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
+                    </div>
+
+                    <div className="mt-auto pt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg"
+                          onClick={() => updateQuantity(itemKey, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center font-bold">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg"
+                          onClick={() => updateQuantity(itemKey, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-lg font-bold font-display text-foreground">
+                          {formatCurrency(item.price * item.quantity)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrency(item.price)} each
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>

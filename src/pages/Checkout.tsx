@@ -193,6 +193,10 @@ const Checkout = () => {
         productName: item.name,
         quantity: item.quantity,
         price: item.price,
+        weight: item.selectedWeight || item.weight,
+        flavor: item.selectedFlavor || item.flavor,
+        brand: item.brand,
+        countryOfOrigin: item.countryOfOrigin,
       }));
 
       const orderTotal = totalPrice + (freeShipping ? 0 : 9.99);
@@ -528,8 +532,16 @@ const Checkout = () => {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.weight}</p>
+                      {item.brand && (
+                        <p className="text-[10px] font-bold text-primary uppercase">{item.brand}</p>
+                      )}
+                      <p className="font-medium text-sm text-foreground">{item.name}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                        <span>{item.selectedWeight || item.weight}</span>
+                        {(item.selectedFlavor || item.flavor) && (
+                          <span>• {item.selectedFlavor || item.flavor}</span>
+                        )}
+                      </div>
                     </div>
                     <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
                   </div>

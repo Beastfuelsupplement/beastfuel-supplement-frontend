@@ -1,28 +1,55 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface ProductVariant {
+  id?: string;
+  weight: string;
+  flavor?: string;
+  price: number;
+  stock: number;
+  sku?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
+  brand?: string;
   price: number;
   image: string;
+  images?: string[];
   category: string;
+  countryOfOrigin?: string;
   description: string;
   weight: string;
+  weights?: string[];
   flavor?: string;
+  flavors?: string[];
+  variants?: ProductVariant[];
   stock: number;
+  featured?: boolean;
+  isActive?: boolean;
 }
 
 export interface CartItem extends Product {
+  cartItemId: string;
+  selectedWeight: string;
+  selectedFlavor?: string;
   quantity: number;
+}
+
+export interface AddItemOptions {
+  weight?: string;
+  flavor?: string;
+  price?: number;
+  stock?: number;
 }
 
 interface CartStore {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
-  getItemQuantity: (productId: string) => number;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: Product, quantity?: number, options?: AddItemOptions) => void;
+  getItemQuantity: (productIdOrCartItemId: string) => number;
+  removeItem: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -33,11 +60,21 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       
-      addItem: (product, requestedQuantity = 1) => {
+      addItem: (product, requestedQuantity = 1, options) => {
         const state = get();
-        const existingItem = state.items.find((item) => item.id === product.id);
+        
+        const selectedWeight = options?.weight || product.weight || (product.weights && product.weights[0]) || 'Standard';
+        const selectedFlavor = options?.flavor || product.flavor || (product.flavors && product.flavors[0]) || undefined;
+        const itemPrice = options?.price !== undefined ? options.price : product.price;
+        const availableStock = options?.stock !== undefined ? options.stock : (product.stock ?? 0);
+        
+        // Generate a composite unique key for this variant
+        const cartItemId = `${product.id}-${selectedWeight}-${selectedFlavor || 'default'}`;
+        
+        const existingItem = state.items.find(
+          (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id)
+        );
         const currentQuantity = existingItem ? existingItem.quantity : 0;
-        const availableStock = product.stock ?? 0;
         
         // Check if adding would exceed stock
         if (currentQuantity + requestedQuantity > availableStock) {
@@ -45,44 +82,66 @@ export const useCartStore = create<CartStore>()(
           if (canAdd <= 0) {
             return; // Can't add any more
           }
-          // Add only what's available
           requestedQuantity = canAdd;
         }
         
         set((state) => {
-          const existingItem = state.items.find((item) => item.id === product.id);
-          if (existingItem) {
+          const exists = state.items.find(
+            (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id)
+          );
+          
+          if (exists) {
             return {
               items: state.items.map((item) =>
-                item.id === product.id
+                (item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id))
                   ? { ...item, quantity: item.quantity + requestedQuantity }
                   : item
               ),
             };
           }
-          return { items: [...state.items, { ...product, quantity: requestedQuantity }] };
+          
+          const newItem: CartItem = {
+            ...product,
+            price: itemPrice,
+            stock: availableStock,
+            cartItemId,
+            selectedWeight,
+            selectedFlavor,
+            quantity: requestedQuantity,
+          };
+          
+          return { items: [...state.items, newItem] };
         });
       },
       
-      getItemQuantity: (productId) => {
-        const item = get().items.find((item) => item.id === productId);
-        return item ? item.quantity : 0;
+      getItemQuantity: (productIdOrCartItemId) => {
+        const items = get().items;
+        // Check by exact cartItemId first
+        const exact = items.find((item) => item.cartItemId === productIdOrCartItemId);
+        if (exact) return exact.quantity;
+        // Or aggregate by product id
+        const matched = items.filter((item) => item.id === productIdOrCartItemId);
+        return matched.reduce((sum, item) => sum + item.quantity, 0);
       },
       
-      removeItem: (productId) => {
+      removeItem: (cartItemId) => {
         set((state) => ({
-          items: state.items.filter((item) => item.id !== productId),
+          items: state.items.filter(
+            (item) => item.cartItemId !== cartItemId && item.id !== cartItemId
+          ),
         }));
       },
       
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (cartItemId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(cartItemId);
           return;
         }
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === productId ? { ...item, quantity } : item
+            (item.cartItemId === cartItemId || item.id === cartItemId)
+              ? { ...item, quantity }
+              : item
           ),
         }));
       },
