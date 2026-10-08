@@ -151,17 +151,6 @@ const Cart = () => {
               );
             })}
           </div>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                      {formatCurrency(item.price * item.quantity)}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
