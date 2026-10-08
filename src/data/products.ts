@@ -21,7 +21,7 @@ export const categories = [
 
 export const countriesOfOrigin = [
   'USA',
-  'UK',
+  'United Kingdom',
   'Germany',
   'Canada',
   'Australia',
