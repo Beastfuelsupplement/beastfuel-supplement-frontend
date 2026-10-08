@@ -54,14 +54,14 @@ class ApiService {
   }
 
   async register(name: string, email: string, password: string) {
-    return this.request<{ token: string; user: { id: string; name: string; email: string; role: string } }>('/auth/register', {
+    return this.request<{ token: string; user: { id: string; name: string; email: string; role: string } }>('/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     });
   }
 
   async getProfile() {
-    return this.request<{ id: string; name: string; email: string; role: string }>('/auth/profile');
+    return this.request<{ user?: { id: string; name: string; email: string; role: string }; id?: string; name?: string; email?: string; role?: string }>('/auth/me');
   }
 
   async updatePassword(currentPassword: string, newPassword: string) {
