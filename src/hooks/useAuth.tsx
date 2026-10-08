@@ -35,12 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const token = api.getToken();
     if (token) {
       api.getProfile()
-        .then((profileData) => {
+        .then((profileData: any) => {
+          const u = profileData?.user || profileData;
           const authUser: AuthUser = {
-            id: profileData.id,
-            email: profileData.email,
-            name: profileData.name,
-            role: profileData.role as 'admin' | 'user',
+            id: u.id || u._id,
+            email: u.email,
+            name: u.name,
+            role: (u.role || 'user') as 'admin' | 'user',
           };
           setUser(authUser);
           setSession({ access_token: token });
@@ -62,11 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await api.login(email, password);
       api.setToken(data.token);
 
+      const u = (data as any).user || data;
       const authUser: AuthUser = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        role: data.user.role as 'admin' | 'user',
+        id: u.id || u._id,
+        email: u.email,
+        name: u.name,
+        role: (u.role || 'user') as 'admin' | 'user',
       };
       setUser(authUser);
       setSession({ access_token: data.token });
@@ -81,11 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await api.register(name, email, password);
       api.setToken(data.token);
 
+      const u = (data as any).user || data;
       const authUser: AuthUser = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        role: data.user.role as 'admin' | 'user',
+        id: u.id || u._id,
+        email: u.email,
+        name: u.name,
+        role: (u.role || 'user') as 'admin' | 'user',
       };
       setUser(authUser);
       setSession({ access_token: data.token });
