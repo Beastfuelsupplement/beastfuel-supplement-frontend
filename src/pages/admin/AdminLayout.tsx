@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import CreativeBackground from '@/components/backgrounds/CreativeBackground';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -65,16 +66,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 bg-card border-r border-border z-50">
         <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img 
-              src="/beastfuel-logo.png" 
-              alt="BEASTFUEL" 
-              className="h-8 w-8 rounded-lg object-contain bg-black border border-border/40 shadow-sm"
-            />
-            <div className="flex flex-col leading-none">
-              <span className="text-display text-xl tracking-widest font-black">BEASTFUEL</span>
-              <span className="text-[0.5rem] tracking-[0.25em] uppercase text-muted-foreground font-medium">Supplements</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <BrandLogo className="h-8 w-auto" />
           </Link>
           <span className="text-xs text-muted-foreground uppercase tracking-wider mt-2 block">Admin Panel</span>
         </div>
@@ -109,13 +102,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img 
-            src="/beastfuel-logo.png" 
-            alt="BEASTFUEL" 
-            className="h-7 w-7 rounded-md object-contain bg-black border border-border/40"
-          />
-          <span className="text-display text-lg tracking-widest font-black">BEASTFUEL</span>
+        <Link to="/" className="flex items-center">
+          <BrandLogo className="h-7 w-auto" />
         </Link>
         <Button
           variant="ghost"
@@ -145,13 +133,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               className="lg:hidden fixed inset-y-0 left-0 w-64 bg-card border-r border-border z-50 flex flex-col"
             >
               <div className="p-6 border-b border-border">
-                <Link to="/" className="flex items-center gap-2 mb-2">
-                  <img 
-                    src="/beastfuel-logo.png" 
-                    alt="BEASTFUEL" 
-                    className="h-7 w-7 rounded-md object-contain bg-black border border-border/40"
-                  />
-                  <span className="text-display text-lg tracking-widest font-black">BEASTFUEL</span>
+                <Link to="/" className="flex items-center mb-2">
+                  <BrandLogo className="h-7 w-auto" />
                 </Link>
                 <span className="text-xs text-muted-foreground uppercase tracking-wider">Admin Panel</span>
               </div>

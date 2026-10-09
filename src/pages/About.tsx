@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Award, Shield, Leaf, Users, Target, Rocket, Heart, Zap, Flame, Layers, TrendingUp, Sparkles, Globe, Calendar, CheckCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const About = () => {
   const values = [
@@ -122,13 +123,7 @@ const About = () => {
             </motion.span>
             
             <motion.div variants={itemVariants} className="flex flex-col items-center mb-6">
-              <img 
-                src="/beastfuel-logo.png" 
-                alt="BEASTFUEL Supplements" 
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl object-contain bg-black border border-border/50 shadow-2xl mb-4"
-              />
-              <span className="text-display text-5xl sm:text-6xl md:text-7xl tracking-[0.16em] font-black text-foreground" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>BEASTFUEL</span>
-              <span className="text-[0.6rem] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-muted-foreground font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Supplements</span>
+              <BrandLogo className="h-16 sm:h-20 md:h-24 w-auto filter drop-shadow-sm" />
             </motion.div>
             
             <motion.h1 

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Youtube, Mail, ArrowUpRight, MapPin, Phone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -17,16 +18,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Brand */}
           <div className="space-y-5 lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-3">
-              <img 
-                src="/beastfuel-logo.png" 
-                alt="BEASTFUEL Supplements" 
-                className="h-10 w-10 rounded-lg object-contain bg-black border border-border/40 shadow-sm"
-              />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-display text-3xl tracking-[0.16em] font-black text-foreground" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>BEASTFUEL</span>
-                <span className="text-[0.55rem] tracking-[0.35em] uppercase text-muted-foreground font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Supplements</span>
-              </div>
+            <Link to="/" className="inline-flex items-center">
+              <BrandLogo className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.

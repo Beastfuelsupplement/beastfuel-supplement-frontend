@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -167,14 +168,8 @@ const Login = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex flex-col items-center mb-4">
-              <img 
-                src="/beastfuel-logo.png" 
-                alt="BEASTFUEL Supplements" 
-                className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-contain bg-black border border-border/40 shadow-lg mb-3"
-              />
-              <span className="text-display text-5xl md:text-7xl tracking-[0.16em] font-black text-foreground" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>BEASTFUEL</span>
-              <span className="text-[0.6rem] md:text-xs tracking-[0.35em] uppercase text-muted-foreground font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Supplements</span>
+            <div className="flex flex-col items-center mb-6">
+              <BrandLogo className="h-16 sm:h-20 w-auto filter drop-shadow-sm" />
             </div>
             <h1 className="text-display text-3xl md:text-5xl mb-4">
               {isLogin ? 'WELCOME BACK' : 'JOIN US'}

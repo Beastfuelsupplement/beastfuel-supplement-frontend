@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,24 +58,12 @@ const Navbar = () => {
       }`}
     >
       <nav className="container mx-auto px-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+        <Link to="/" className="flex items-center group">
           <motion.div 
-            className="flex items-center gap-2.5 sm:gap-3"
+            className="flex items-center"
             whileHover={{ scale: 1.02 }}
           >
-            <img 
-              src="/beastfuel-logo.png" 
-              alt="BEASTFUEL Supplements" 
-              className="h-9 sm:h-10 w-9 sm:w-10 rounded-lg object-contain bg-black border border-border/40 shadow-sm"
-            />
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-display text-2xl sm:text-3xl md:text-4xl tracking-[0.16em] font-black text-foreground" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                BEASTFUEL
-              </span>
-              <span className="text-[0.5rem] sm:text-[0.55rem] md:text-[0.6rem] tracking-[0.35em] uppercase text-muted-foreground font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
-                Supplements
-              </span>
-            </div>
+            <BrandLogo className="h-9 sm:h-10 w-auto" />
           </motion.div>
         </Link>
 
@@ -247,20 +236,8 @@ const Navbar = () => {
 
               {/* Footer Branding */}
               <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20">
-                <div className="flex items-center justify-center gap-2.5">
-                  <img 
-                    src="/beastfuel-logo.png" 
-                    alt="BEASTFUEL" 
-                    className="h-7 w-7 rounded-md object-contain bg-black border border-border/30 opacity-70"
-                  />
-                  <div className="flex flex-col items-start">
-                    <span className="text-lg tracking-[0.18em] font-black text-muted-foreground/70" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                      BEASTFUEL
-                    </span>
-                    <span className="text-[0.5rem] tracking-[0.35em] uppercase text-muted-foreground/40">
-                      Supplements
-                    </span>
-                  </div>
+                <div className="flex items-center justify-center">
+                  <BrandLogo className="h-7 w-auto opacity-75" />
                 </div>
               </div>
             </motion.div>
