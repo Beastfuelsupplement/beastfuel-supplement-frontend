@@ -58,10 +58,10 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       className="group h-full"
     >
       <Link to={`/products/${product.id}`} className="block h-full">
-        <div className="relative h-full overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 dark:border-border/50 shadow-sm hover:shadow-xl hover:border-foreground/30 transition-all duration-400 flex flex-col justify-between">
+        <div className="relative h-full overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 dark:border-border/50 shadow-sm hover:shadow-xl hover:border-foreground/40 lighting-card transition-all duration-400 flex flex-col justify-between">
           
           {/* Image Container */}
-          <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900/50">
+          <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden shrink-0 bg-secondary/50 dark:bg-neutral-900/50">
             {/* Image */}
             <motion.img
               src={product.image}

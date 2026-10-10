@@ -51,7 +51,7 @@ const Index = () => {
   return (
     <Layout accent="blue">
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden section-spotlight section-gray-0">
         {/* Animated Background */}
         <motion.div 
           style={{ y: heroY, scale: heroScale }}
@@ -61,14 +61,17 @@ const Index = () => {
             className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
             style={{ backgroundImage: `url(${heroBg})` }}
           />
-          {/* Dual-theme athletic overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background dark:from-background/90 dark:via-background/70 dark:to-background" />
+          {/* Dual-theme athletic overlay with soft studio lighting */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background dark:from-background/90 dark:via-background/70 dark:to-background" />
         </motion.div>
-        
+
+        {/* Ambient Hero Lighting Aura & Beam */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
+        <div className="ambient-beam" />
         
         <motion.div 
           style={{ opacity: heroOpacity }}
-          className="relative container mx-auto px-4 text-center py-16 sm:py-24"
+          className="relative container mx-auto px-4 text-center py-16 sm:py-24 z-10"
         >
           <motion.div
             variants={containerVariants}
@@ -78,7 +81,7 @@ const Index = () => {
           >
             {/* Badge */}
             <motion.div variants={itemVariants} className="flex flex-col items-center gap-4 mb-6 md:mb-8">
-              <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 glass-card text-xs sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.22em] font-semibold shadow-sm">
+              <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-card/90 backdrop-blur-md text-xs sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.22em] font-semibold shadow-sm border border-border/80">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 #UnleashYourPower
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
@@ -131,7 +134,7 @@ const Index = () => {
                 { value: '99%', label: 'Pure' },
                 { value: '4.9', label: 'Rating' },
               ].map((stat, i) => (
-                <div key={i} className="text-center">
+                <div key={i} className="text-center p-3 rounded-xl bg-card/60 backdrop-blur-sm border border-border/60 shadow-xs">
                   <div className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary">{stat.value}</div>
                   <div className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</div>
                 </div>
@@ -145,9 +148,9 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
         >
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">Scroll</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Scroll</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -157,9 +160,10 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Features Bar */}
-      <section className="relative py-12 border-y border-border/80 bg-secondary/40 dark:bg-card/40">
-        <div className="relative container mx-auto px-4">
+      {/* Features Bar - Section Gray Level 1 */}
+      <section className="relative py-12 section-gray-1 border-y overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="relative container mx-auto px-4 z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {features.map((feature, index) => (
               <motion.div
@@ -168,10 +172,10 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="group flex items-center gap-4 p-4 glass-card hover-lift cursor-default shadow-sm border border-border/70"
+                className="group flex items-center gap-4 p-4 rounded-xl bg-card border border-border/80 dark:border-border/60 hover-lift lighting-card cursor-default shadow-sm"
               >
-                <div className="w-14 h-14 bg-background dark:bg-neutral-900 border border-border/80 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 shadow-sm text-foreground">
-                  <feature.icon className="h-6 w-6 text-foreground" />
+                <div className="w-14 h-14 bg-secondary/80 dark:bg-neutral-900 border border-border/80 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs text-foreground">
+                  <feature.icon className="h-6 w-6 transition-colors" />
                 </div>
                 <div>
                   <h4 className="font-bold text-sm tracking-wide text-foreground">{feature.title}</h4>
@@ -183,10 +187,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Shop by Category */}
-      <section className="py-24 md:py-32 relative">
-        <div className="absolute inset-0 gradient-radial opacity-30" />
-        <div className="relative container mx-auto px-4">
+      {/* Shop by Category - Section Gray Level 0 */}
+      <section className="py-24 md:py-32 relative section-gray-0 section-spotlight overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
+        
+        <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -194,7 +200,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <span className="inline-block px-4 py-2 glass-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm">
+            <span className="inline-block px-4 py-2 rounded-full bg-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm">
               Browse Collection
             </span>
             <h2 className="text-display text-5xl md:text-7xl font-bold">
@@ -220,7 +226,7 @@ const Index = () => {
               >
                 <Link
                   to={`/products?category=${cat.slug}`}
-                  className="group block relative aspect-[3/4] rounded-xl overflow-hidden hover-lift shadow-sm hover:shadow-lg transition-all"
+                  className="group block relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift shadow-sm hover:shadow-xl border border-border/80 dark:border-border/50 transition-all"
                 >
                   <img
                     src={cat.image}
@@ -242,10 +248,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-24 md:py-32 relative bg-secondary/30 dark:bg-transparent border-y border-border/40">
-        <div className="absolute inset-0 gradient-radial opacity-50" />
-        <div className="relative container mx-auto px-4">
+      {/* Featured Products - Section Gray Level 1 */}
+      <section className="py-24 md:py-32 relative section-gray-1 border-y overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent pointer-events-none opacity-50" />
+        
+        <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -257,7 +265,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="inline-block px-4 py-2 glass-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm"
+              className="inline-block px-4 py-2 rounded-full bg-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm"
             >
               Best Sellers
             </motion.span>
@@ -280,7 +288,7 @@ const Index = () => {
             className="text-center mt-16"
           >
             <Link to="/products">
-              <Button variant="outline" size="xl" className="group">
+              <Button variant="outline" size="xl" className="group bg-card shadow-xs">
                 View All Products
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -289,10 +297,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Why Choose BEASTFUEL */}
-      <section className="py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-radial opacity-30" />
-        <div className="relative container mx-auto px-4">
+      {/* Why Choose BEASTFUEL - Section Gray Level 0 */}
+      <section className="py-24 md:py-32 relative section-gray-0 section-spotlight overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
+        
+        <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -300,13 +310,13 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <span className="inline-block px-4 py-2 glass-card text-sm uppercase tracking-[0.2em] text-muted-foreground mb-6">
+            <span className="inline-block px-4 py-2 rounded-full bg-card text-sm uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-6 border border-border/80 shadow-sm">
               Why Athletes Choose Us
             </span>
             <h2 className="text-display text-5xl md:text-7xl">
               WHY <span className="text-stroke">BEASTFUEL</span>
             </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg leading-relaxed">
               We don't cut corners. Every product is formulated with clinically dosed ingredients, third-party tested, and designed to deliver real results.
             </p>
           </motion.div>
@@ -324,12 +334,12 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.6 }}
-                className="glass-card p-6 hover-lift group border border-border/50"
+                className="p-6 rounded-2xl bg-card border border-border/80 dark:border-border/60 hover-lift lighting-card group shadow-sm"
               >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <feature.icon className="w-5 h-5 text-primary" />
+                <div className="w-12 h-12 rounded-xl bg-secondary dark:bg-neutral-900 border border-border/80 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
+                  <feature.icon className="w-5 h-5 text-foreground group-hover:text-primary-foreground transition-colors" />
                 </div>
-                <h4 className="font-semibold mb-2">{feature.title}</h4>
+                <h4 className="font-bold text-base mb-2 text-foreground">{feature.title}</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
@@ -344,7 +354,7 @@ const Index = () => {
             className="flex flex-wrap justify-center gap-3 mt-12"
           >
             {['Whey Protein', 'Pre-Workout', 'Creatine', 'BCAAs', 'Mass Gainers', 'Vitamins', 'Fish Oil', 'Recovery'].map((cat) => (
-              <span key={cat} className="px-4 py-2 glass-card text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors cursor-default">
+              <span key={cat} className="px-4 py-2 rounded-full bg-card border border-border/80 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-foreground/40 shadow-xs transition-all cursor-default">
                 {cat}
               </span>
             ))}
@@ -352,10 +362,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-24 md:py-32 relative">
-        <div className="absolute inset-0 gradient-radial opacity-30" />
-        <div className="relative container mx-auto px-4">
+      {/* Testimonials Section - Section Gray Level 1 */}
+      <section className="py-24 md:py-32 relative section-gray-1 border-y overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -363,7 +373,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <span className="inline-block px-4 py-2 glass-card text-sm uppercase tracking-[0.2em] text-muted-foreground mb-6">
+            <span className="inline-block px-4 py-2 rounded-full bg-card text-sm uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-6 border border-border/80 shadow-sm">
               What Our Customers Say
             </span>
             <h2 className="text-display text-5xl md:text-7xl">
@@ -386,19 +396,19 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.6 }}
-                className="glass-card p-6 md:p-8 hover-lift group border border-border/50 relative"
+                className="p-6 md:p-8 rounded-2xl bg-card border border-border/80 dark:border-border/60 hover-lift lighting-card group relative shadow-sm"
               >
                 <Quote className="absolute top-4 right-4 w-8 h-8 text-primary/10 group-hover:text-primary/20 transition-colors" />
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: 5 }).map((_, starIdx) => (
-                    <Star key={starIdx} className={`w-4 h-4 ${starIdx < testimonial.rating ? 'text-primary fill-primary' : 'text-muted-foreground/30'}`} />
+                    <Star key={starIdx} className={`w-4 h-4 ${starIdx < testimonial.rating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground/30'}`} />
                   ))}
                 </div>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-6 italic">"{testimonial.quote}"</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">{testimonial.name.charAt(0)}</div>
+                <div className="flex items-center gap-3 pt-4 border-t border-border/60">
+                  <div className="w-10 h-10 rounded-full bg-secondary border border-border/80 flex items-center justify-center text-foreground font-bold text-sm shadow-xs">{testimonial.name.charAt(0)}</div>
                   <div>
-                    <h4 className="font-semibold text-sm">{testimonial.name}</h4>
+                    <h4 className="font-semibold text-sm text-foreground">{testimonial.name}</h4>
                     <p className="text-xs text-muted-foreground">{testimonial.role}</p>
                   </div>
                 </div>
@@ -408,23 +418,23 @@ const Index = () => {
         </div>
       </section>
 
-
-      <section className="py-24 md:py-32 relative overflow-hidden">
+      {/* Athletic Luxury Dark Banner - High Contrast Closing Statement */}
+      <section className="py-24 md:py-32 relative overflow-hidden bg-neutral-950 text-white">
         {/* Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 gradient-dark" />
-          <div className="absolute inset-0 grid-pattern opacity-30" />
+          <div className="absolute inset-0 bg-neutral-950" />
+          <div className="absolute inset-0 grid-pattern opacity-25" />
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-1/2 -right-1/2 w-full h-full opacity-20"
+            className="absolute -top-1/2 -right-1/2 w-full h-full opacity-25"
             style={{
-              background: "conic-gradient(from 0deg, transparent, hsl(0 0% 20%), transparent 30%)",
+              background: "conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.15), transparent 30%)",
             }}
           />
         </div>
 
-        <div className="relative container mx-auto px-4 text-center">
+        <div className="relative container mx-auto px-4 text-center z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -439,23 +449,23 @@ const Index = () => {
               transition={{ delay: 0.2 }}
               className="inline-block mb-8"
             >
-              <span className="px-6 py-3 glass-card text-sm uppercase tracking-[0.2em]">
+              <span className="px-6 py-3 rounded-full bg-neutral-900 border border-neutral-800 text-sm uppercase tracking-[0.2em] text-neutral-300 font-semibold shadow-inner">
                 Join 50,000+ Athletes
               </span>
             </motion.div>
 
             <h2 className="text-display text-5xl sm:text-6xl md:text-8xl leading-[0.9] mb-8">
-              <span className="block">READY TO</span>
+              <span className="block text-white">READY TO</span>
               <span className="block gradient-text">TRANSFORM?</span>
             </h2>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-xl mx-auto">
+            <p className="text-lg md:text-xl text-neutral-400 mb-12 max-w-xl mx-auto">
               Join thousands of athletes who trust BEASTFUEL for their supplement needs. 
-              <span className="text-foreground font-medium"> Start your journey today.</span>
+              <span className="text-white font-medium"> Start your journey today.</span>
             </p>
 
             <Link to="/products">
-              <Button variant="hero" size="2xl" className="group">
+              <Button variant="hero" size="2xl" className="group bg-white text-black hover:bg-neutral-200">
                 Start Shopping
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>

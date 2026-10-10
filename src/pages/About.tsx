@@ -106,8 +106,11 @@ const About = () => {
   return (
     <Layout accent="purple">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center overflow-hidden">
-        <div className="relative container mx-auto px-4 py-20 sm:py-32">
+      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center overflow-hidden section-gray-0 section-spotlight">
+        <div className="ambient-beam" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
+        
+        <div className="relative container mx-auto px-4 py-20 sm:py-32 z-10">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -116,21 +119,21 @@ const About = () => {
           >
             <motion.span 
               variants={itemVariants}
-              className="inline-block px-4 sm:px-6 py-2 mb-6 text-xs sm:text-sm uppercase tracking-[0.2em] bg-primary/10 dark:bg-primary/10 text-primary dark:text-primary rounded-full border border-primary/20 dark:border-primary/20"
+              className="inline-block px-4 sm:px-6 py-2 mb-6 text-xs sm:text-sm uppercase tracking-[0.2em] bg-card text-foreground font-semibold rounded-full border border-border/80 shadow-sm"
             >
               Since 2019
             </motion.span>
             
             <motion.h1 
               variants={itemVariants}
-              className="text-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl mb-6 text-foreground dark:text-foreground leading-[0.9]"
+              className="text-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl mb-6 text-foreground leading-[0.9]"
             >
-              OUR <span className="text-primary dark:text-primary">STORY</span>
+              OUR <span className="text-stroke font-black">STORY</span>
             </motion.h1>
             
             <motion.p 
               variants={itemVariants}
-              className="text-base sm:text-lg md:text-xl text-muted-foreground dark:text-muted-foreground leading-relaxed max-w-2xl mx-auto px-4"
+              className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto px-4"
             >
               Born from a passion for fitness and a frustration with subpar supplements, 
               BEASTFUEL was created to give athletes what they deserve — clean, effective, 
@@ -144,21 +147,22 @@ const About = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
         >
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-6 h-10 rounded-full border-2 border-primary/30 dark:border-primary/30 flex items-start justify-center p-2"
+            className="w-6 h-10 rounded-full border-2 border-border/80 flex items-start justify-center p-2"
           >
-            <motion.div className="w-1.5 h-1.5 bg-primary dark:bg-primary rounded-full" />
+            <motion.div className="w-1.5 h-1.5 bg-foreground rounded-full" />
           </motion.div>
         </motion.div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 sm:py-16 bg-secondary dark:bg-card border-y border-border">
-        <div className="container mx-auto px-4">
+      {/* Stats Section - Section Gray Level 1 */}
+      <section className="py-12 sm:py-16 section-gray-1 border-y border-border/80 relative overflow-hidden">
+        <div className="ambient-beam" />
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {stats.map((stat, index) => (
               <motion.div
@@ -263,10 +267,11 @@ const About = () => {
         </div>
       </section>
 
-      {/* Redesigned Milestones & Journey Section */}
-      <section className="py-20 sm:py-28 md:py-36 bg-gradient-to-b from-background via-secondary/30 to-background relative overflow-hidden">
+      {/* Milestones & Journey Section - Section Gray Level 1 */}
+      <section className="py-20 sm:py-28 md:py-36 section-gray-1 border-y border-border/80 relative overflow-hidden">
+        <div className="ambient-beam" />
         {/* Ambient background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/70 dark:bg-white/5 rounded-full blur-3xl pointer-events-none ambient-glow-aura" />
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -275,7 +280,7 @@ const About = () => {
             viewport={{ once: true }}
             className="text-center max-w-2xl mx-auto mb-16 sm:mb-24"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs sm:text-sm uppercase tracking-widest text-primary font-bold mb-4 shadow-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/80 text-xs sm:text-sm uppercase tracking-widest text-foreground font-bold mb-4 shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               Our Evolution & Heritage
             </div>
@@ -311,7 +316,7 @@ const About = () => {
                     {/* Content Card (Half width on desktop) */}
                     <div className="w-full lg:w-1/2">
                       <div
-                        className={`p-6 sm:p-8 rounded-2xl bg-card border border-border/70 hover:border-primary/40 shadow-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 group relative overflow-hidden ${
+                        className={`p-6 sm:p-8 rounded-2xl bg-card border border-border/80 dark:border-border/60 hover:border-foreground/30 lighting-card shadow-sm hover:shadow-xl transition-all duration-300 group relative overflow-hidden ${
                           isEven ? 'lg:ml-6' : 'lg:mr-6'
                         }`}
                       >
@@ -322,11 +327,11 @@ const About = () => {
 
                         {/* Top Badges */}
                         <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-secondary text-foreground border border-border/80">
                             <IconComponent className="w-3.5 h-3.5" />
                             {milestone.stage}
                           </span>
-                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-secondary text-foreground border border-border/50">
+                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-secondary/80 text-foreground border border-border/70">
                             {milestone.metric}
                           </span>
                         </div>
@@ -370,8 +375,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values Section */}
-      <section className="py-16 sm:py-24 md:py-32 bg-background dark:bg-background">
+      {/* Values Section - Section Gray Level 0 */}
+      <section className="py-16 sm:py-24 md:py-32 section-gray-0 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -379,7 +384,7 @@ const About = () => {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <span className="inline-block px-4 py-2 bg-secondary dark:bg-card rounded-full text-xs sm:text-sm uppercase tracking-widest text-muted-foreground mb-4">
+            <span className="inline-block px-4 py-2 bg-card rounded-full text-xs sm:text-sm uppercase tracking-widest text-muted-foreground font-semibold mb-4 border border-border/80 shadow-sm">
               What We Stand For
             </span>
             <h2 className="text-display text-3xl sm:text-4xl md:text-5xl text-foreground">OUR VALUES</h2>
@@ -394,9 +399,9 @@ const About = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -8 }}
-                className="group p-6 sm:p-8 rounded-2xl text-center bg-secondary dark:bg-card border border-border hover:border-primary/30 dark:hover:border-primary/30 transition-all duration-300 hover:shadow-card"
+                className="group p-6 sm:p-8 rounded-2xl text-center bg-card border border-border/80 dark:border-border/60 hover:border-foreground/30 lighting-card shadow-sm hover:shadow-xl transition-all duration-300"
               >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary text-primary-foreground rounded-xl flex items-center justify-center mx-auto mb-5 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary text-primary-foreground rounded-xl flex items-center justify-center mx-auto mb-5 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-xs">
                   <value.icon className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
                 <h3 className="text-display text-lg sm:text-xl mb-3 sm:mb-4 text-foreground">{value.title}</h3>
