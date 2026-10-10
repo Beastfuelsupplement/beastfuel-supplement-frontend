@@ -139,24 +139,23 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 {product.name}
               </h3>
               
-              {/* Variants Pill info (Quantity / Weight) */}
-              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
-                {weightsCount > 1 && (
-                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
-                    {weightsCount} Weights
-                  </span>
-                )}
-                {flavorsCount > 1 && (
-                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
-                    {flavorsCount} Flavors
-                  </span>
-                )}
-                {weightsCount <= 1 && flavorsCount <= 1 && (
-                  <span className="font-medium">{product.weight || 'Standard'}</span>
-                )}
-              </div>
+              {/* Variants Pill info (if multiple options available) */}
+              {(weightsCount > 1 || flavorsCount > 1) && (
+                <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
+                  {weightsCount > 1 && (
+                    <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
+                      {weightsCount} Weights
+                    </span>
+                  )}
+                  {flavorsCount > 1 && (
+                    <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
+                      {flavorsCount} Flavors
+                    </span>
+                  )}
+                </div>
+              )}
 
-              {/* Highlighted Country of Origin - Below Quantity and Above Price */}
+              {/* Highlighted Country of Origin */}
               <div className="mt-2.5 flex items-center">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] sm:text-xs font-semibold rounded-md bg-secondary/80 dark:bg-card border border-border/80 text-foreground shadow-xs">
                   <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
