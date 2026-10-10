@@ -186,11 +186,11 @@ const ProductDetails = () => {
                 </span>
               </div>
 
-              {/* Country of Origin Badge */}
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-background/90 dark:bg-card/90 backdrop-blur-md rounded-lg border border-border/60 text-foreground shadow-sm">
-                  <Globe className="w-3.5 h-3.5 text-blue-500" />
-                  Made in {countryOrigin}
+              {/* Country of Origin Badge - Prominently Highlighted */}
+              <div className="absolute top-4 right-4 z-10">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold bg-neutral-950/90 text-white dark:bg-card/95 dark:text-foreground backdrop-blur-md rounded-xl border border-neutral-700/80 dark:border-border shadow-lg">
+                  <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>Made in <strong className="font-extrabold tracking-wider uppercase text-white dark:text-foreground">{countryOrigin}</strong></span>
                 </span>
               </div>
             </div>
@@ -220,13 +220,14 @@ const ProductDetails = () => {
           >
             <div className="mb-auto">
               {/* Brand and Origin Tagline */}
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs uppercase tracking-wider font-bold text-primary px-2.5 py-1 bg-primary/10 rounded-md">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-3">
+                <span className="text-xs uppercase tracking-wider font-bold text-primary px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
                   {brandName}
                 </span>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                  Origin: <strong className="text-foreground">{countryOrigin}</strong>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary/90 dark:bg-card text-xs font-semibold text-foreground border border-border/80 shadow-xs">
+                  <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="text-muted-foreground font-medium">Origin:</span>
+                  <span className="font-bold text-foreground uppercase tracking-wider">{countryOrigin}</span>
                 </span>
               </div>
 

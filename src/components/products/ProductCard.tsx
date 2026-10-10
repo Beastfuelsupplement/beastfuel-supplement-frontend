@@ -79,7 +79,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-primary/5 to-transparent" />
             </div>
 
-            {/* Category Badge & Origin - Top Left */}
+            {/* Category Badge - Top Left */}
             <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start">
               <motion.span 
                 initial={{ opacity: 0, x: -10 }}
@@ -89,11 +89,6 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               >
                 {product.category}
               </motion.span>
-              
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-background/90 dark:bg-background/70 backdrop-blur-md rounded-md border border-border/70 text-foreground/80 shadow-xs">
-                <Globe className="w-2.5 h-2.5 text-blue-500" />
-                {countryOrigin}
-              </span>
             </div>
 
             {/* Rating Badge - Top Right */}
@@ -144,21 +139,30 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 {product.name}
               </h3>
               
-              {/* Variants Pill info */}
+              {/* Variants Pill info (Quantity / Weight) */}
               <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
                 {weightsCount > 1 && (
-                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40">
+                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
                     {weightsCount} Weights
                   </span>
                 )}
                 {flavorsCount > 1 && (
-                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40">
+                  <span className="bg-secondary px-2 py-0.5 rounded-md border border-border/40 font-medium">
                     {flavorsCount} Flavors
                   </span>
                 )}
                 {weightsCount <= 1 && flavorsCount <= 1 && (
-                  <span>{product.weight || 'Standard'}</span>
+                  <span className="font-medium">{product.weight || 'Standard'}</span>
                 )}
+              </div>
+
+              {/* Highlighted Country of Origin - Below Quantity and Above Price */}
+              <div className="mt-2.5 flex items-center">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] sm:text-xs font-semibold rounded-md bg-secondary/80 dark:bg-card border border-border/80 text-foreground shadow-xs">
+                  <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="text-muted-foreground font-medium">Origin:</span>
+                  <span className="font-bold text-foreground uppercase tracking-wide">{countryOrigin}</span>
+                </span>
               </div>
             </div>
             
