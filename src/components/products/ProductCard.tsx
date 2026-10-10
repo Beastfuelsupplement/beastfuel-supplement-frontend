@@ -58,10 +58,10 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       className="group h-full"
     >
       <Link to={`/products/${product.id}`} className="block h-full">
-        <div className="relative h-full overflow-hidden rounded-2xl sm:rounded-3xl bg-secondary/50 dark:bg-card/50 border border-border/30 dark:border-border/50 transition-all duration-500 group-hover:border-primary/20 dark:group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5 dark:group-hover:shadow-primary/10 flex flex-col justify-between">
+        <div className="relative h-full overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 dark:border-border/50 shadow-sm hover:shadow-xl hover:border-foreground/30 transition-all duration-400 flex flex-col justify-between">
           
           {/* Image Container */}
-          <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden shrink-0">
+          <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900/50">
             {/* Image */}
             <motion.img
               src={product.image}
@@ -71,13 +71,12 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               transition={{ duration: 0.6, ease: "easeOut" }}
             />
             
-            {/* Multi-layer gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-80 dark:opacity-70" />
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-background/40 dark:to-background/60" />
+            {/* Multi-layer gradient overlay - dark mode subtle blend */}
+            <div className="hidden dark:block absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-70" />
             
             {/* Hover glow effect */}
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/15 via-primary/5 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-primary/5 to-transparent" />
             </div>
 
             {/* Category Badge & Origin - Top Left */}
@@ -86,12 +85,12 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 + 0.2 }}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-semibold bg-background/90 dark:bg-background/70 backdrop-blur-md rounded-full border border-border/40 text-foreground shadow-sm"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-bold bg-background/95 dark:bg-background/80 backdrop-blur-md rounded-full border border-border text-foreground shadow-sm"
               >
                 {product.category}
               </motion.span>
               
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-background/80 dark:bg-background/60 backdrop-blur-md rounded-md border border-border/30 text-muted-foreground">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-background/90 dark:bg-background/70 backdrop-blur-md rounded-md border border-border/70 text-foreground/80 shadow-xs">
                 <Globe className="w-2.5 h-2.5 text-blue-500" />
                 {countryOrigin}
               </span>

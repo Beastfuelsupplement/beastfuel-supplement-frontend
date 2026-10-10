@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { Award, Shield, Leaf, Users, Target, Rocket, Heart, Zap, Flame, Layers, TrendingUp, Sparkles, Globe, Calendar, CheckCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
-import { BrandLogo } from '@/components/common/BrandLogo';
 
 const About = () => {
   const values = [
@@ -121,10 +120,6 @@ const About = () => {
             >
               Since 2019
             </motion.span>
-            
-            <motion.div variants={itemVariants} className="flex flex-col items-center mb-6">
-              <BrandLogo className="h-16 sm:h-20 md:h-24 w-auto filter drop-shadow-sm" />
-            </motion.div>
             
             <motion.h1 
               variants={itemVariants}

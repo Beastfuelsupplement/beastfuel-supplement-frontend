@@ -13,7 +13,7 @@ export interface BrandLogoProps extends React.ImgHTMLAttributes<HTMLImageElement
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'auto',
-  className = 'h-9 w-auto',
+  className = 'h-10 sm:h-11 w-auto',
   alt = 'BEASTFUEL Supplements',
   ...props
 }) => {
@@ -40,8 +40,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   }
 
   // Automatic: Switches seamlessly according to the theme class on <html>
-  // In Light mode: Shows dark logo without background
-  // In Dark mode: Shows light logo without background
+  // In Light mode: Shows dark logo with bold, high-contrast SUPPLEMENTS
+  // In Dark mode: Shows light logo with bold, high-contrast SUPPLEMENTS
   return (
     <span className="inline-flex items-center bg-transparent">
       <img

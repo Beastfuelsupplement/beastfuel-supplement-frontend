@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Truck, Shield, Award, Zap, ChevronDown, Star, Quote, Dumbbell, Flame, Leaf, HeartPulse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
-import { BrandLogo } from '@/components/common/BrandLogo';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -24,7 +23,7 @@ const Index = () => {
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
   const features = [
-    { icon: Truck, title: 'Free Shipping', description: 'Orders over Rs. 50' },
+    { icon: Truck, title: 'Free Shipping', description: 'Orders over Rs. 15,000' },
     { icon: Shield, title: 'Lab Tested', description: '100% quality verified' },
     { icon: Award, title: 'Premium Quality', description: 'Best ingredients' },
     { icon: Zap, title: 'Fast Results', description: 'Feel the difference' },
@@ -52,7 +51,7 @@ const Index = () => {
   return (
     <Layout accent="blue">
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <motion.div 
           style={{ y: heroY, scale: heroScale }}
@@ -62,14 +61,14 @@ const Index = () => {
             className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
             style={{ backgroundImage: `url(${heroBg})` }}
           />
-          {/* Dark overlay with gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background" />
+          {/* Dual-theme athletic overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background dark:from-background/90 dark:via-background/70 dark:to-background" />
         </motion.div>
         
         
         <motion.div 
           style={{ opacity: heroOpacity }}
-          className="relative container mx-auto px-4 text-center"
+          className="relative container mx-auto px-4 text-center py-16 sm:py-24"
         >
           <motion.div
             variants={containerVariants}
@@ -79,16 +78,11 @@ const Index = () => {
           >
             {/* Badge */}
             <motion.div variants={itemVariants} className="flex flex-col items-center gap-4 mb-6 md:mb-8">
-              <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 glass-card text-xs sm:text-sm uppercase tracking-[0.15em] sm:tracking-[0.2em]">
+              <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 glass-card text-xs sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.22em] font-semibold shadow-sm">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 #UnleashYourPower
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
               </span>
-            </motion.div>
-
-            {/* Brand Mark */}
-            <motion.div variants={itemVariants} className="flex flex-col items-center mb-6 md:mb-8">
-              <BrandLogo className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto filter drop-shadow-sm" />
             </motion.div>
 
             {/* Main Heading */}
@@ -96,8 +90,8 @@ const Index = () => {
               variants={itemVariants}
               className="text-display text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl leading-[0.9] mb-6 md:mb-8"
             >
-              <span className="block text-foreground">FUEL YOUR</span>
-              <span className="block text-stroke-thick gradient-text">ASCENT</span>
+              <span className="block text-foreground font-black drop-shadow-sm">FUEL YOUR</span>
+              <span className="block text-stroke-thick gradient-text font-black">ASCENT</span>
             </motion.h1>
 
             {/* Subheading */}
@@ -164,8 +158,7 @@ const Index = () => {
       </section>
 
       {/* Features Bar */}
-      <section className="relative py-12 border-y border-border/50">
-        <div className="absolute inset-0 glass-dark" />
+      <section className="relative py-12 border-y border-border/80 bg-secondary/40 dark:bg-card/40">
         <div className="relative container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {features.map((feature, index) => (
@@ -175,13 +168,13 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="group flex items-center gap-4 p-4 glass-card hover-lift cursor-default"
+                className="group flex items-center gap-4 p-4 glass-card hover-lift cursor-default shadow-sm border border-border/70"
               >
-                <div className="w-14 h-14 glass-button rounded-xl flex items-center justify-center shrink-0 group-hover:shadow-neon transition-shadow duration-500">
-                  <feature.icon className="h-6 w-6" />
+                <div className="w-14 h-14 bg-background dark:bg-neutral-900 border border-border/80 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 shadow-sm text-foreground">
+                  <feature.icon className="h-6 w-6 text-foreground" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">{feature.title}</h4>
+                  <h4 className="font-bold text-sm tracking-wide text-foreground">{feature.title}</h4>
                   <p className="text-xs text-muted-foreground">{feature.description}</p>
                 </div>
               </motion.div>
@@ -201,11 +194,11 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <span className="inline-block px-4 py-2 glass-card text-sm uppercase tracking-[0.2em] text-muted-foreground mb-6">
+            <span className="inline-block px-4 py-2 glass-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm">
               Browse Collection
             </span>
-            <h2 className="text-display text-5xl md:text-7xl">
-              SHOP BY <span className="text-stroke">CATEGORY</span>
+            <h2 className="text-display text-5xl md:text-7xl font-bold">
+              SHOP BY <span className="text-stroke font-black">CATEGORY</span>
             </h2>
           </motion.div>
 
@@ -227,7 +220,7 @@ const Index = () => {
               >
                 <Link
                   to={`/products?category=${cat.slug}`}
-                  className="group block relative aspect-[3/4] rounded-xl overflow-hidden hover-lift"
+                  className="group block relative aspect-[3/4] rounded-xl overflow-hidden hover-lift shadow-sm hover:shadow-lg transition-all"
                 >
                   <img
                     src={cat.image}
@@ -235,10 +228,10 @@ const Index = () => {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                    <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider">{cat.name}</h3>
-                    <span className="text-xs text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">
+                    <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white drop-shadow-sm">{cat.name}</h3>
+                    <span className="text-xs text-white/80 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-medium">
                       Shop Now →
                     </span>
                   </div>
@@ -250,7 +243,7 @@ const Index = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 md:py-32 relative">
+      <section className="py-24 md:py-32 relative bg-secondary/30 dark:bg-transparent border-y border-border/40">
         <div className="absolute inset-0 gradient-radial opacity-50" />
         <div className="relative container mx-auto px-4">
           <motion.div
@@ -264,12 +257,12 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="inline-block px-4 py-2 glass-card text-sm uppercase tracking-[0.2em] text-muted-foreground mb-6"
+              className="inline-block px-4 py-2 glass-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm"
             >
               Best Sellers
             </motion.span>
-            <h2 className="text-display text-5xl md:text-7xl">
-              FEATURED <span className="text-stroke">PRODUCTS</span>
+            <h2 className="text-display text-5xl md:text-7xl font-bold">
+              FEATURED <span className="text-stroke font-black">PRODUCTS</span>
             </h2>
           </motion.div>
 

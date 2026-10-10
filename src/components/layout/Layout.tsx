@@ -17,7 +17,7 @@ const Layout = ({ children, accent = 'default' }: LayoutProps) => {
         <CreativeBackground accent={accent} />
       </div>
       <Navbar />
-      <main className="flex-1 pt-16 relative z-10">
+      <main className="flex-1 pt-[72px] sm:pt-[76px] relative z-10">
         {children}
       </main>
       <Footer />

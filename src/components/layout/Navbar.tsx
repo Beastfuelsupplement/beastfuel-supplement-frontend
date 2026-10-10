@@ -51,21 +51,38 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled 
-          ? 'glass-dark py-3' 
-          : 'bg-transparent py-4'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
-      <nav className="container mx-auto px-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center group">
-          <motion.div 
-            className="flex items-center"
-            whileHover={{ scale: 1.02 }}
-          >
-            <BrandLogo className="h-9 sm:h-10 w-auto" />
-          </motion.div>
-        </Link>
+      {/* Sleek Announcement Bar - Carnage Athletic Style */}
+      <div className="bg-neutral-950 text-neutral-100 dark:bg-black dark:text-neutral-300 py-1.5 px-4 text-center text-[10px] sm:text-[11px] font-semibold tracking-[0.22em] uppercase border-b border-neutral-800/80 select-none">
+        <div className="container mx-auto flex items-center justify-center gap-2 sm:gap-4 overflow-hidden">
+          <span className="text-amber-400">⚡</span>
+          <span>FREE DELIVERY ON ORDERS OVER RS. 15,000</span>
+          <span className="opacity-40 hidden sm:inline">•</span>
+          <span className="hidden md:inline">100% AUTHENTIC IMPORTS</span>
+          <span className="opacity-40 hidden md:inline">•</span>
+          <span className="hidden sm:inline">LAB-TESTED PURITY</span>
+          <span className="text-amber-400">⚡</span>
+        </div>
+      </div>
+
+      {/* Main Nav Container */}
+      <div 
+        className={`transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-background/92 dark:bg-background/85 backdrop-blur-xl border-b border-border/80 shadow-sm py-2.5 sm:py-3' 
+            : 'bg-background/60 backdrop-blur-md md:bg-transparent md:backdrop-blur-none py-3.5 sm:py-4'
+        }`}
+      >
+        <nav className="container mx-auto px-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center group">
+            <motion.div 
+              className="flex items-center"
+              whileHover={{ scale: 1.02 }}
+            >
+              <BrandLogo className="h-10 sm:h-11 md:h-12 w-auto" />
+            </motion.div>
+          </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-1">
@@ -143,8 +160,9 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
+    </div>
 
-      {/* Mobile Drawer Overlay */}
+    {/* Mobile Drawer Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <>

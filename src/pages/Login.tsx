@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
-import { BrandLogo } from '@/components/common/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -168,9 +167,6 @@ const Login = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex flex-col items-center mb-6">
-              <BrandLogo className="h-16 sm:h-20 w-auto filter drop-shadow-sm" />
-            </div>
             <h1 className="text-display text-3xl md:text-5xl mb-4">
               {isLogin ? 'WELCOME BACK' : 'JOIN US'}
             </h1>
