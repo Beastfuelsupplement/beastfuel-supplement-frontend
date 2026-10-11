@@ -1,12 +1,27 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, ArrowUpDown, Grid3X3, LayoutGrid, ChevronDown, X, Zap, Globe } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  Sparkles, 
+  ArrowUpDown, 
+  Grid3X3, 
+  LayoutGrid, 
+  ChevronDown, 
+  X, 
+  Zap, 
+  Globe, 
+  Layers, 
+  Award, 
+  SlidersHorizontal, 
+  RotateCcw 
+} from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { categories, brands, countriesOfOrigin } from '@/data/products';
 import { useProducts } from '@/hooks/useProducts';
+import FilterDropdown, { FilterOption } from '@/components/products/FilterDropdown';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,31 +35,78 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [gridCols, setGridCols] = useState<3 | 4>(4);
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('name');
 
-  // Sync URL params with state
+  // Compute dynamic options with real-time item counts directly from all products (including admin creations)
+  const categoryOptions = useMemo<FilterOption[]>(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      const cat = (p.category || '').trim();
+      if (cat) {
+        counts[cat] = (counts[cat] || 0) + 1;
+      }
+    });
+    const sorted = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    return [
+      { label: 'All Categories', value: 'All', count: products.length },
+      ...sorted.map(([name, count]) => ({ label: name, value: name, count }))
+    ];
+  }, [products]);
+
+  const brandOptions = useMemo<FilterOption[]>(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      const b = (p.brand || '').trim();
+      if (b) {
+        counts[b] = (counts[b] || 0) + 1;
+      }
+    });
+    const sorted = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    return [
+      { label: 'All Brands', value: 'All', count: products.length },
+      ...sorted.map(([name, count]) => ({ label: name, value: name, count }))
+    ];
+  }, [products]);
+
+  const originOptions = useMemo<FilterOption[]>(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      const orig = (p.countryOfOrigin || '').trim();
+      if (orig) {
+        counts[orig] = (counts[orig] || 0) + 1;
+      }
+    });
+    const sorted = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    return [
+      { label: 'All Origins', value: 'All', count: products.length },
+      ...sorted.map(([name, count]) => ({ label: name, value: name, count }))
+    ];
+  }, [products]);
+
+  // Sync URL params dynamically with state
   useEffect(() => {
     if (categoryFromUrl) {
-      const matchedCategory = categories.find(
-        (cat) => cat.toLowerCase() === categoryFromUrl.toLowerCase()
+      const matchedCategory = categoryOptions.find(
+        (cat) => cat.value.toLowerCase() === categoryFromUrl.toLowerCase()
       );
       if (matchedCategory) {
-        setSelectedCategory(matchedCategory);
+        setSelectedCategory(matchedCategory.value);
       }
     } else {
       setSelectedCategory('All');
     }
 
     if (brandFromUrl) {
-      const matchedBrand = brands.find(
-        (b) => b.toLowerCase() === brandFromUrl.toLowerCase()
+      const matchedBrand = brandOptions.find(
+        (b) => b.value.toLowerCase() === brandFromUrl.toLowerCase()
       );
       if (matchedBrand) {
-        setSelectedBrand(matchedBrand);
+        setSelectedBrand(matchedBrand.value);
       }
     } else {
       setSelectedBrand('All');
     }
-  }, [categoryFromUrl, brandFromUrl]);
+  }, [categoryFromUrl, brandFromUrl, categoryOptions, brandOptions]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -65,33 +127,16 @@ const Products = () => {
     }
     setSearchParams(searchParams);
   };
-  
-  const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('name');
 
-  // Compute dynamic lists from actual product data to avoid empty/duplicate categories
-  const dynamicCategories = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.category) set.add(p.category);
-    });
-    return ['All', ...Array.from(set)];
-  }, [products]);
-
-  const dynamicBrands = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.brand) set.add(p.brand);
-    });
-    return ['All', ...Array.from(set)];
-  }, [products]);
-
-  const dynamicOrigins = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.countryOfOrigin) set.add(p.countryOfOrigin);
-    });
-    return ['All', ...Array.from(set)];
-  }, [products]);
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedBrand('All');
+    setSelectedCategory('All');
+    setSelectedOrigin('All');
+    searchParams.delete('brand');
+    searchParams.delete('category');
+    setSearchParams(searchParams);
+  };
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -296,249 +341,188 @@ const Products = () => {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className="w-full justify-between h-12 text-sm"
+              className="w-full justify-between h-12 text-sm rounded-xl"
             >
               <span className="flex items-center gap-2">
-                <Filter className="w-4 h-4" />
+                <Filter className="w-4 h-4 text-primary" />
                 Filters & Search
+                {(selectedBrand !== 'All' || selectedCategory !== 'All' || selectedOrigin !== 'All') && (
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                )}
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
             </Button>
           </div>
 
-          {/* Search & Filter Bar - Premium Glass Design */}
+          {/* Unified Filter Control Center - Modern Compact Glass Design */}
           <AnimatePresence>
-            {(showFilters || typeof window !== 'undefined' && window.innerWidth >= 1024) && (
+            {(showFilters || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="lg:block"
+                className="lg:block mb-6 sm:mb-8"
               >
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex flex-col lg:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 lg:mb-10 p-4 sm:p-5 lg:p-6 bg-secondary/50 dark:bg-card/50 backdrop-blur-sm rounded-2xl lg:rounded-3xl border border-border/50"
-                >
-                  {/* Search */}
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-11 sm:h-12 lg:h-14 pl-11 sm:pl-12 pr-4 bg-background dark:bg-background/80 border border-border/50 rounded-xl lg:rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all text-sm sm:text-base"
-                    />
-                    {searchQuery && (
-                      <button 
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors"
+                <div className="p-4 sm:p-5 lg:p-6 bg-secondary/40 dark:bg-card/50 backdrop-blur-md rounded-2xl lg:rounded-3xl border border-border/50 shadow-sm space-y-4">
+                  {/* Row 1: Search + Creative Dropdowns + Sort + Grid View Toggle */}
+                  <div className="flex flex-col lg:flex-row gap-3 sm:gap-3.5 items-stretch lg:items-center">
+                    {/* Search */}
+                    <div className="relative flex-1 min-w-[220px]">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search products by name, flavor, brand..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-11 sm:h-12 pl-11 sm:pl-12 pr-10 bg-background dark:bg-background/80 border border-border/60 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all text-xs sm:text-sm"
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground"
+                          title="Clear search"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filter Dropdowns group */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                      {/* Category Dropdown */}
+                      <FilterDropdown
+                        label="Category"
+                        icon={Layers}
+                        value={selectedCategory}
+                        onChange={handleCategoryChange}
+                        options={categoryOptions}
+                      />
+
+                      {/* Brand Dropdown */}
+                      <FilterDropdown
+                        label="Brand"
+                        icon={Award}
+                        value={selectedBrand}
+                        onChange={handleBrandChange}
+                        options={brandOptions}
+                      />
+
+                      {/* Origin Dropdown */}
+                      <FilterDropdown
+                        label="Origin"
+                        icon={Globe}
+                        value={selectedOrigin}
+                        onChange={setSelectedOrigin}
+                        options={originOptions}
+                      />
+
+                      {/* Sort Dropdown */}
+                      <FilterDropdown
+                        label="Sort By"
+                        icon={ArrowUpDown}
+                        value={sortBy}
+                        onChange={(val) => setSortBy(val as typeof sortBy)}
+                        options={[
+                          { label: 'Name (A to Z)', value: 'name' },
+                          { label: 'Price: Low to High', value: 'price-asc' },
+                          { label: 'Price: High to Low', value: 'price-desc' },
+                        ]}
+                        showCount={false}
+                      />
+
+                      {/* Desktop Grid View Switcher */}
+                      <div className="hidden xl:flex items-center gap-1 border-l border-border/60 pl-2.5 ml-1">
+                        <Button
+                          variant={gridCols === 3 ? 'default' : 'ghost'}
+                          size="icon"
+                          onClick={() => setGridCols(3)}
+                          className="h-11 w-11 rounded-xl"
+                          title="3 Columns"
+                        >
+                          <Grid3X3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={gridCols === 4 ? 'default' : 'ghost'}
+                          size="icon"
+                          onClick={() => setGridCols(4)}
+                          className="h-11 w-11 rounded-xl"
+                          title="4 Columns"
+                        >
+                          <LayoutGrid className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Active Filters Ribbon */}
+                  {(selectedCategory !== 'All' || selectedBrand !== 'All' || selectedOrigin !== 'All' || searchQuery) && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/40">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mr-1">
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+                          Active Filters:
+                        </span>
+
+                        {selectedCategory !== 'All' && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                            Category: {selectedCategory}
+                            <button onClick={() => handleCategoryChange('All')} className="hover:text-foreground">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )}
+
+                        {selectedBrand !== 'All' && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-secondary text-foreground border border-border">
+                            Brand: {selectedBrand}
+                            <button onClick={() => handleBrandChange('All')} className="hover:text-primary">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )}
+
+                        {selectedOrigin !== 'All' && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                            Origin: {selectedOrigin}
+                            <button onClick={() => setSelectedOrigin('All')} className="hover:text-foreground">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )}
+
+                        {searchQuery && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-secondary text-foreground border border-border">
+                            Search: "{searchQuery}"
+                            <button onClick={() => setSearchQuery('')} className="hover:text-primary">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )}
+                      </div>
+
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={clearAllFilters}
+                        className="text-xs text-muted-foreground hover:text-foreground gap-1.5 h-8 px-3 rounded-lg"
                       >
-                        <X className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Sort */}
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <ArrowUpDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground hidden sm:block" />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                      className="h-11 sm:h-12 lg:h-14 px-3 sm:px-4 bg-background dark:bg-background/80 border border-border/50 rounded-xl lg:rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none cursor-pointer min-w-[140px] sm:min-w-[160px] text-sm sm:text-base"
-                    >
-                      <option value="name">Sort by Name</option>
-                      <option value="price-asc">Price: Low to High</option>
-                      <option value="price-desc">Price: High to Low</option>
-                    </select>
-                  </div>
-
-                  {/* Grid Toggle - Desktop only */}
-                  <div className="hidden xl:flex items-center gap-2 border-l border-border/50 pl-4">
-                    <Button
-                      variant={gridCols === 3 ? 'default' : 'ghost'}
-                      size="icon"
-                      onClick={() => setGridCols(3)}
-                      className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl"
-                    >
-                      <Grid3X3 className="h-4 w-4 lg:h-5 lg:w-5" />
-                    </Button>
-                    <Button
-                      variant={gridCols === 4 ? 'default' : 'ghost'}
-                      size="icon"
-                      onClick={() => setGridCols(4)}
-                      className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl"
-                    >
-                      <LayoutGrid className="h-4 w-4 lg:h-5 lg:w-5" />
-                    </Button>
-                  </div>
-                </motion.div>
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Clear All Filters
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Filters Bar: Brand -> Category Hierarchy */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-8 space-y-5"
-          >
-            {/* 1. Brands Filter */}
-            <div className="p-4 bg-secondary/40 dark:bg-card/40 rounded-2xl border border-border/50">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  Filter by Brand:
-                </span>
-                {selectedBrand !== 'All' && (
-                  <button
-                    onClick={() => handleBrandChange('All')}
-                    className="text-xs text-primary hover:underline font-medium"
-                  >
-                    Reset Brand
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-                {dynamicBrands.map((brand, index) => (
-                  <Button
-                    key={brand}
-                    variant={selectedBrand === brand ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleBrandChange(brand)}
-                    className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
-                      selectedBrand === brand 
-                        ? 'shadow-md shadow-primary/20 font-bold' 
-                        : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {brand}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Categories Filter */}
-            <div className="p-4 bg-secondary/20 dark:bg-card/20 rounded-2xl border border-border/40">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  Filter by Category:
-                </span>
-                {selectedCategory !== 'All' && (
-                  <button
-                    onClick={() => handleCategoryChange('All')}
-                    className="text-xs text-primary hover:underline font-medium"
-                  >
-                    Reset Category
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-                {dynamicCategories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleCategoryChange(category)}
-                    className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
-                      selectedCategory === category 
-                        ? 'shadow-md shadow-primary/20 font-bold' 
-                        : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Origin Filter */}
-            {dynamicOrigins.length > 2 && (
-              <div className="p-4 bg-secondary/40 dark:bg-card/40 rounded-2xl border border-border/50">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-blue-500" />
-                    Filter by Origin:
-                  </span>
-                  {selectedOrigin !== 'All' && (
-                    <button
-                      onClick={() => setSelectedOrigin('All')}
-                      className="text-xs text-primary hover:underline font-medium"
-                    >
-                      Reset Origin
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-                  {dynamicOrigins.map((orig) => (
-                    <Button
-                      key={orig}
-                      variant={selectedOrigin === orig ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedOrigin(orig)}
-                      className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
-                        selectedOrigin === orig 
-                          ? 'shadow-md shadow-blue-500/20 font-bold' 
-                          : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {orig}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Results Count & Active Filters */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''}
-              </p>
-              {selectedBrand !== 'All' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                  Brand: {selectedBrand}
-                  <button onClick={() => handleBrandChange('All')}><X className="w-3 h-3 hover:text-foreground" /></button>
-                </span>
-              )}
-              {selectedCategory !== 'All' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground border border-border">
-                  Category: {selectedCategory}
-                  <button onClick={() => handleCategoryChange('All')}><X className="w-3 h-3 hover:text-foreground" /></button>
-                </span>
-              )}
-            </div>
-
-            {(selectedCategory !== 'All' || selectedBrand !== 'All' || selectedOrigin !== 'All' || searchQuery) && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedBrand('All');
-                  setSelectedCategory('All');
-                  setSelectedOrigin('All');
-                  searchParams.delete('brand');
-                  searchParams.delete('category');
-                  setSearchParams(searchParams);
-                }}
-                className="text-xs sm:text-sm gap-1.5"
-              >
-                <X className="w-3.5 h-3.5" />
-                Clear All Filters
-              </Button>
-            )}
-          </motion.div>
+          {/* Results Summary Bar */}
+          <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Showing <span className="font-bold text-foreground">{filteredProducts.length}</span> of{' '}
+              <span className="font-semibold text-foreground">{products.length}</span> products
+            </p>
+          </div>
 
           {/* Products Grid - Premium Layout */}
           {filteredProducts.length > 0 ? (
