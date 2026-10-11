@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, ArrowUpDown, Grid3X3, LayoutGrid, ChevronDown, X, Zap } from 'lucide-react';
+import { Search, Filter, Sparkles, ArrowUpDown, Grid3X3, LayoutGrid, ChevronDown, X, Zap, Globe } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
