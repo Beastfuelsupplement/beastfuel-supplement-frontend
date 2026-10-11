@@ -32,23 +32,28 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isOutOfStock) {
-      toast.error('This product is out of stock');
+    const defaultWeight = product.weights?.[0] || product.weight || '1kg';
+    const defaultFlavor = product.flavors?.[0] || product.flavor || 'Standard';
+    const matchingVariant = product.variants?.find(
+      (v) => v.weight === defaultWeight && (!defaultFlavor || v.flavor === defaultFlavor)
+    ) || product.variants?.[0];
+    const defaultPrice = matchingVariant ? matchingVariant.price : product.price;
+    const defaultStock = matchingVariant ? matchingVariant.stock : (product.stock ?? 0);
+
+    if (defaultStock <= 0) {
+      toast.error('This product option is out of stock');
       return;
     }
-    if (isMaxInCart) {
-      toast.error('Maximum quantity already in cart');
-      return;
-    }
-    const defaultWeight = product.weights?.[0] || product.weight || 'Standard';
-    const defaultFlavor = product.flavors?.[0] || product.flavor;
+
     addItem(product, 1, {
       weight: defaultWeight,
       flavor: defaultFlavor,
-      price: product.price,
-      stock: product.stock,
+      price: defaultPrice,
+      stock: defaultStock,
+      variantId: matchingVariant?.id || matchingVariant?._id,
+      sku: matchingVariant?.sku,
     });
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${product.name} (${defaultWeight}${defaultFlavor ? ` • ${defaultFlavor}` : ''}) added to cart`);
   };
 
   return (

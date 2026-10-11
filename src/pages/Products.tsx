@@ -85,6 +85,14 @@ const Products = () => {
     return ['All', ...Array.from(set)];
   }, [products]);
 
+  const dynamicOrigins = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.countryOfOrigin) set.add(p.countryOfOrigin);
+    });
+    return ['All', ...Array.from(set)];
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
@@ -430,7 +438,7 @@ const Products = () => {
                 )}
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-                {dynamicCategories.map((category, index) => (
+                {dynamicCategories.map((category) => (
                   <Button
                     key={category}
                     variant={selectedCategory === category ? 'default' : 'outline'}
@@ -447,6 +455,43 @@ const Products = () => {
                 ))}
               </div>
             </div>
+
+            {/* 3. Origin Filter */}
+            {dynamicOrigins.length > 2 && (
+              <div className="p-4 bg-secondary/40 dark:bg-card/40 rounded-2xl border border-border/50">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-blue-500" />
+                    Filter by Origin:
+                  </span>
+                  {selectedOrigin !== 'All' && (
+                    <button
+                      onClick={() => setSelectedOrigin('All')}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Reset Origin
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                  {dynamicOrigins.map((orig) => (
+                    <Button
+                      key={orig}
+                      variant={selectedOrigin === orig ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedOrigin(orig)}
+                      className={`text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 whitespace-nowrap ${
+                        selectedOrigin === orig 
+                          ? 'shadow-md shadow-blue-500/20 font-bold' 
+                          : 'hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {orig}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Results Count & Active Filters */}

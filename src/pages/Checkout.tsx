@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdminStore } from '@/store/adminStore';
 import { sendCustomerOrderConfirmation } from '@/utils/customerOrderConfirmation';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import { z } from 'zod';
 import { 
@@ -203,8 +204,26 @@ const Checkout = () => {
       const shippingAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zip}`;
       const customerName = `${formData.firstName} ${formData.lastName}`;
 
-      // Create order
-      const orderId = addOrder({
+      // 1. Create order on backend (revalidates price and deducts inventory on server)
+      let backendOrder: any = null;
+      try {
+        backendOrder = await api.createOrder({
+          customerName,
+          customerEmail: formData.email,
+          items: orderItems,
+          total: orderTotal,
+          shippingAddress,
+          paymentMethod: formData.paymentMethod,
+        });
+      } catch (backendErr: any) {
+        console.error('Backend order creation notice:', backendErr);
+        toast.error(backendErr.message || 'Order could not be processed. Please check item stock.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Local admin store sync
+      const orderId = backendOrder?.orderNumber || backendOrder?._id || addOrder({
         customerId: user?.id || `guest-${Date.now()}`,
         customerName,
         customerEmail: formData.email,
@@ -222,10 +241,10 @@ const Checkout = () => {
         shippingAddress,
       });
 
-      // Send customer order confirmation email (with auth token)
+      // 3. Send customer order confirmation email (if configured)
       if (settings.emailNotifications) {
         sendCustomerOrderConfirmation({
-          orderId,
+          orderId: String(orderId),
           customerName,
           customerEmail: formData.email,
           items: orderItems,
@@ -241,6 +260,8 @@ const Checkout = () => {
       toast.success(`Order ${orderId} placed successfully!`);
       clearCart();
       navigate('/');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to place order');
     } finally {
       setIsSubmitting(false);
     }

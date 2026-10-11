@@ -3,24 +3,65 @@ import { api } from '@/lib/api';
 import { Product } from '@/store/cartStore';
 import { toast } from 'sonner';
 
-const mapApiToProduct = (p: any): Product => ({
-  id: p._id || p.id,
-  name: p.name,
-  price: Number(p.price),
-  image: p.image || '/placeholder.svg',
-  category: p.category,
-  description: p.description || '',
-  weight: p.weight || '',
-  flavor: p.flavor || undefined,
-  stock: p.stock,
-});
+export const mapApiToProduct = (p: any): Product => {
+  const id = p._id || p.id;
+  const rawVariants = Array.isArray(p.variants) ? p.variants : [];
+  
+  const variants = rawVariants.map((v: any, index: number) => ({
+    id: v._id || v.id || `v-${index}`,
+    _id: v._id || v.id,
+    weight: v.weight || '',
+    flavor: v.flavor || '',
+    price: Number(v.price) || 0,
+    stock: Number(v.stock) || 0,
+    sku: v.sku || '',
+  }));
 
-export const useProducts = (activeOnly = true) => {
+  const weights = Array.isArray(p.weights) && p.weights.length > 0
+    ? p.weights
+    : Array.from(new Set(variants.map((v: any) => v.weight).filter(Boolean)));
+
+  const flavors = Array.isArray(p.flavors) && p.flavors.length > 0
+    ? p.flavors
+    : Array.from(new Set(variants.map((v: any) => v.flavor).filter(Boolean)));
+
+  const primaryImage = p.image || (Array.isArray(p.images) && p.images[0]) || '/placeholder.svg';
+  const allImages = Array.isArray(p.images) && p.images.length > 0
+    ? Array.from(new Set([primaryImage, ...p.images]))
+    : [primaryImage];
+
+  return {
+    id,
+    _id: id,
+    name: p.name || 'Unnamed Product',
+    brand: p.brand || 'BEASTFUEL',
+    price: Number(p.price) || (variants[0] ? variants[0].price : 0),
+    image: primaryImage,
+    images: allImages,
+    category: p.category || 'Supplements',
+    countryOfOrigin: p.countryOfOrigin || 'USA',
+    description: p.description || '',
+    weight: p.weight || (weights[0] || '1kg'),
+    weights: weights.length > 0 ? weights : [p.weight || '1kg'],
+    flavor: p.flavor || (flavors[0] || 'Standard'),
+    flavors: flavors.length > 0 ? flavors : [p.flavor || 'Standard'],
+    variants,
+    stock: typeof p.stock === 'number' ? p.stock : variants.reduce((s: number, v: any) => s + v.stock, 0),
+    featured: Boolean(p.featured),
+    isActive: p.isActive !== false,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+};
+
+export const useProducts = (activeOnly = true, filters?: { category?: string; brand?: string; origin?: string; search?: string }) => {
   return useQuery({
-    queryKey: ['products', { activeOnly }],
+    queryKey: ['products', { activeOnly, ...filters }],
     queryFn: async () => {
-      const data = await api.getProducts();
-      // Backend already filters by isActive for the public route
+      const data = await api.getProducts({
+        all: activeOnly ? undefined : 'true',
+        ...filters,
+      });
       return data.map(mapApiToProduct);
     },
   });
@@ -42,24 +83,32 @@ export const useProduct = (id: string | undefined) => {
 export const useAddProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id'>) => {
-      await api.createProduct({
+    mutationFn: async (product: Omit<Product, 'id'> | any) => {
+      return await api.createProduct({
         name: product.name,
+        brand: product.brand,
         price: product.price,
         image: product.image,
+        images: product.images,
         category: product.category,
+        countryOfOrigin: product.countryOfOrigin,
         description: product.description,
         weight: product.weight,
-        flavor: product.flavor || null,
+        weights: product.weights,
+        flavor: product.flavor,
+        flavors: product.flavors,
+        variants: product.variants,
         stock: product.stock,
+        isActive: product.isActive !== false,
+        featured: Boolean(product.featured),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product added successfully');
+      toast.success('Product published successfully!');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add product');
+      toast.error(error.message || 'Failed to publish product');
     },
   });
 };
@@ -68,20 +117,28 @@ export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      await api.updateProduct(id, {
+      return await api.updateProduct(id, {
         name: updates.name,
+        brand: updates.brand,
         price: updates.price,
         image: updates.image,
+        images: updates.images,
         category: updates.category,
+        countryOfOrigin: updates.countryOfOrigin,
         description: updates.description,
         weight: updates.weight,
-        flavor: updates.flavor || null,
+        weights: updates.weights,
+        flavor: updates.flavor,
+        flavors: updates.flavors,
+        variants: updates.variants,
         stock: updates.stock,
+        isActive: updates.isActive !== false,
+        featured: updates.featured,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product updated successfully');
+      toast.success('Product updated successfully!');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to update product');
@@ -93,7 +150,7 @@ export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.deleteProduct(id);
+      return await api.deleteProduct(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

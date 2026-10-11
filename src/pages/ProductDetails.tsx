@@ -123,6 +123,8 @@ const ProductDetails = () => {
       flavor: selectedFlavor,
       price: activePrice,
       stock: activeStock,
+      variantId: activeVariant?.id || activeVariant?._id,
+      sku: activeVariant?.sku,
     });
 
     const variantDesc = [selectedWeight, selectedFlavor].filter(Boolean).join(' • ');

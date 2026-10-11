@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export interface ProductVariant {
   id?: string;
+  _id?: string;
   weight: string;
   flavor?: string;
   price: number;
@@ -12,6 +13,7 @@ export interface ProductVariant {
 
 export interface Product {
   id: string;
+  _id?: string;
   name: string;
   brand?: string;
   price: number;
@@ -28,6 +30,8 @@ export interface Product {
   stock: number;
   featured?: boolean;
   isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem extends Product {
@@ -35,6 +39,8 @@ export interface CartItem extends Product {
   selectedWeight: string;
   selectedFlavor?: string;
   quantity: number;
+  variantId?: string;
+  sku?: string;
 }
 
 export interface AddItemOptions {
@@ -42,6 +48,8 @@ export interface AddItemOptions {
   flavor?: string;
   price?: number;
   stock?: number;
+  variantId?: string;
+  sku?: string;
 }
 
 interface CartStore {
@@ -68,32 +76,28 @@ export const useCartStore = create<CartStore>()(
         const itemPrice = options?.price !== undefined ? options.price : product.price;
         const availableStock = options?.stock !== undefined ? options.stock : (product.stock ?? 0);
         
-        // Generate a composite unique key for this variant
-        const cartItemId = `${product.id}-${selectedWeight}-${selectedFlavor || 'default'}`;
+        // Composite unique key for this exact variant
+        const cartItemId = `${product.id || product._id}-${selectedWeight}-${selectedFlavor || 'default'}`;
         
-        const existingItem = state.items.find(
-          (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id)
-        );
+        const existingItem = state.items.find((item) => item.cartItemId === cartItemId);
         const currentQuantity = existingItem ? existingItem.quantity : 0;
         
-        // Check if adding would exceed stock
+        // Prevent exceeding variant stock
         if (currentQuantity + requestedQuantity > availableStock) {
           const canAdd = availableStock - currentQuantity;
           if (canAdd <= 0) {
-            return; // Can't add any more
+            return;
           }
           requestedQuantity = canAdd;
         }
         
         set((state) => {
-          const exists = state.items.find(
-            (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id)
-          );
+          const exists = state.items.find((item) => item.cartItemId === cartItemId);
           
           if (exists) {
             return {
               items: state.items.map((item) =>
-                (item.cartItemId === cartItemId || (!item.cartItemId && item.id === product.id))
+                item.cartItemId === cartItemId
                   ? { ...item, quantity: item.quantity + requestedQuantity }
                   : item
               ),
@@ -102,11 +106,14 @@ export const useCartStore = create<CartStore>()(
           
           const newItem: CartItem = {
             ...product,
+            id: product.id || (product._id as string),
             price: itemPrice,
             stock: availableStock,
             cartItemId,
             selectedWeight,
             selectedFlavor,
+            variantId: options?.variantId,
+            sku: options?.sku,
             quantity: requestedQuantity,
           };
           
@@ -120,7 +127,7 @@ export const useCartStore = create<CartStore>()(
         const exact = items.find((item) => item.cartItemId === productIdOrCartItemId);
         if (exact) return exact.quantity;
         // Or aggregate by product id
-        const matched = items.filter((item) => item.id === productIdOrCartItemId);
+        const matched = items.filter((item) => item.id === productIdOrCartItemId || item.cartItemId.startsWith(`${productIdOrCartItemId}-`));
         return matched.reduce((sum, item) => sum + item.quantity, 0);
       },
       
@@ -140,7 +147,7 @@ export const useCartStore = create<CartStore>()(
         set((state) => ({
           items: state.items.map((item) =>
             (item.cartItemId === cartItemId || item.id === cartItemId)
-              ? { ...item, quantity }
+              ? { ...item, quantity: Math.min(quantity, item.stock) }
               : item
           ),
         }));

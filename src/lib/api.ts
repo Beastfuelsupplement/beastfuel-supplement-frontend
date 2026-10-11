@@ -1,5 +1,4 @@
 // API service layer for connecting to the Node.js backend
-// Change this to your backend URL when running locally
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
@@ -39,7 +38,7 @@ class ApiService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
     }
 
     return response.json();
@@ -79,12 +78,23 @@ class ApiService {
   }
 
   // Products
-  async getProducts(params?: { category?: string; search?: string }) {
+  async getProducts(params?: { category?: string; search?: string; all?: string; brand?: string; origin?: string }) {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);
+    if (params?.brand) query.set('brand', params.brand);
+    if (params?.origin) query.set('origin', params.origin);
     if (params?.search) query.set('search', params.search);
+    if (params?.all) query.set('all', params.all);
     const queryStr = query.toString();
     return this.request<any[]>(`/products${queryStr ? `?${queryStr}` : ''}`);
+  }
+
+  async getBrands() {
+    return this.request<string[]>('/products/brands');
+  }
+
+  async getOrigins() {
+    return this.request<string[]>('/products/origins');
   }
 
   async getProduct(id: string) {
@@ -116,6 +126,10 @@ class ApiService {
     return this.request<any[]>('/orders');
   }
 
+  async getAllOrders() {
+    return this.request<any[]>('/orders/all');
+  }
+
   async getOrder(id: string) {
     return this.request<any>(`/orders/${id}`);
   }
@@ -131,10 +145,10 @@ class ApiService {
     });
   }
 
-  async updateOrderStatus(id: string, status: string) {
+  async updateOrderStatus(id: string, status: string, paymentStatus?: string) {
     return this.request<any>(`/orders/${id}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, paymentStatus }),
     });
   }
 
@@ -193,7 +207,8 @@ class ApiService {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const uploadUrl = API_BASE_URL.endsWith('/api') ? `${API_BASE_URL}/upload` : `${API_BASE_URL}/api/upload`;
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
@@ -201,7 +216,27 @@ class ApiService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Upload failed');
+      throw new Error(errorData.error || errorData.message || `Upload failed with status ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async uploadMultipleImages(files: File[]): Promise<{ message: string; images: Array<{ imageUrl: string; filename: string }> }> {
+    const token = this.getToken();
+    const formData = new FormData();
+    files.forEach(file => formData.append('images', file));
+
+    const uploadUrl = API_BASE_URL.endsWith('/api') ? `${API_BASE_URL}/upload/multiple` : `${API_BASE_URL}/api/upload/multiple`;
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || `Gallery upload failed with status ${response.status}`);
     }
 
     return response.json();
