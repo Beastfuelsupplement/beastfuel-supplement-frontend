@@ -15,8 +15,9 @@ interface ProductCardProps {
 const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const addItem = useCartStore((state) => state.addItem);
   const getItemQuantity = useCartStore((state) => state.getItemQuantity);
-  const stock = product.stock ?? 0;
-  const cartQuantity = getItemQuantity(product.id);
+  const stock = product?.stock ?? 0;
+  const productId = product?.id || product?._id || '';
+  const cartQuantity = productId ? getItemQuantity(productId) : 0;
   const availableToAdd = stock - cartQuantity;
   const maxStock = 100;
   const stockPercentage = Math.min((stock / maxStock) * 100, 100);
