@@ -313,7 +313,6 @@ const ProductDetails = () => {
                   <div className="flex flex-wrap gap-2.5">
                     {availableWeights.map((w) => {
                       const isSelected = selectedWeight === w;
-                      const variantForWeight = product.variants?.find((v) => v.weight === w);
                       return (
                         <button
                           key={w}
@@ -327,15 +326,6 @@ const ProductDetails = () => {
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{w}</span>
-                          {variantForWeight && (
-                            <span
-                              className={`text-xs ml-0.5 ${
-                                isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground'
-                              }`}
-                            >
-                              ({formatCurrency(variantForWeight.price)})
-                            </span>
-                          )}
                         </button>
                       );
                     })}
