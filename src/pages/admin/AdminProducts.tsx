@@ -71,10 +71,11 @@ const AdminProducts = () => {
           selectedCategoryFilter === 'All' ||
           (p.category || '').toLowerCase() === selectedCategoryFilter.toLowerCase();
 
+        const threshold = p.lowStockThreshold ?? 5;
         const matchesStock =
           selectedStockFilter === 'All' ||
-          (selectedStockFilter === 'in_stock' && (p.stock ?? 0) > 10) ||
-          (selectedStockFilter === 'low_stock' && (p.stock ?? 0) > 0 && (p.stock ?? 0) <= 10) ||
+          (selectedStockFilter === 'in_stock' && (p.stock ?? 0) > threshold) ||
+          (selectedStockFilter === 'low_stock' && (p.stock ?? 0) > 0 && (p.stock ?? 0) <= threshold) ||
           (selectedStockFilter === 'out_of_stock' && (p.stock ?? 0) === 0);
 
         const query = searchQuery.toLowerCase().trim();
@@ -242,8 +243,8 @@ const AdminProducts = () => {
                   className="h-9 px-2.5 bg-secondary border border-border rounded-lg text-xs font-medium text-foreground focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="All">All Stock</option>
-                  <option value="in_stock">In Stock (&gt; 10)</option>
-                  <option value="low_stock">Low Stock (1-10)</option>
+                  <option value="in_stock">In Stock (&gt; Threshold)</option>
+                  <option value="low_stock">Low Stock (≤ Threshold / 5)</option>
                   <option value="out_of_stock">Out of Stock (0)</option>
                 </select>
               </div>
@@ -292,9 +293,10 @@ const AdminProducts = () => {
                   const origin = product.countryOfOrigin || 'USA';
                   const weights = product.weights?.length ? product.weights : [product.weight || '1kg'];
                   const flavors = product.flavors?.length ? product.flavors : [product.flavor || 'Standard'];
+                  const threshold = product.lowStockThreshold ?? 5;
                   const totalStock = product.stock ?? 0;
                   const isOut = totalStock === 0;
-                  const isLow = totalStock > 0 && totalStock <= 10;
+                  const isLow = totalStock > 0 && totalStock <= threshold;
 
                   return (
                     <motion.tr
@@ -364,7 +366,7 @@ const AdminProducts = () => {
                         <div className="space-y-1 max-w-[220px]">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                 isOut
                                   ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
                                   : isLow
@@ -372,7 +374,16 @@ const AdminProducts = () => {
                                   : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                               }`}
                             >
-                              {isOut ? 'Out of Stock' : `${totalStock} units available`}
+                              {isOut ? (
+                                'Out of Stock'
+                              ) : isLow ? (
+                                <>
+                                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                                  Low Stock Alert ({totalStock} units ≤ {threshold})
+                                </>
+                              ) : (
+                                `${totalStock} units available`
+                              )}
                             </span>
                           </div>
                           <p className="text-[10px] text-muted-foreground line-clamp-1">
@@ -528,7 +539,22 @@ const AdminProducts = () => {
                           {viewingProduct.stock} units
                         </p>
                       </div>
+
+                      <div className="p-2.5 bg-secondary/50 rounded-xl">
+                        <span className="text-muted-foreground text-[10px] uppercase font-bold">Low Stock Threshold</span>
+                        <p className="font-bold text-foreground text-sm mt-0.5 text-amber-500">
+                          {viewingProduct.lowStockThreshold ?? 5} units
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Low Stock Alert Message if Applicable */}
+                    {viewingProduct.stock <= (viewingProduct.lowStockThreshold ?? 5) && (
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>Low Stock Alert: Total product inventory is at or below the threshold of {viewingProduct.lowStockThreshold ?? 5} units!</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -555,27 +581,35 @@ const AdminProducts = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
-                        {(viewingProduct.variants || []).map((v, i) => (
-                          <tr key={i} className="hover:bg-secondary/20">
-                            <td className="p-2.5 font-bold text-foreground">{v.weight}</td>
-                            <td className="p-2.5 font-medium text-foreground">{v.flavor}</td>
-                            <td className="p-2.5 font-semibold text-primary">{formatCurrency(v.price)}</td>
-                            <td className="p-2.5">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  v.stock === 0
-                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                }`}
-                              >
-                                {v.stock} units
-                              </span>
-                            </td>
-                            <td className="p-2.5 text-muted-foreground font-mono text-[10px]">
-                              {v.sku || 'N/A'}
-                            </td>
-                          </tr>
-                        ))}
+                        {(viewingProduct.variants || []).map((v, i) => {
+                          const vThreshold = viewingProduct.lowStockThreshold ?? 5;
+                          const isVOut = v.stock === 0;
+                          const isVLow = v.stock > 0 && v.stock <= vThreshold;
+
+                          return (
+                            <tr key={i} className="hover:bg-secondary/20">
+                              <td className="p-2.5 font-bold text-foreground">{v.weight}</td>
+                              <td className="p-2.5 font-medium text-foreground">{v.flavor}</td>
+                              <td className="p-2.5 font-semibold text-primary">{formatCurrency(v.price)}</td>
+                              <td className="p-2.5">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    isVOut
+                                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                                      : isVLow
+                                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  }`}
+                                >
+                                  {isVOut ? 'Out of Stock' : isVLow ? `⚠️ Low Stock (${v.stock} units)` : `${v.stock} units`}
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-muted-foreground font-mono text-[10px]">
+                                {v.sku || 'N/A'}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

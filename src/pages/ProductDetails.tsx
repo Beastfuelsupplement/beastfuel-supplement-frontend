@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,29 @@ const ProductDetails = () => {
   const { data: product, isLoading } = useProduct(id);
   const { data: allProducts = [] } = useProducts();
   const { averageRating, totalReviews } = useReviews(id || '');
+
+  // Extract all photos (primary + gallery)
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    const list: string[] = [];
+    if (product.image) list.push(product.image);
+    if (Array.isArray(product.images)) {
+      product.images.forEach((img) => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    }
+    return list;
+  }, [product]);
+
+  const [activeImage, setActiveImage] = useState<string>('');
+
+  useEffect(() => {
+    if (product?.image) {
+      setActiveImage(product.image);
+    } else if (allImages.length > 0) {
+      setActiveImage(allImages[0]);
+    }
+  }, [product?.id, product?.image, allImages]);
 
   // Extract available weights
   const availableWeights = useMemo(() => {
@@ -173,9 +196,9 @@ const ProductDetails = () => {
           >
             <div className="relative aspect-square bg-secondary rounded-2xl overflow-hidden border border-border shadow-lg">
               <img
-                src={product.image}
+                src={activeImage || product.image}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-all duration-300"
               />
               {/* Category and Brand Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -187,28 +210,29 @@ const ProductDetails = () => {
                   {brandName}
                 </span>
               </div>
-
-              {/* Country of Origin Badge - Prominently Highlighted */}
-              <div className="absolute top-4 right-4 z-10">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold bg-neutral-950/90 text-white dark:bg-card/95 dark:text-foreground backdrop-blur-md rounded-xl border border-neutral-700/80 dark:border-border shadow-lg">
-                  <Globe className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span>Made in <strong className="font-extrabold tracking-wider uppercase text-white dark:text-foreground">{countryOrigin}</strong></span>
-                </span>
-              </div>
             </div>
 
-            {/* Thumbnail images if multiple */}
-            {product.images && product.images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {}}
-                    className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/50 shrink-0"
-                  >
-                    <img src={img} alt={`${product.name} ${i}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+            {/* All Product Photos / Thumbnail Gallery */}
+            {allImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                {allImages.map((img, i) => {
+                  const isSelected = (activeImage || product.image) === img;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveImage(img)}
+                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                        isSelected
+                          ? 'border-primary ring-2 ring-primary/40 shadow-md scale-105'
+                          : 'border-border/70 hover:border-border opacity-70 hover:opacity-100'
+                      }`}
+                      title={`View photo ${i + 1}`}
+                    >
+                      <img src={img} alt={`${product.name} photo ${i + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </motion.div>
@@ -343,6 +367,14 @@ const ProductDetails = () => {
                 </div>
               )}
 
+              {/* Low Stock Alert Banner */}
+              {!isOutOfStock && activeStock <= (product.lowStockThreshold ?? 5) && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2.5 text-amber-600 dark:text-amber-400 text-xs font-semibold animate-pulse">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Low Stock Alert: Only {activeStock} units left in stock! (Threshold: {product.lowStockThreshold ?? 5} units) Order now to secure yours.</span>
+                </div>
+              )}
+
               {/* Stock Status */}
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -351,10 +383,10 @@ const ProductDetails = () => {
                       <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
                       Out of Stock in this variant
                     </span>
-                  ) : activeStock <= 10 ? (
+                  ) : activeStock <= (product.lowStockThreshold ?? 5) ? (
                     <span className="text-amber-600 dark:text-amber-400 font-semibold text-sm flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      Low Stock - Only {activeStock} units left
+                      Low Stock Alert - Only {activeStock} units left
                     </span>
                   ) : (
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm flex items-center gap-1.5">

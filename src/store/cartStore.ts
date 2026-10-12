@@ -28,6 +28,7 @@ export interface Product {
   flavors?: string[];
   variants?: ProductVariant[];
   stock: number;
+  lowStockThreshold?: number;
   featured?: boolean;
   isActive?: boolean;
   createdAt?: string;

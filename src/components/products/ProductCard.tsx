@@ -21,8 +21,9 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const availableToAdd = stock - cartQuantity;
   const maxStock = 100;
   const stockPercentage = Math.min((stock / maxStock) * 100, 100);
+  const lowStockThreshold = product?.lowStockThreshold ?? 5;
   const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock <= 10;
+  const isLowStock = stock > 0 && stock <= lowStockThreshold;
   const isMaxInCart = availableToAdd <= 0 && stock > 0;
 
   const brandName = product.brand || 'BEASTFUEL';
@@ -187,9 +188,9 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             {/* Stock indicator with animated bar */}
             <div className="pt-1">
               <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground mb-1.5">
-                <span className={`flex items-center gap-1 ${isOutOfStock ? 'text-destructive' : isLowStock ? 'text-yellow-600 dark:text-yellow-400' : ''}`}>
+                <span className={`flex items-center gap-1 font-semibold ${isOutOfStock ? 'text-destructive' : isLowStock ? 'text-amber-600 dark:text-amber-400' : ''}`}>
                   <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  {isOutOfStock ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
+                  {isOutOfStock ? 'Out of Stock' : isLowStock ? `Low Stock Alert (${stock} left)` : 'In Stock'}
                 </span>
                 <span>{stock} available</span>
               </div>

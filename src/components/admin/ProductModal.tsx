@@ -22,6 +22,7 @@ import {
   Eye,
   Sliders,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product, ProductVariant } from '@/store/cartStore';
@@ -112,12 +113,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
   // ================= STEP 3: FLAVORS & INVENTORY MATRIX =================
   const [flavors, setFlavors] = useState<string[]>(['Chocolate', 'Vanilla']);
   const [newFlavorInput, setNewFlavorInput] = useState('');
+  const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
   // Map key: `${weight}:::${flavor}` -> stock (number)
   const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({
-    '1kg:::Chocolate': 20,
-    '1kg:::Vanilla': 15,
-    '2kg:::Chocolate': 10,
-    '2kg:::Vanilla': 8,
+    '1kg:::Chocolate': 0,
+    '1kg:::Vanilla': 0,
+    '2kg:::Chocolate': 0,
+    '2kg:::Vanilla': 0,
   });
 
   // ================= STEP 4: IMAGES =================
@@ -181,6 +183,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         };
       });
       setWeightConfigs(wConfigs.length > 0 ? wConfigs : [{ weight: '1kg', price: '7000' }]);
+      setLowStockThreshold(product.lowStockThreshold !== undefined ? Number(product.lowStockThreshold) : 5);
 
       // Populate stock matrix
       const matrix: Record<string, number> = {};
@@ -190,7 +193,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
           const v = product.variants?.find(
             item => item.weight === w && (item.flavor === f || !item.flavor)
           );
-          matrix[key] = v?.stock ?? 10;
+          matrix[key] = v?.stock ?? 0;
         });
       });
       setStockMatrix(matrix);
@@ -201,22 +204,24 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCategory('');
       setCountryOfOrigin('USA');
       setDescription('');
+      setLowStockThreshold(5);
       setWeightConfigs([
         { weight: '500g', price: '4000' },
         { weight: '1kg', price: '7000' },
         { weight: '2kg', price: '12000' },
       ]);
       setFlavors(['Chocolate', 'Vanilla', 'Strawberry']);
+      // All variant unit stocks default to 0
       setStockMatrix({
-        '500g:::Chocolate': 20,
-        '500g:::Vanilla': 15,
-        '500g:::Strawberry': 10,
-        '1kg:::Chocolate': 18,
-        '1kg:::Vanilla': 12,
-        '1kg:::Strawberry': 8,
-        '2kg:::Chocolate': 10,
-        '2kg:::Vanilla': 6,
-        '2kg:::Strawberry': 4,
+        '500g:::Chocolate': 0,
+        '500g:::Vanilla': 0,
+        '500g:::Strawberry': 0,
+        '1kg:::Chocolate': 0,
+        '1kg:::Vanilla': 0,
+        '1kg:::Strawberry': 0,
+        '2kg:::Chocolate': 0,
+        '2kg:::Vanilla': 0,
+        '2kg:::Strawberry': 0,
       });
       setPrimaryImage('');
       setImagePreview(null);
@@ -362,10 +367,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setNewWeightInput('');
     setNewWeightPriceInput('');
 
-    // Prepopulate matrix for this new weight across existing flavors
+    // Prepopulate matrix for this new weight across existing flavors (default to 0)
     const updated = { ...stockMatrix };
     flavors.forEach(fl => {
-      updated[`${w}:::${fl}`] = 10;
+      updated[`${w}:::${fl}`] = 0;
     });
     setStockMatrix(updated);
     toast.success(`Added weight option: ${w} at Rs. ${p}`);
@@ -397,10 +402,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setFlavors([...flavors, fl]);
     setNewFlavorInput('');
 
-    // Prepopulate matrix for this flavor across existing weights
+    // Prepopulate matrix for this flavor across existing weights (default to 0)
     const updated = { ...stockMatrix };
     weightConfigs.forEach(wc => {
-      updated[`${wc.weight}:::${fl}`] = 10;
+      updated[`${wc.weight}:::${fl}`] = 0;
     });
     setStockMatrix(updated);
   };
@@ -414,7 +419,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   const handleUpdateStockCell = (weight: string, flavor: string, value: string) => {
-    const num = parseInt(value, 10);
+    // Strip leading zeros if more than 1 digit (e.g. "010" -> "10", "05" -> "5")
+    const stripped = value.replace(/^0+(?=\d)/, '');
+    const num = stripped === '' ? 0 : parseInt(stripped, 10);
     const validNum = isNaN(num) || num < 0 ? 0 : num;
     setStockMatrix(prev => ({
       ...prev,
@@ -531,6 +538,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       images: allImagesList,
       price: startingPrice,
       stock: totalCalculatedStock,
+      lowStockThreshold: Math.max(0, Number(lowStockThreshold) || 5),
       weight: weightConfigs[0]?.weight || '1kg',
       weights: weightConfigs.map(wc => wc.weight),
       flavor: flavors[0] || 'Standard',
@@ -1069,6 +1077,54 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </div>
               </div>
 
+              {/* Admin Customizable Low Stock Threshold */}
+              <div className="p-4 bg-secondary/30 rounded-xl border border-border/70 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      Low Stock Alert Threshold (Customizable)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Variants or products at or below this stock value trigger low stock alert messages. (Default: 5 units)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={lowStockThreshold}
+                      onFocus={e => { if (e.target.value === '0') e.target.select(); }}
+                      onChange={e => {
+                        const stripped = e.target.value.replace(/^0+(?=\d)/, '');
+                        const val = stripped === '' ? 0 : parseInt(stripped, 10);
+                        setLowStockThreshold(isNaN(val) || val < 0 ? 0 : val);
+                      }}
+                      className="w-20 h-9 px-3 text-center bg-background border border-border rounded-lg text-xs font-bold text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground">units</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Low Stock Alert Message Banner */}
+              {compiledVariants.some(v => v.stock <= lowStockThreshold) && (
+                <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2.5 text-amber-600 dark:text-amber-400 animate-in fade-in">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="text-xs space-y-0.5">
+                    <strong className="font-bold">Low Stock Alert:</strong>{' '}
+                    {compiledVariants.filter(v => v.stock === 0).length > 0 && (
+                      <span>{compiledVariants.filter(v => v.stock === 0).length} variant(s) are completely out of stock (0 units). </span>
+                    )}
+                    {compiledVariants.filter(v => v.stock > 0 && v.stock <= lowStockThreshold).length > 0 && (
+                      <span>{compiledVariants.filter(v => v.stock > 0 && v.stock <= lowStockThreshold).length} variant(s) are at or below low stock threshold (≤ {lowStockThreshold} units). </span>
+                    )}
+                    <span>Admin alert message will be shown to customers and managers.</span>
+                  </div>
+                </div>
+              )}
+
               {/* Weight x Flavor Inventory Matrix */}
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1077,13 +1133,27 @@ const ProductModal: React.FC<ProductModalProps> = ({
                       Weight & Flavor Inventory Matrix ({compiledVariants.length} Variants)
                     </h3>
                     <p className="text-[11px] text-muted-foreground">
-                      Each combination has its own dedicated stock level and unique SKU.
+                      Each combination has its own dedicated stock level and unique SKU. Default is 0 units.
                     </p>
                   </div>
 
                   {/* Bulk Stock Actions */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground">Quick Fill Stock:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] text-muted-foreground mr-1">Quick Fill:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStock(0)}
+                      className="text-[10px] px-2 py-1 bg-secondary hover:bg-secondary/80 rounded border font-semibold"
+                    >
+                      All 0
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStock(5)}
+                      className="text-[10px] px-2 py-1 bg-secondary hover:bg-secondary/80 rounded border font-semibold"
+                    >
+                      All 5
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleBulkSetStock(10)}
@@ -1138,6 +1208,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                               const key = `${wc.weight}:::${fl}`;
                               const currentVal = stockMatrix[key] !== undefined ? stockMatrix[key] : 0;
                               const isOut = currentVal === 0;
+                              const isLow = currentVal > 0 && currentVal <= lowStockThreshold;
 
                               return (
                                 <td key={fl} className="p-3 text-center">
@@ -1147,10 +1218,17 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                       min="0"
                                       step="1"
                                       value={currentVal}
+                                      onFocus={e => {
+                                        if (e.target.value === '0') {
+                                          e.target.select();
+                                        }
+                                      }}
                                       onChange={e => handleUpdateStockCell(wc.weight, fl, e.target.value)}
                                       className={`w-20 h-8 px-2 text-center bg-secondary border rounded-lg text-xs font-bold focus:ring-1 focus:ring-primary ${
                                         isOut
                                           ? 'border-destructive/60 bg-destructive/5 text-destructive'
+                                          : isLow
+                                          ? 'border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                           : 'border-border text-foreground'
                                       }`}
                                     />
@@ -1158,10 +1236,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                       className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
                                         isOut
                                           ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10'
+                                          : isLow
+                                          ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
                                           : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
                                       }`}
                                     >
-                                      {isOut ? 'Out of Stock' : `${currentVal} units`}
+                                      {isOut ? 'Out of Stock' : isLow ? `⚠️ Low (${currentVal} units)` : `${currentVal} units`}
                                     </span>
                                   </div>
                                 </td>
@@ -1459,38 +1539,54 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </div>
               </div>
 
-              {/* Complete Variant Inventory Table */}
+              {/* Complete Variant Inventory Table & Low Stock Summary */}
               <div className="border border-border rounded-xl overflow-hidden bg-background space-y-2">
                 <div className="bg-secondary/70 px-4 py-2.5 text-xs font-bold text-foreground flex items-center justify-between border-b border-border">
                   <span>Variant Inventory Breakdown ({compiledVariants.length} Combinations)</span>
-                  <span>Total Stock: <strong className="text-primary">{totalCalculatedStock} units</strong></span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground">Alert Threshold: <strong className="text-amber-500">{lowStockThreshold} units</strong></span>
+                    <span>Total Stock: <strong className="text-primary">{totalCalculatedStock} units</strong></span>
+                  </div>
                 </div>
 
+                {/* Low Stock Alert in Review */}
+                {compiledVariants.some(v => v.stock <= lowStockThreshold) && (
+                  <div className="mx-3 mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Low Stock Alert Notice: This product contains variants at or below the threshold of {lowStockThreshold} units.</span>
+                  </div>
+                )}
+
                 <div className="max-h-56 overflow-y-auto divide-y divide-border/50 text-xs">
-                  {compiledVariants.map((v, i) => (
-                    <div key={i} className="px-4 py-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground">{v.weight}</span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="font-medium text-foreground">{v.flavor}</span>
-                        <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border">
-                          SKU: {v.sku}
-                        </span>
+                  {compiledVariants.map((v, i) => {
+                    const isVLow = v.stock > 0 && v.stock <= lowStockThreshold;
+                    return (
+                      <div key={i} className="px-4 py-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground">{v.weight}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="font-medium text-foreground">{v.flavor}</span>
+                          <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border">
+                            SKU: {v.sku}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-foreground">{formatCurrency(v.price)}</span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              v.stock === 0
+                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                                : isVLow
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            }`}
+                          >
+                            {v.stock === 0 ? 'Out of Stock' : isVLow ? `⚠️ Low Stock (${v.stock} units)` : `${v.stock} in stock`}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-semibold text-foreground">{formatCurrency(v.price)}</span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            v.stock === 0
-                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          }`}
-                        >
-                          {v.stock === 0 ? 'Out of Stock' : `${v.stock} in stock`}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
