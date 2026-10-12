@@ -57,7 +57,7 @@ const ForgotPassword = () => {
   if (isSubmitted) {
     return (
       <Layout accent="blue">
-        <section className="relative py-20 bg-gradient-to-b from-primary/5 to-transparent">
+        <section className="relative pt-6 pb-10 sm:pt-10 sm:pb-14">
           <div className="container mx-auto px-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -116,7 +116,7 @@ const ForgotPassword = () => {
   return (
     <Layout accent="blue">
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="relative pt-6 pb-10 sm:pt-10 sm:pb-14">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

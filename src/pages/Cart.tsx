@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { formatCurrency } from '@/lib/currency';
+import { formatImageUrl } from '@/lib/api';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, getTotalPrice } = useCartStore();
@@ -67,8 +68,11 @@ const Cart = () => {
                 >
                   <Link to={`/products/${item.id}`} className="shrink-0">
                     <img
-                      src={item.image}
+                      src={formatImageUrl(item.image)}
                       alt={item.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      }}
                       className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg"
                     />
                   </Link>

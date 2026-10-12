@@ -23,11 +23,16 @@ import {
   Sliders,
   ShieldCheck,
   AlertTriangle,
+  FolderOpen,
+  Link as LinkIcon,
+  HardDrive,
+  FileImage,
+  FolderUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product, ProductVariant } from '@/store/cartStore';
 import { categories, brands } from '@/data/products';
-import { api, API_BASE_URL } from '@/lib/api';
+import { api, API_BASE_URL, formatImageUrl } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
 
@@ -123,12 +128,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
   });
 
   // ================= STEP 4: IMAGES =================
+  const [primaryImageSource, setPrimaryImageSource] = useState<'local' | 'url'>('local');
+  const [galleryImageSource, setGalleryImageSource] = useState<'local' | 'url'>('local');
   const [primaryImage, setPrimaryImage] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [primaryFileName, setPrimaryFileName] = useState<string | null>(null);
+  const [primaryFileSize, setPrimaryFileSize] = useState<string | null>(null);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [isDraggingPrimary, setIsDraggingPrimary] = useState(false);
+  const [isDraggingGallery, setIsDraggingGallery] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,10 +162,17 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCountryOfOrigin(product.countryOfOrigin || '');
       setDescription(product.description || '');
       setPrimaryImage(product.image || '');
-      setImagePreview(product.image || null);
+      setImagePreview(product.image ? formatImageUrl(product.image) : null);
+      setPrimaryFileName(null);
+      setPrimaryFileSize(null);
+      if (product.image?.startsWith('http://') || product.image?.startsWith('https://')) {
+        setPrimaryImageSource('url');
+      } else {
+        setPrimaryImageSource('local');
+      }
       setGalleryImages(
         product.images
-          ? product.images.filter(img => img && img !== product.image)
+          ? product.images.filter(img => img && img !== product.image).map(img => formatImageUrl(img))
           : []
       );
 
@@ -225,6 +243,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
       });
       setPrimaryImage('');
       setImagePreview(null);
+      setPrimaryFileName(null);
+      setPrimaryFileSize(null);
+      setPrimaryImageSource('local');
+      setGalleryImageSource('local');
       setGalleryImages([]);
     }
 
@@ -441,53 +463,118 @@ const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   // ================= IMAGE UPLOAD =================
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, isGallery = false) => {
-    const file = e.target.files?.[0];
+  const readFileAsDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image file from local folder.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePrimaryFileSelect = async (file?: File) => {
     if (!file) return;
 
-    // Validate mime / format
-    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    // Validate format
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
     if (!allowed.includes(file.type)) {
-      toast.error('Only PNG, JPG, JPEG, or WEBP image formats are allowed.');
+      toast.error('Only PNG, JPG, JPEG, WEBP or GIF formats are allowed.');
       return;
     }
 
-    // Validate size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size exceeds 5MB limit. Please upload a smaller image.');
+    // Validate size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size exceeds 10MB limit. Please choose a smaller image.');
       return;
     }
+
+    setPrimaryFileName(file.name);
+    const sizeStr = file.size > 1024 * 1024
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+      : `${Math.round(file.size / 1024)} KB`;
+    setPrimaryFileSize(sizeStr);
 
     setIsUploading(true);
-    setUploadProgress('Uploading image to persistent storage...');
+    setUploadProgress(`Reading "${file.name}" from local folder...`);
 
     try {
-      const res = await api.uploadImage(file);
-      if (res && res.imageUrl) {
-        // Construct full URL if relative
-        const fullUrl = res.imageUrl.startsWith('http')
-          ? res.imageUrl
-          : res.imageUrl.startsWith('/uploads')
-          ? res.imageUrl
-          : `/uploads/${res.imageUrl}`;
+      // Immediate local preview so user sees it instantly
+      const localDataUrl = await readFileAsDataUrl(file);
+      setImagePreview(localDataUrl);
 
-        if (isGallery) {
-          setGalleryImages(prev => [...prev, fullUrl]);
-          toast.success('Gallery image uploaded successfully!');
-        } else {
-          setPrimaryImage(fullUrl);
-          setImagePreview(fullUrl);
-          toast.success('Primary product image uploaded successfully!');
+      // Attempt persistent upload to backend storage
+      try {
+        setUploadProgress(`Uploading "${file.name}" to storage...`);
+        const res = await api.uploadImage(file);
+        if (res && res.imageUrl) {
+          const formatted = formatImageUrl(res.imageUrl);
+          setPrimaryImage(formatted);
+          setImagePreview(formatted);
+          toast.success(`"${file.name}" uploaded successfully!`);
+          return;
         }
+      } catch (uploadErr) {
+        console.warn('Server upload unavailable, using local image data:', uploadErr);
       }
+
+      // Offline / fallback: save data URL so image works seamlessly
+      setPrimaryImage(localDataUrl);
+      toast.success(`"${file.name}" loaded from local folder successfully!`);
     } catch (err: any) {
-      console.error('Upload failure:', err);
-      toast.error(err.message || 'Image upload failed. Please verify image size and format.');
+      toast.error(err.message || 'Failed to read local image file');
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
-      if (e.target) e.target.value = '';
     }
+  };
+
+  const handleGalleryFilesSelect = async (fileList?: FileList | File[]) => {
+    if (!fileList) return;
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress(`Processing ${files.length} image(s) from local folder...`);
+
+    let addedCount = 0;
+    for (const file of files) {
+      const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+      if (!allowed.includes(file.type)) {
+        toast.error(`Skipped "${file.name}": Unsupported format.`);
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`Skipped "${file.name}": Exceeds 10MB limit.`);
+        continue;
+      }
+
+      try {
+        let finalImage = '';
+        try {
+          const res = await api.uploadImage(file);
+          if (res?.imageUrl) {
+            finalImage = formatImageUrl(res.imageUrl);
+          }
+        } catch {
+          // Fallback to data URL
+        }
+
+        if (!finalImage) {
+          finalImage = await readFileAsDataUrl(file);
+        }
+
+        setGalleryImages(prev => [...prev, finalImage]);
+        addedCount++;
+      } catch (err: any) {
+        toast.error(`Error loading "${file.name}": ${err.message}`);
+      }
+    }
+
+    if (addedCount > 0) {
+      toast.success(`Added ${addedCount} image(s) from local folder to gallery!`);
+    }
+    setIsUploading(false);
+    setUploadProgress(null);
   };
 
   const handleAddGalleryUrl = () => {
@@ -1275,68 +1362,182 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 <div className="text-xs text-muted-foreground space-y-1">
                   <strong className="text-foreground font-semibold">Step 4: Product Images</strong>
                   <p>
-                    Upload high-quality supplement images (PNG, JPG, JPEG, WEBP up to 5MB). Images are persistently stored and accessible to customers.
+                    Add product images using <strong>local folder files</strong> from your computer or <strong>direct web image URLs</strong>. Both methods are supported for primary and gallery images.
                   </p>
                 </div>
               </div>
 
               {/* Primary Image Upload Card */}
-              <div className="p-5 bg-background rounded-2xl border-2 border-dashed border-border hover:border-primary/50 transition-colors space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="p-5 bg-background rounded-2xl border-2 border-border/80 hover:border-primary/50 transition-colors space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-primary" />
                       Primary Product Image <span className="text-destructive">* REQUIRED</span>
                     </h4>
                     <p className="text-[11px] text-muted-foreground">
-                      Main image displayed on catalog cards, details page, and cart
+                      Main showcase image displayed on cards, detail view, and cart
                     </p>
                   </div>
                   {primaryImage && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                      <Check className="w-3 h-3" /> Image Ready
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 w-fit">
+                      <Check className="w-3 h-3" /> Image Configured
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="url"
-                    value={primaryImage}
-                    onChange={e => {
-                      setPrimaryImage(e.target.value);
-                      setImagePreview(e.target.value);
-                    }}
-                    placeholder="Enter image URL or use the upload button..."
-                    className={`h-11 px-4 bg-secondary/50 border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary flex-1 ${
-                      stepErrors.image ? 'border-destructive ring-1 ring-destructive' : 'border-border'
-                    }`}
-                  />
-
-                  <Button
+                {/* Source Selection Tabs */}
+                <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+                  <button
                     type="button"
-                    variant="default"
-                    disabled={isUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-11 px-5 text-xs font-bold shrink-0 shadow-md"
+                    onClick={() => setPrimaryImageSource('local')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      primaryImageSource === 'local'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`}
                   >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Upload Image File
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={e => handleImageFileChange(e, false)}
-                    className="hidden"
-                  />
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    Upload from Local Folder
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryImageSource('url')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      primaryImageSource === 'url'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    Enter Image URL
+                  </button>
                 </div>
 
+                {/* Option 1: Local Folder Upload Area */}
+                {primaryImageSource === 'local' && (
+                  <div
+                    onDragOver={e => {
+                      e.preventDefault();
+                      setIsDraggingPrimary(true);
+                    }}
+                    onDragLeave={() => setIsDraggingPrimary(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setIsDraggingPrimary(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handlePrimaryFileSelect(file);
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      isDraggingPrimary
+                        ? 'border-primary bg-primary/10 scale-[1.01]'
+                        : 'border-border/80 hover:border-primary/60 bg-secondary/10 hover:bg-secondary/20'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2.5">
+                      <FolderUp className="w-6 h-6" />
+                    </div>
+                    <p className="text-xs font-bold text-foreground">
+                      Choose an image from your local computer folder
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 max-w-sm">
+                      Drag & drop an image here or click below to browse files (PNG, JPG, JPEG, WEBP up to 10MB)
+                    </p>
+                    <div className="mt-3.5 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="default"
+                        size="sm"
+                        disabled={isUploading}
+                        onClick={e => {
+                          e.stopPropagation();
+                          fileInputRef.current?.click();
+                        }}
+                        className="text-xs font-bold h-9 px-4 gap-2 shadow-sm"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <HardDrive className="w-3.5 h-3.5" />
+                        )}
+                        Browse Local Files
+                      </Button>
+                      {primaryImage && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            fileInputRef.current?.click();
+                          }}
+                          className="text-xs h-9"
+                        >
+                          Change File
+                        </Button>
+                      )}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) handlePrimaryFileSelect(file);
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
+                {/* Option 2: Image URL Input Area */}
+                {primaryImageSource === 'url' && (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <LinkIcon className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="url"
+                          value={primaryImage}
+                          onChange={e => {
+                            setPrimaryImage(e.target.value);
+                            setImagePreview(e.target.value);
+                            setPrimaryFileName(null);
+                            setPrimaryFileSize(null);
+                          }}
+                          placeholder="https://images.unsplash.com/... or any online image URL"
+                          className={`w-full h-11 pl-10 pr-4 bg-secondary/30 border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary ${
+                            stepErrors.image ? 'border-destructive ring-1 ring-destructive' : 'border-border'
+                          }`}
+                        />
+                      </div>
+                      {primaryImage && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setPrimaryImage('');
+                            setImagePreview(null);
+                            setPrimaryFileName(null);
+                            setPrimaryFileSize(null);
+                          }}
+                          className="h-11 text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Paste an image URL from Unsplash, manufacturer CDN, or any public image link.
+                    </p>
+                  </div>
+                )}
+
                 {uploadProgress && (
-                  <p className="text-xs text-primary font-semibold flex items-center gap-1.5 animate-pulse">
+                  <p className="text-xs text-primary font-semibold flex items-center gap-1.5 animate-pulse bg-primary/10 p-2.5 rounded-lg border border-primary/20">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> {uploadProgress}
                   </p>
                 )}
@@ -1349,102 +1550,224 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
                 {/* Primary Image Preview Box */}
                 {imagePreview && (
-                  <div className="flex items-center gap-4 p-3 bg-secondary/30 rounded-xl border border-border w-fit">
-                    <div className="w-20 h-20 rounded-lg overflow-hidden border border-border shrink-0 bg-background">
+                  <div className="flex items-center gap-4 p-3 bg-secondary/30 rounded-xl border border-border w-full sm:w-fit">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border border-border shrink-0 bg-background relative">
                       <img
-                        src={imagePreview}
+                        src={formatImageUrl(imagePreview)}
                         alt="Product preview"
                         className="w-full h-full object-cover"
                         onError={() => setImagePreview('/placeholder.svg')}
                       />
                     </div>
-                    <div className="text-xs space-y-1">
-                      <p className="font-bold text-foreground">Primary Product Image</p>
-                      <p className="text-muted-foreground text-[11px] truncate max-w-xs">{primaryImage}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPrimaryImage('');
-                          setImagePreview(null);
-                        }}
-                        className="text-[11px] text-destructive hover:underline font-medium inline-block"
-                      >
-                        Remove image
-                      </button>
+                    <div className="text-xs space-y-1 min-w-[200px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-foreground">Selected Primary Image</span>
+                        <span className="text-[10px] px-2 py-0.2 rounded-full font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {primaryFileName ? '📁 Local Folder' : '🔗 Web URL'}
+                        </span>
+                      </div>
+                      {primaryFileName ? (
+                        <p className="text-foreground text-[11px] font-semibold truncate max-w-xs">
+                          {primaryFileName} {primaryFileSize && <span className="text-muted-foreground">({primaryFileSize})</span>}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground text-[11px] truncate max-w-xs">{primaryImage}</p>
+                      )}
+                      <div className="pt-0.5 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (primaryImageSource === 'local') {
+                              fileInputRef.current?.click();
+                            } else {
+                              setPrimaryImage('');
+                              setImagePreview(null);
+                            }
+                          }}
+                          className="text-[11px] text-primary hover:underline font-semibold"
+                        >
+                          Change
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPrimaryImage('');
+                            setImagePreview(null);
+                            setPrimaryFileName(null);
+                            setPrimaryFileSize(null);
+                          }}
+                          className="text-[11px] text-destructive hover:underline font-medium"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Additional Gallery Images */}
-              <div className="p-5 bg-secondary/20 rounded-2xl border border-border/70 space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="p-5 bg-secondary/20 rounded-2xl border border-border/70 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-primary" />
                       Additional Gallery Images (Optional)
                     </h4>
                     <p className="text-[11px] text-muted-foreground">
-                      Extra product shots, nutrition label, ingredient breakdown ({galleryImages.length} images)
+                      Extra product shots, nutrition label, ingredient breakdown ({galleryImages.length} image{galleryImages.length === 1 ? '' : 's'})
                     </p>
                   </div>
+                </div>
 
-                  <Button
+                {/* Gallery Source Tabs */}
+                <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isUploading}
+                    onClick={() => setGalleryImageSource('local')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      galleryImageSource === 'local'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    Upload from Local Folder (Multiple)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGalleryImageSource('url')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      galleryImageSource === 'url'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    Add by Web URL
+                  </button>
+                </div>
+
+                {/* Gallery Local Folder Multi-upload Dropzone */}
+                {galleryImageSource === 'local' && (
+                  <div
+                    onDragOver={e => {
+                      e.preventDefault();
+                      setIsDraggingGallery(true);
+                    }}
+                    onDragLeave={() => setIsDraggingGallery(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setIsDraggingGallery(false);
+                      if (e.dataTransfer.files) handleGalleryFilesSelect(e.dataTransfer.files);
+                    }}
                     onClick={() => galleryInputRef.current?.click()}
-                    className="text-xs font-semibold h-8"
+                    className={`p-5 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      isDraggingGallery
+                        ? 'border-primary bg-primary/10 scale-[1.01]'
+                        : 'border-border/80 hover:border-primary/60 bg-background/50 hover:bg-background/80'
+                    }`}
                   >
-                    <Upload className="w-3.5 h-3.5 mr-1" /> Upload to Gallery
-                  </Button>
-                  <input
-                    ref={galleryInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={e => handleImageFileChange(e, true)}
-                    className="hidden"
-                  />
-                </div>
+                    <FolderUp className="w-7 h-7 text-primary mb-2" />
+                    <p className="text-xs font-bold text-foreground">
+                      Select or drop multiple gallery images from your local folder
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Supports selecting multiple images at once (PNG, JPG, JPEG, WEBP)
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isUploading}
+                      onClick={e => {
+                        e.stopPropagation();
+                        galleryInputRef.current?.click();
+                      }}
+                      className="mt-3 text-xs font-bold h-8 gap-1.5"
+                    >
+                      <HardDrive className="w-3.5 h-3.5" />
+                      Browse Local Folder Images
+                    </Button>
+                    <input
+                      ref={galleryInputRef}
+                      type="file"
+                      multiple
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                      onChange={e => {
+                        if (e.target.files) handleGalleryFilesSelect(e.target.files);
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                )}
 
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={newGalleryUrl}
-                    onChange={e => setNewGalleryUrl(e.target.value)}
-                    placeholder="Enter additional image URL..."
-                    className="h-9 px-3 bg-background border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-primary flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddGalleryUrl}
-                    className="h-9 text-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add URL
-                  </Button>
-                </div>
+                {/* Gallery URL Input */}
+                {galleryImageSource === 'url' && (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <LinkIcon className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="url"
+                        value={newGalleryUrl}
+                        onChange={e => setNewGalleryUrl(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddGalleryUrl();
+                          }
+                        }}
+                        placeholder="Enter additional web image URL..."
+                        className="w-full h-10 pl-10 pr-3 bg-background border border-border rounded-xl text-xs text-foreground focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddGalleryUrl}
+                      className="h-10 text-xs font-bold px-4"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add URL
+                    </Button>
+                  </div>
+                )}
 
                 {/* Gallery Images Grid */}
                 {galleryImages.length > 0 && (
-                  <div className="flex flex-wrap gap-2.5 pt-2">
-                    {galleryImages.map((img, idx) => (
-                      <div
-                        key={idx}
-                        className="relative group w-20 h-20 rounded-xl overflow-hidden border border-border bg-background shadow-xs"
-                      >
-                        <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGalleryImage(idx)}
-                          className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                          title="Remove image"
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[11px] text-muted-foreground font-semibold">
+                      Gallery Collection ({galleryImages.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-2.5">
+                      {galleryImages.map((img, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group w-20 h-20 rounded-xl overflow-hidden border border-border bg-background shadow-xs"
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                          <img
+                            src={formatImageUrl(img)}
+                            alt={`Gallery ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={e => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryImage(idx)}
+                            className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                            title="Remove image"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
+                          <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded font-bold">
+                            #{idx + 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

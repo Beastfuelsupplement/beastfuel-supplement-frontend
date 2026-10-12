@@ -6,6 +6,7 @@ import { Product } from '@/store/cartStore';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
 import { formatCurrencyParts } from '@/lib/currency';
+import { formatImageUrl } from '@/lib/api';
 
 interface ProductCardProps {
   product: Product;
@@ -71,9 +72,12 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden shrink-0 bg-secondary/50 dark:bg-neutral-900/50">
             {/* Image */}
             <motion.img
-              src={product.image}
+              src={formatImageUrl(product.image)}
               alt={product.name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
               whileHover={{ scale: 1.08 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             />

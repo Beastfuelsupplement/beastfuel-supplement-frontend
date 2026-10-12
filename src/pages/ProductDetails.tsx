@@ -12,6 +12,7 @@ import ProductReviews from '@/components/reviews/ProductReviews';
 import StarRating from '@/components/reviews/StarRating';
 import { useReviews } from '@/hooks/useReviews';
 import { formatCurrency } from '@/lib/currency';
+import { formatImageUrl } from '@/lib/api';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -196,8 +197,11 @@ const ProductDetails = () => {
           >
             <div className="relative aspect-square bg-secondary rounded-2xl overflow-hidden border border-border shadow-lg">
               <img
-                src={activeImage || product.image}
+                src={formatImageUrl(activeImage || product.image)}
                 alt={product.name}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
                 className="w-full h-full object-cover transition-all duration-300"
               />
               {/* Category and Brand Badges */}
@@ -229,7 +233,14 @@ const ProductDetails = () => {
                       }`}
                       title={`View photo ${i + 1}`}
                     >
-                      <img src={img} alt={`${product.name} photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={formatImageUrl(img)}
+                        alt={`${product.name} photo ${i + 1}`}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   );
                 })}

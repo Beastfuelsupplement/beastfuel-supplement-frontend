@@ -208,18 +208,37 @@ class ApiService {
     formData.append('image', file);
 
     const uploadUrl = API_BASE_URL.endsWith('/api') ? `${API_BASE_URL}/upload` : `${API_BASE_URL}/api/upload`;
-    const response = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `Upload failed with status ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Upload failed with status ${response.status}`);
+      }
+
+      return response.json();
+    } catch (err: any) {
+      // Fallback via Vite proxy path if direct URL failed
+      if (uploadUrl.includes('localhost:5000')) {
+        try {
+          const fallbackRes = await fetch('/api/upload', {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+          });
+          if (fallbackRes.ok) {
+            return fallbackRes.json();
+          }
+        } catch {
+          // Ignore fallback error and rethrow original
+        }
+      }
+      throw err;
     }
-
-    return response.json();
   }
 
   async uploadMultipleImages(files: File[]): Promise<{ message: string; images: Array<{ imageUrl: string; filename: string }> }> {
@@ -228,20 +247,53 @@ class ApiService {
     files.forEach(file => formData.append('images', file));
 
     const uploadUrl = API_BASE_URL.endsWith('/api') ? `${API_BASE_URL}/upload/multiple` : `${API_BASE_URL}/api/upload/multiple`;
-    const response = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `Gallery upload failed with status ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Gallery upload failed with status ${response.status}`);
+      }
+
+      return response.json();
+    } catch (err: any) {
+      if (uploadUrl.includes('localhost:5000')) {
+        try {
+          const fallbackRes = await fetch('/api/upload/multiple', {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+          });
+          if (fallbackRes.ok) {
+            return fallbackRes.json();
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      throw err;
     }
-
-    return response.json();
   }
 }
+
+export const formatImageUrl = (url?: string): string => {
+  if (!url) return '/placeholder.svg';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  if (url.startsWith('/uploads')) {
+    if (API_BASE_URL.startsWith('http')) {
+      const origin = API_BASE_URL.replace(/\/api\/?$/, '');
+      return `${origin}${url}`;
+    }
+    return url;
+  }
+  return url;
+};
 
 export const api = new ApiService();
 export { API_BASE_URL };

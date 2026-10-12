@@ -27,6 +27,7 @@ import ConfirmModal from '@/components/admin/ConfirmModal';
 import { Product } from '@/store/cartStore';
 import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { formatCurrency } from '@/lib/currency';
+import { formatImageUrl } from '@/lib/api';
 
 const AdminProducts = () => {
   // Fetch all products (including inactive if any) for the admin view
@@ -310,7 +311,7 @@ const AdminProducts = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3 min-w-[220px]">
                           <img
-                            src={product.image || '/placeholder.svg'}
+                            src={formatImageUrl(product.image)}
                             alt={product.name}
                             className="w-12 h-12 object-cover rounded-xl border border-border shadow-xs shrink-0"
                             onError={(e) => {

@@ -91,7 +91,7 @@ const OrderHistory = () => {
   return (
     <Layout accent="blue">
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="py-8 sm:py-12">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -293,7 +293,7 @@ const Checkout = () => {
   return (
     <Layout accent="purple">
       {/* Hero Section */}
-      <section className="relative py-16 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="relative py-8 sm:py-12">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
