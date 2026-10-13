@@ -462,12 +462,68 @@ const ProductModal: React.FC<ProductModalProps> = ({
     toast.success(`Set stock of all variants to ${qty} units.`);
   };
 
-  // ================= IMAGE UPLOAD =================
-  const readFileAsDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  // ================= IMAGE COMPRESSION & UPLOAD =================
+  const compressImageFile = (file: File, maxDim = 1200, quality = 0.82): Promise<{ file: File; dataUrl: string }> => {
+    return new Promise((resolve) => {
+      // SVGs/GIFs pass through
+      if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ file, dataUrl: (reader.result as string) || '' });
+        reader.onerror = () => resolve({ file, dataUrl: '' });
+        reader.readAsDataURL(file);
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Failed to read image file from local folder.'));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve({ file, dataUrl: (e.target?.result as string) || '' });
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const outMime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          const dataUrl = canvas.toDataURL(outMime, quality);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob && blob.size < file.size) {
+                const optFile = new File([blob], file.name, {
+                  type: outMime,
+                  lastModified: Date.now(),
+                });
+                resolve({ file: optFile, dataUrl });
+              } else {
+                resolve({ file, dataUrl: dataUrl || ((e.target?.result as string) || '') });
+              }
+            },
+            outMime,
+            quality
+          );
+        };
+        img.onerror = () => {
+          resolve({ file, dataUrl: (e.target?.result as string) || '' });
+        };
+        img.src = (e.target?.result as string) || '';
+      };
+      reader.onerror = () => resolve({ file, dataUrl: '' });
       reader.readAsDataURL(file);
     });
   };
@@ -495,17 +551,19 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setPrimaryFileSize(sizeStr);
 
     setIsUploading(true);
-    setUploadProgress(`Reading "${file.name}" from local folder...`);
+    setUploadProgress(`Processing "${file.name}"...`);
 
     try {
-      // Immediate local preview so user sees it instantly
-      const localDataUrl = await readFileAsDataUrl(file);
-      setImagePreview(localDataUrl);
+      // Compress and get instant local preview
+      const { file: optimizedFile, dataUrl: compressedDataUrl } = await compressImageFile(file);
+      if (compressedDataUrl) {
+        setImagePreview(compressedDataUrl);
+      }
 
       // Attempt persistent upload to backend storage
       try {
         setUploadProgress(`Uploading "${file.name}" to storage...`);
-        const res = await api.uploadImage(file);
+        const res = await api.uploadImage(optimizedFile);
         if (res && res.imageUrl) {
           const formatted = formatImageUrl(res.imageUrl);
           setPrimaryImage(formatted);
@@ -514,14 +572,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
           return;
         }
       } catch (uploadErr) {
-        console.warn('Server upload unavailable, using local image data:', uploadErr);
+        console.warn('Server upload unavailable, using optimized local image data:', uploadErr);
       }
 
-      // Offline / fallback: save data URL so image works seamlessly
-      setPrimaryImage(localDataUrl);
-      toast.success(`"${file.name}" loaded from local folder successfully!`);
+      // Offline / fallback: save compressed data URL so payload stays lightweight
+      if (compressedDataUrl) {
+        setPrimaryImage(compressedDataUrl);
+        toast.success(`"${file.name}" loaded successfully!`);
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to read local image file');
+      toast.error(err.message || 'Failed to process image file');
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -534,7 +594,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     if (files.length === 0) return;
 
     setIsUploading(true);
-    setUploadProgress(`Processing ${files.length} image(s) from local folder...`);
+    setUploadProgress(`Processing ${files.length} image(s)...`);
 
     let addedCount = 0;
     for (const file of files) {
@@ -549,29 +609,32 @@ const ProductModal: React.FC<ProductModalProps> = ({
       }
 
       try {
+        const { file: optimizedFile, dataUrl: compressedDataUrl } = await compressImageFile(file);
         let finalImage = '';
         try {
-          const res = await api.uploadImage(file);
+          const res = await api.uploadImage(optimizedFile);
           if (res?.imageUrl) {
             finalImage = formatImageUrl(res.imageUrl);
           }
         } catch {
-          // Fallback to data URL
+          // Fallback to compressed data URL
         }
 
         if (!finalImage) {
-          finalImage = await readFileAsDataUrl(file);
+          finalImage = compressedDataUrl;
         }
 
-        setGalleryImages(prev => [...prev, finalImage]);
-        addedCount++;
+        if (finalImage) {
+          setGalleryImages(prev => [...prev, finalImage]);
+          addedCount++;
+        }
       } catch (err: any) {
         toast.error(`Error loading "${file.name}": ${err.message}`);
       }
     }
 
     if (addedCount > 0) {
-      toast.success(`Added ${addedCount} image(s) from local folder to gallery!`);
+      toast.success(`Added ${addedCount} image(s) to gallery!`);
     }
     setIsUploading(false);
     setUploadProgress(null);

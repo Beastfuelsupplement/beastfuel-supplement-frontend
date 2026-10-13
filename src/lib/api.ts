@@ -285,7 +285,7 @@ export const formatImageUrl = (url?: string): string => {
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
     return url;
   }
-  if (url.startsWith('/uploads')) {
+  if (url.startsWith('/uploads') || url.startsWith('/api/upload')) {
     if (API_BASE_URL.startsWith('http')) {
       const origin = API_BASE_URL.replace(/\/api\/?$/, '');
       return `${origin}${url}`;
