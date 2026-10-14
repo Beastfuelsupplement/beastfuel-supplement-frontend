@@ -19,32 +19,39 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const stock = product?.stock ?? 0;
   const productId = product?.id || product?._id || '';
   const cartQuantity = productId ? getItemQuantity(productId) : 0;
-  const availableToAdd = stock - cartQuantity;
-  const maxStock = 100;
-  const stockPercentage = Math.min((stock / maxStock) * 100, 100);
   const lowStockThreshold = product?.lowStockThreshold ?? 5;
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock <= lowStockThreshold;
-  const isMaxInCart = availableToAdd <= 0 && stock > 0;
 
   const brandName = product.brand || 'BEASTFUEL';
   const countryOrigin = product.countryOfOrigin || 'USA';
   const weightsCount = product.weights?.length || (product.weight ? 1 : 0);
   const flavorsCount = product.flavors?.length || (product.flavor ? 1 : 0);
 
+  // Find first available in-stock variant for smooth quick-add
+  const inStockVariant = product.variants?.find((v) => Number(v.stock) > 0);
+  const matchingVariant = inStockVariant || product.variants?.[0];
+  const defaultWeight = matchingVariant?.weight || product.weights?.[0] || product.weight || '1kg';
+  const defaultFlavor = matchingVariant?.flavor || product.flavors?.[0] || product.flavor || 'Standard';
+  const defaultPrice = matchingVariant ? matchingVariant.price : product.price;
+  const defaultStock = matchingVariant ? Number(matchingVariant.stock) : (product.stock ?? 0);
+
+  // Variant-level actual stock calculation
+  const hasVariants = Boolean(product.variants && product.variants.length > 0);
+  const totalVariants = product.variants?.length || 0;
+  const soldOutVariantsCount = product.variants?.filter((v) => Number(v.stock) === 0).length || 0;
+  const allVariantsSoldOut = hasVariants ? soldOutVariantsCount === totalVariants : isOutOfStock;
+  const isDefaultVariantSoldOut = defaultStock === 0;
+  const isDefaultVariantLowStock = defaultStock > 0 && defaultStock <= lowStockThreshold;
+  const availableToAdd = defaultStock - cartQuantity;
+  const isMaxInCart = availableToAdd <= 0 && defaultStock > 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const defaultWeight = product.weights?.[0] || product.weight || '1kg';
-    const defaultFlavor = product.flavors?.[0] || product.flavor || 'Standard';
-    const matchingVariant = product.variants?.find(
-      (v) => v.weight === defaultWeight && (!defaultFlavor || v.flavor === defaultFlavor)
-    ) || product.variants?.[0];
-    const defaultPrice = matchingVariant ? matchingVariant.price : product.price;
-    const defaultStock = matchingVariant ? matchingVariant.stock : (product.stock ?? 0);
 
-    if (defaultStock <= 0) {
-      toast.error('This product option is out of stock');
+    if (defaultStock <= 0 || isOutOfStock) {
+      toast.error('All variants of this product are currently sold out');
       return;
     }
 
@@ -91,7 +98,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             </div>
 
             {/* Category Badge - Top Left */}
-            <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start">
+            <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start z-10">
               <motion.span 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -100,10 +107,15 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               >
                 {product.category}
               </motion.span>
+              {isOutOfStock && (
+                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-extrabold bg-rose-600 text-white rounded-full shadow-md">
+                  Sold Out
+                </span>
+              )}
             </div>
 
             {/* Rating Badge - Top Right */}
-            <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+            <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10">
               <motion.span 
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -115,17 +127,29 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               </motion.span>
             </div>
 
+            {/* Sold Out Semi-Transparent Overlay */}
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-background/40 backdrop-blur-[1.5px] flex items-center justify-center p-4 pointer-events-none z-5">
+                <span className="px-3.5 py-1.5 rounded-xl bg-rose-600/90 text-white font-black text-xs tracking-widest uppercase shadow-xl border border-rose-400/40">
+                  Sold Out
+                </span>
+              </div>
+            )}
+
             {/* Quick Actions - Bottom overlay on hover */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20">
               <div className="flex gap-2 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 ease-out">
                 <Button
-                  variant="default"
+                  variant={isOutOfStock ? "secondary" : "default"}
                   size="sm"
-                  className="flex-1 h-9 sm:h-10 text-xs sm:text-sm font-medium rounded-xl backdrop-blur-md shadow-lg"
+                  className={`flex-1 h-9 sm:h-10 text-xs sm:text-sm font-medium rounded-xl backdrop-blur-md shadow-lg ${
+                    isOutOfStock ? 'opacity-80 text-rose-600 dark:text-rose-400 cursor-not-allowed' : ''
+                  }`}
                   onClick={handleAddToCart}
+                  disabled={isOutOfStock}
                 >
                   <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                  Select & Add
+                  {isOutOfStock ? 'Sold Out' : 'Select & Add'}
                 </Button>
                 <Button 
                   variant="secondary" 
@@ -189,30 +213,69 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               </span>
             </div>
 
-            {/* Stock indicator with animated bar */}
-            <div className="pt-1">
-              <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground mb-1.5">
-                <span className={`flex items-center gap-1 font-semibold ${isOutOfStock ? 'text-destructive' : isLowStock ? 'text-amber-600 dark:text-amber-400' : ''}`}>
-                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  {isOutOfStock ? 'Out of Stock' : isLowStock ? `Low Stock Alert (${stock} left)` : 'In Stock'}
-                </span>
-                <span>{stock} available</span>
-              </div>
-              <div className="h-1 sm:h-1.5 bg-secondary dark:bg-card rounded-full overflow-hidden">
-                <motion.div 
-                  className={`h-full rounded-full ${
-                    isOutOfStock 
-                      ? 'bg-destructive' 
-                      : isLowStock 
-                        ? 'bg-gradient-to-r from-yellow-500/60 via-yellow-500 to-yellow-500/80' 
-                        : 'bg-gradient-to-r from-primary/60 via-primary to-primary/80'
-                  }`}
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${stockPercentage}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: index * 0.05 + 0.4, ease: "easeOut" }}
-                />
-              </div>
+            {/* Real Stock Indicator (Accurate Variant Data) */}
+            <div className="pt-2 border-t border-border/40">
+              {allVariantsSoldOut ? (
+                <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                  <span className="inline-flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-400">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                    Sold Out
+                  </span>
+                  <span className="text-[10px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                    Currently Unavailable
+                  </span>
+                </div>
+              ) : hasVariants ? (
+                <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    {isDefaultVariantSoldOut ? (
+                      <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                        Sold Out ({defaultWeight})
+                      </span>
+                    ) : isDefaultVariantLowStock ? (
+                      <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                        Low: {defaultStock} left ({defaultWeight})
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        In Stock: {defaultStock} units ({defaultWeight})
+                      </span>
+                    )}
+                  </div>
+                  {soldOutVariantsCount > 0 ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+                      {soldOutVariantsCount} sold out
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {totalVariants} variant{totalVariants > 1 ? 's' : ''} stocked
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                  {isOutOfStock ? (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-400">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      Sold Out
+                    </span>
+                  ) : isLowStock ? (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                      Low Stock: Only {stock} left
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      In Stock: {stock} units
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground font-medium">Standard</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

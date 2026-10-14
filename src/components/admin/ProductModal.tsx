@@ -126,6 +126,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
     '2kg:::Chocolate': 0,
     '2kg:::Vanilla': 0,
   });
+  // Map key: `${weight}:::${flavor}` -> boolean (true if produced for this weight, false if not produced)
+  const [producedMatrix, setProducedMatrix] = useState<Record<string, boolean>>({
+    '1kg:::Chocolate': true,
+    '1kg:::Vanilla': true,
+    '2kg:::Chocolate': true,
+    '2kg:::Vanilla': true,
+  });
 
   // ================= STEP 4: IMAGES =================
   const [primaryImageSource, setPrimaryImageSource] = useState<'local' | 'url'>('local');
@@ -203,18 +210,29 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setWeightConfigs(wConfigs.length > 0 ? wConfigs : [{ weight: '1kg', price: '7000' }]);
       setLowStockThreshold(product.lowStockThreshold !== undefined ? Number(product.lowStockThreshold) : 5);
 
-      // Populate stock matrix
+      // Populate stock matrix & produced status
       const matrix: Record<string, number> = {};
+      const prodMap: Record<string, boolean> = {};
+      const hasExistingVariants = Boolean(product.variants && product.variants.length > 0);
+
       wList.forEach(w => {
         fList.forEach(f => {
           const key = `${w}:::${f}`;
           const v = product.variants?.find(
             item => item.weight === w && (item.flavor === f || !item.flavor)
           );
-          matrix[key] = v?.stock ?? 0;
+          if (v) {
+            prodMap[key] = true;
+            matrix[key] = v.stock !== undefined ? v.stock : 0;
+          } else {
+            // If the product had existing variants, any combo not in variants is NOT produced
+            prodMap[key] = hasExistingVariants ? false : true;
+            matrix[key] = 0;
+          }
         });
       });
       setStockMatrix(matrix);
+      setProducedMatrix(prodMap);
     } else {
       // Clean state for adding new product
       setName('');
@@ -224,22 +242,34 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setDescription('');
       setLowStockThreshold(5);
       setWeightConfigs([
-        { weight: '500g', price: '4000' },
         { weight: '1kg', price: '7000' },
         { weight: '2kg', price: '12000' },
+        { weight: '2.2kg', price: '13000' },
       ]);
       setFlavors(['Chocolate', 'Vanilla', 'Strawberry']);
       // All variant unit stocks default to 0
       setStockMatrix({
-        '500g:::Chocolate': 0,
-        '500g:::Vanilla': 0,
-        '500g:::Strawberry': 0,
         '1kg:::Chocolate': 0,
         '1kg:::Vanilla': 0,
         '1kg:::Strawberry': 0,
         '2kg:::Chocolate': 0,
         '2kg:::Vanilla': 0,
         '2kg:::Strawberry': 0,
+        '2.2kg:::Chocolate': 0,
+        '2.2kg:::Vanilla': 0,
+        '2.2kg:::Strawberry': 0,
+      });
+      // By default enable produced
+      setProducedMatrix({
+        '1kg:::Chocolate': true,
+        '1kg:::Vanilla': true,
+        '1kg:::Strawberry': true,
+        '2kg:::Chocolate': true,
+        '2kg:::Vanilla': true,
+        '2kg:::Strawberry': false,
+        '2.2kg:::Chocolate': true,
+        '2.2kg:::Vanilla': false,
+        '2.2kg:::Strawberry': true,
       });
       setPrimaryImage('');
       setImagePreview(null);
@@ -255,7 +285,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setIsSubmittingInternal(false);
   }, [isOpen, product]);
 
-  // Compute full compiled variants list
+  // Compute full compiled variants list (only for combinations produced for that weight)
   const compiledVariants = useMemo<VariantCell[]>(() => {
     const list: VariantCell[] = [];
     const bCode = (brand || 'BF').substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -265,6 +295,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
       const priceNum = parseFloat(wc.price) || 0;
       flavors.forEach(fl => {
         const key = `${wc.weight}:::${fl}`;
+        const isProduced = producedMatrix[key] !== false;
+        if (!isProduced) return; // Skip if this flavor is NOT produced for this weight
+
         const stockNum = stockMatrix[key] !== undefined ? stockMatrix[key] : 0;
         const wCode = wc.weight.toUpperCase().replace(/[^A-Z0-9]/g, '');
         const flCode = fl.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -281,7 +314,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     });
 
     return list;
-  }, [weightConfigs, flavors, stockMatrix, brand, name]);
+  }, [weightConfigs, flavors, stockMatrix, producedMatrix, brand, name]);
 
   const totalCalculatedStock = useMemo(() => {
     return compiledVariants.reduce((sum, v) => sum + v.stock, 0);
@@ -329,14 +362,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
     if (step === 3) {
       if (flavors.length === 0) {
         errors.flavors = 'Please add at least one flavor option.';
+      } else if (compiledVariants.length === 0) {
+        errors.flavors = 'Please enable at least one weight & flavor combination for this product.';
       } else {
-        // Validate stock inputs
+        // Validate stock inputs only for produced combinations
         weightConfigs.forEach(wc => {
           flavors.forEach(fl => {
             const key = `${wc.weight}:::${fl}`;
-            const s = stockMatrix[key];
-            if (s === undefined || isNaN(s) || s < 0) {
-              errors[key] = 'Stock cannot be negative.';
+            if (producedMatrix[key] !== false) {
+              const s = stockMatrix[key];
+              if (s === undefined || isNaN(s) || s < 0) {
+                errors[key] = 'Stock cannot be negative.';
+              }
             }
           });
         });
@@ -389,12 +426,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setNewWeightInput('');
     setNewWeightPriceInput('');
 
-    // Prepopulate matrix for this new weight across existing flavors (default to 0)
+    // Prepopulate matrix for this new weight across existing flavors (default to 0, enabled by default)
     const updated = { ...stockMatrix };
+    const updatedProd = { ...producedMatrix };
     flavors.forEach(fl => {
       updated[`${w}:::${fl}`] = 0;
+      updatedProd[`${w}:::${fl}`] = true;
     });
     setStockMatrix(updated);
+    setProducedMatrix(updatedProd);
     toast.success(`Added weight option: ${w} at Rs. ${p}`);
   };
 
@@ -424,12 +464,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setFlavors([...flavors, fl]);
     setNewFlavorInput('');
 
-    // Prepopulate matrix for this flavor across existing weights (default to 0)
+    // Prepopulate matrix for this flavor across existing weights (default to 0, enabled by default)
     const updated = { ...stockMatrix };
+    const updatedProd = { ...producedMatrix };
     weightConfigs.forEach(wc => {
       updated[`${wc.weight}:::${fl}`] = 0;
+      updatedProd[`${wc.weight}:::${fl}`] = true;
     });
     setStockMatrix(updated);
+    setProducedMatrix(updatedProd);
   };
 
   const handleRemoveFlavor = (flToRemove: string) => {
@@ -438,6 +481,33 @@ const ProductModal: React.FC<ProductModalProps> = ({
       return;
     }
     setFlavors(flavors.filter(f => f !== flToRemove));
+  };
+
+  // Toggle whether a specific weight+flavor combination is produced/offered
+  const handleToggleProduced = (weight: string, flavor: string) => {
+    const key = `${weight}:::${flavor}`;
+    setProducedMatrix(prev => {
+      const current = prev[key] !== false;
+      const nextVal = !current;
+      toast.info(
+        nextVal
+          ? `Enabled "${flavor}" for "${weight}"`
+          : `Disabled "${flavor}" for "${weight}" (Not Produced)`
+      );
+      return { ...prev, [key]: nextVal };
+    });
+  };
+
+  // Bulk enable or disable all flavors for a specific weight
+  const handleSetRowProduced = (weight: string, enabled: boolean) => {
+    setProducedMatrix(prev => {
+      const updated = { ...prev };
+      flavors.forEach(fl => {
+        updated[`${weight}:::${fl}`] = enabled;
+      });
+      toast.info(`${enabled ? 'Enabled' : 'Disabled'} all flavors for ${weight}`);
+      return updated;
+    });
   };
 
   const handleUpdateStockCell = (weight: string, flavor: string, value: string) => {
@@ -677,6 +747,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
       new Set([primaryImage.trim(), ...galleryImages.map(img => img.trim()).filter(Boolean)])
     );
 
+    const derivedWeights = Array.from(new Set(compiled.map(v => v.weight)));
+    const derivedFlavors = Array.from(new Set(compiled.map(v => v.flavor)));
+
     const productPayload: any = {
       ...(product?.id && { id: product.id }),
       name: name.trim(),
@@ -689,10 +762,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
       price: startingPrice,
       stock: totalCalculatedStock,
       lowStockThreshold: Math.max(0, Number(lowStockThreshold) || 5),
-      weight: weightConfigs[0]?.weight || '1kg',
-      weights: weightConfigs.map(wc => wc.weight),
-      flavor: flavors[0] || 'Standard',
-      flavors: flavors,
+      weight: derivedWeights[0] || weightConfigs[0]?.weight || '1kg',
+      weights: derivedWeights.length > 0 ? derivedWeights : weightConfigs.map(wc => wc.weight),
+      flavor: derivedFlavors[0] || flavors[0] || 'Standard',
+      flavors: derivedFlavors.length > 0 ? derivedFlavors : flavors,
       variants: compiled,
       isActive: true,
     };
@@ -1279,23 +1352,27 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Weight & Flavor Inventory Matrix ({compiledVariants.length} Variants)
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                      <span>Weight & Flavor Inventory Matrix</span>
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                        {compiledVariants.length} Active Variant{compiledVariants.length !== 1 ? 's' : ''}
+                      </span>
                     </h3>
-                    <p className="text-[11px] text-muted-foreground">
-                      Each combination has its own dedicated stock level and unique SKU. Default is 0 units.
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Toggle which flavors are produced for each weight. Set stock to <strong>0</strong> to mark as <strong>Sold Out</strong>.
                     </p>
                   </div>
 
                   {/* Bulk Stock Actions */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[11px] text-muted-foreground mr-1">Quick Fill:</span>
+                    <span className="text-[11px] text-muted-foreground mr-1">Quick Fill Active:</span>
                     <button
                       type="button"
                       onClick={() => handleBulkSetStock(0)}
-                      className="text-[10px] px-2 py-1 bg-secondary hover:bg-secondary/80 rounded border font-semibold"
+                      className="text-[10px] px-2 py-1 bg-secondary hover:bg-secondary/80 rounded border font-semibold text-rose-600 dark:text-rose-400"
+                      title="Set all active variants to 0 (Sold Out)"
                     >
-                      All 0
+                      All 0 (Sold Out)
                     </button>
                     <button
                       type="button"
@@ -1318,13 +1395,20 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     >
                       All 25
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSetStock(50)}
-                      className="text-[10px] px-2 py-1 bg-secondary hover:bg-secondary/80 rounded border font-semibold"
-                    >
-                      All 50
-                    </button>
+                  </div>
+                </div>
+
+                {/* Helpful Business Logic Tip */}
+                <div className="p-3 bg-secondary/40 border border-border/80 rounded-xl text-[11px] text-muted-foreground flex items-start gap-2">
+                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <strong className="text-foreground">Flavor-to-Weight Mapping & Sold-Out Rules:</strong>
+                    <p>
+                      • <strong>Not Produced:</strong> Click <span className="text-foreground font-semibold">Disable</span> if a flavor is not manufactured in that weight (e.g. 2kg has Chocolate & Vanilla, but never Strawberry). Customers will not see unproduced options for that weight.
+                    </p>
+                    <p>
+                      • <strong>Sold Out:</strong> Leave as <span className="text-emerald-500 font-semibold">Produced</span> and enter <span className="text-rose-500 font-semibold">0</span> units (e.g. 2kg Chocolate is produced but sold out). Customers will see a <span className="text-rose-500 font-semibold">Sold Out</span> badge and cannot buy it.
+                    </p>
                   </div>
                 </div>
 
@@ -1334,66 +1418,141 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-secondary/70 border-b border-border text-foreground font-bold">
-                          <th className="p-3 text-left">Weight Option</th>
-                          <th className="p-3 text-left">Fixed Price (Rs.)</th>
+                          <th className="p-3 text-left min-w-[150px]">Weight Option</th>
+                          <th className="p-3 text-left min-w-[110px]">Price (Rs.)</th>
                           {flavors.map(fl => (
-                            <th key={fl} className="p-3 text-center min-w-[130px]">
-                              {fl} Stock
+                            <th key={fl} className="p-3 text-center min-w-[145px]">
+                              {fl}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
                         {weightConfigs.map(wc => (
-                          <tr key={wc.weight} className="hover:bg-secondary/10">
-                            <td className="p-3 font-bold text-foreground">
-                              <span className="px-2.5 py-1 bg-secondary rounded-lg border border-border/80">
-                                {wc.weight}
-                              </span>
+                          <tr key={wc.weight} className="hover:bg-secondary/10 transition-colors">
+                            {/* Weight info & row toggles */}
+                            <td className="p-3 align-top">
+                              <div className="space-y-1.5">
+                                <span className="inline-block px-2.5 py-1 bg-secondary rounded-lg border border-border/80 font-bold text-foreground">
+                                  {wc.weight}
+                                </span>
+                                <div className="flex items-center gap-1.5 pt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetRowProduced(wc.weight, true)}
+                                    className="text-[9px] px-1.5 py-0.5 bg-secondary hover:bg-primary/20 text-muted-foreground hover:text-primary rounded border border-border/60 font-semibold transition-colors"
+                                    title={`Enable all flavors for ${wc.weight}`}
+                                  >
+                                    All On
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetRowProduced(wc.weight, false)}
+                                    className="text-[9px] px-1.5 py-0.5 bg-secondary hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded border border-border/60 font-semibold transition-colors"
+                                    title={`Disable all flavors for ${wc.weight}`}
+                                  >
+                                    All Off
+                                  </button>
+                                </div>
+                              </div>
                             </td>
-                            <td className="p-3 font-semibold text-primary">
-                              {formatCurrency(parseFloat(wc.price) || 0)}
+
+                            {/* Fixed price for weight */}
+                            <td className="p-3 align-top font-semibold text-primary">
+                              <div className="pt-1">
+                                {formatCurrency(parseFloat(wc.price) || 0)}
+                              </div>
                             </td>
+
+                            {/* Per Flavor cells */}
                             {flavors.map(fl => {
                               const key = `${wc.weight}:::${fl}`;
+                              const isProduced = producedMatrix[key] !== false;
                               const currentVal = stockMatrix[key] !== undefined ? stockMatrix[key] : 0;
                               const isOut = currentVal === 0;
                               const isLow = currentVal > 0 && currentVal <= lowStockThreshold;
 
                               return (
-                                <td key={fl} className="p-3 text-center">
-                                  <div className="flex flex-col items-center gap-1">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="1"
-                                      value={currentVal}
-                                      onFocus={e => {
-                                        if (e.target.value === '0') {
-                                          e.target.select();
-                                        }
-                                      }}
-                                      onChange={e => handleUpdateStockCell(wc.weight, fl, e.target.value)}
-                                      className={`w-20 h-8 px-2 text-center bg-secondary border rounded-lg text-xs font-bold focus:ring-1 focus:ring-primary ${
-                                        isOut
-                                          ? 'border-destructive/60 bg-destructive/5 text-destructive'
-                                          : isLow
-                                          ? 'border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                          : 'border-border text-foreground'
-                                      }`}
-                                    />
-                                    <span
-                                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                                        isOut
-                                          ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10'
-                                          : isLow
-                                          ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
-                                          : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
-                                      }`}
-                                    >
-                                      {isOut ? 'Out of Stock' : isLow ? `⚠️ Low (${currentVal} units)` : `${currentVal} units`}
-                                    </span>
-                                  </div>
+                                <td key={fl} className="p-2.5 text-center align-top">
+                                  {!isProduced ? (
+                                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-secondary/15 border border-dashed border-border/70 text-center min-h-[82px] transition-all">
+                                      <span className="text-[10px] text-muted-foreground/70 italic font-medium mb-1.5">
+                                        Not Produced
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleProduced(wc.weight, fl)}
+                                        className="text-[9px] px-2 py-0.5 rounded-md bg-background hover:bg-primary hover:text-primary-foreground border border-border font-bold transition-all shadow-xs flex items-center gap-1"
+                                      >
+                                        <Plus className="w-2.5 h-2.5" /> Enable
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-card border border-border/90 shadow-2xs transition-all">
+                                      {/* Cell Header: Produced pill + Disable button */}
+                                      <div className="w-full flex items-center justify-between gap-1 pb-1 border-b border-border/40 text-[9px]">
+                                        <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                                          <Check className="w-2.5 h-2.5" /> Produced
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleProduced(wc.weight, fl)}
+                                          className="text-muted-foreground hover:text-destructive transition-colors px-1 py-0.5 rounded hover:bg-destructive/10"
+                                          title={`Disable ${fl} for ${wc.weight} (Not Produced)`}
+                                        >
+                                          Disable
+                                        </button>
+                                      </div>
+
+                                      {/* Stock input + Quick Zero / Restock toggle */}
+                                      <div className="flex items-center gap-1">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="1"
+                                          value={currentVal}
+                                          onFocus={e => {
+                                            if (e.target.value === '0') {
+                                              e.target.select();
+                                            }
+                                          }}
+                                          onChange={e => handleUpdateStockCell(wc.weight, fl, e.target.value)}
+                                          className={`w-18 h-7 px-1.5 text-center bg-secondary border rounded-lg text-xs font-bold focus:ring-1 focus:ring-primary ${
+                                            isOut
+                                              ? 'border-destructive/60 bg-destructive/5 text-destructive font-black'
+                                              : isLow
+                                              ? 'border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                              : 'border-border text-foreground'
+                                          }`}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateStockCell(wc.weight, fl, isOut ? '10' : '0')}
+                                          className={`text-[9px] px-1.5 py-1 rounded-md font-bold transition-all border ${
+                                            isOut
+                                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                                          }`}
+                                          title={isOut ? "Quick restock to 10 units" : "Mark Sold Out (0 stock)"}
+                                        >
+                                          {isOut ? '+10' : '0'}
+                                        </button>
+                                      </div>
+
+                                      {/* Visual status badge */}
+                                      <span
+                                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${
+                                          isOut
+                                            ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20'
+                                            : isLow
+                                            ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                            : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                                        }`}
+                                      >
+                                        {isOut ? 'Sold Out (0)' : isLow ? `⚠️ Low (${currentVal})` : `In Stock (${currentVal})`}
+                                      </span>
+                                    </div>
+                                  )}
                                 </td>
                               );
                             })}
@@ -1407,7 +1566,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 {/* Matrix Totals Summary */}
                 <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl border border-border/60 text-xs">
                   <span className="text-muted-foreground">
-                    Total Variants: <strong className="text-foreground">{compiledVariants.length} combinations</strong>
+                    Active Produced Variants: <strong className="text-foreground">{compiledVariants.length} combinations</strong>
                   </span>
                   <span className="text-muted-foreground">
                     Total Inventory: <strong className="text-primary font-bold">{totalCalculatedStock} units</strong>

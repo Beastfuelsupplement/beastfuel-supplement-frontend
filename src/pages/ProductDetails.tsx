@@ -47,35 +47,66 @@ const ProductDetails = () => {
     }
   }, [product?.id, product?.image, allImages]);
 
-  // Extract available weights
+  // Extract available weights (from active variants if available, or product metadata)
   const availableWeights = useMemo(() => {
     if (!product) return [];
+    if (product.variants && product.variants.length > 0) {
+      const distinctWeights = Array.from(new Set(product.variants.map((v) => v.weight).filter(Boolean)));
+      if (distinctWeights.length > 0) return distinctWeights;
+    }
     if (product.weights && product.weights.length > 0) return product.weights;
     if (product.weight) return [product.weight];
     return ['Standard'];
-  }, [product]);
-
-  // Extract available flavors
-  const availableFlavors = useMemo(() => {
-    if (!product) return [];
-    if (product.flavors && product.flavors.length > 0) return product.flavors;
-    if (product.flavor) return [product.flavor];
-    return [];
   }, [product]);
 
   // State for user selection
   const [selectedWeight, setSelectedWeight] = useState<string>('');
   const [selectedFlavor, setSelectedFlavor] = useState<string>('');
 
-  // Set default weight and flavor when product loads
+  // Extract available flavors SPECIFICALLY FOR THE SELECTED WEIGHT (sparse variant matrix)
+  const availableFlavors = useMemo(() => {
+    if (!product) return [];
+    const currentWeight = selectedWeight || (availableWeights.length > 0 ? availableWeights[0] : '');
+
+    if (product.variants && product.variants.length > 0) {
+      // Filter variants that match current weight
+      const matchingVariants = product.variants.filter(
+        (v) => (v.weight || '').trim().toLowerCase() === currentWeight.trim().toLowerCase()
+      );
+      const fls = matchingVariants.map((v) => v.flavor?.trim()).filter(Boolean);
+      if (fls.length > 0) {
+        return Array.from(new Set(fls)) as string[];
+      }
+    }
+    if (product.flavors && product.flavors.length > 0) return product.flavors;
+    if (product.flavor) return [product.flavor];
+    return [];
+  }, [product, selectedWeight, availableWeights]);
+
+  // Ensure default weight is selected
   useEffect(() => {
-    if (availableWeights.length > 0 && !selectedWeight) {
-      setSelectedWeight(availableWeights[0]);
+    if (availableWeights.length > 0) {
+      if (!selectedWeight || !availableWeights.includes(selectedWeight)) {
+        setSelectedWeight(availableWeights[0]);
+      }
     }
-    if (availableFlavors.length > 0 && !selectedFlavor) {
-      setSelectedFlavor(availableFlavors[0]);
+  }, [availableWeights, selectedWeight]);
+
+  // Auto-align flavor when selected weight changes
+  useEffect(() => {
+    if (availableFlavors.length > 0) {
+      if (!selectedFlavor || !availableFlavors.includes(selectedFlavor)) {
+        // If possible, pick first in-stock flavor for this weight
+        const firstInStock = availableFlavors.find((fl) => {
+          const v = product?.variants?.find(
+            (item) => item.weight === selectedWeight && item.flavor === fl
+          );
+          return v && v.stock > 0;
+        });
+        setSelectedFlavor(firstInStock || availableFlavors[0]);
+      }
     }
-  }, [availableWeights, availableFlavors, selectedWeight, selectedFlavor]);
+  }, [availableFlavors, selectedFlavor, selectedWeight, product?.variants]);
 
   // Calculate active variant details (price, stock)
   const activeVariant = useMemo(() => {
@@ -348,22 +379,52 @@ const ProductDetails = () => {
                   <div className="flex flex-wrap gap-2.5">
                     {availableFlavors.map((fl) => {
                       const isSelected = selectedFlavor === fl;
+                      const flVariant = product.variants?.find(
+                        (v) =>
+                          (v.weight || '').trim().toLowerCase() === (selectedWeight || '').trim().toLowerCase() &&
+                          (v.flavor || '').trim().toLowerCase() === fl.trim().toLowerCase()
+                      );
+                      const flStock = flVariant ? flVariant.stock : (product.stock ?? 0);
+                      const isFlSoldOut = flStock === 0;
+
                       return (
                         <button
                           key={fl}
                           type="button"
                           onClick={() => setSelectedFlavor(fl)}
-                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                            isSelected
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                            isSelected && isFlSoldOut
+                              ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-2 border-rose-500/60 shadow-md ring-2 ring-rose-500/20 font-bold scale-[1.02]'
+                              : isSelected
                               ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40 font-bold scale-[1.02]'
+                              : isFlSoldOut
+                              ? 'bg-background hover:bg-secondary/70 text-foreground/70 border border-border/70 hover:border-rose-500/40'
                               : 'bg-background hover:bg-secondary text-foreground border border-border/70 hover:border-foreground/30'
                           }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{fl}</span>
+                          {isFlSoldOut && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                              Sold Out
+                            </span>
+                          )}
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sold Out Alert Banner */}
+              {isOutOfStock && (
+                <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-3 text-rose-600 dark:text-rose-400 animate-in fade-in duration-200">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-sm">Sold Out in this Weight & Flavor</p>
+                    <p className="text-xs text-rose-600/90 dark:text-rose-400/90 mt-0.5 leading-relaxed">
+                      The <strong>{selectedFlavor || 'Standard'}</strong> flavor in <strong>{selectedWeight || 'Standard'}</strong> is currently sold out. Please select another available flavor or weight above, or check back soon!
+                    </p>
                   </div>
                 </div>
               )}
@@ -380,9 +441,11 @@ const ProductDetails = () => {
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   {isOutOfStock ? (
-                    <span className="text-rose-600 dark:text-rose-400 font-semibold text-sm flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
-                      Out of Stock in this variant
+                    <span className="text-rose-600 dark:text-rose-400 font-bold text-sm flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-xs uppercase font-extrabold tracking-wider">
+                        Sold Out (0 Available)
+                      </span>
                     </span>
                   ) : activeStock <= (product.lowStockThreshold ?? 5) ? (
                     <span className="text-amber-600 dark:text-amber-400 font-semibold text-sm flex items-center gap-1.5">
@@ -416,7 +479,7 @@ const ProductDetails = () => {
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="text-lg font-bold w-8 text-center">{quantity}</span>
+                  <span className="text-lg font-bold w-8 text-center">{isOutOfStock ? 0 : quantity}</span>
                   <Button
                     variant="outline"
                     size="icon"
@@ -433,18 +496,29 @@ const ProductDetails = () => {
             {/* Actions */}
             <div className="space-y-4">
               <Button
-                variant="hero"
+                variant={isOutOfStock ? "outline" : "hero"}
                 size="xl"
-                className="w-full text-base font-bold shadow-lg"
+                className={`w-full text-base font-bold shadow-lg transition-all ${
+                  isOutOfStock
+                    ? 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 cursor-not-allowed'
+                    : ''
+                }`}
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || maxQuantity === 0}
               >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                {isOutOfStock
-                  ? 'Out of Stock'
-                  : maxQuantity === 0
-                  ? 'Max In Cart'
-                  : `Add to Cart • ${formatCurrency(activePrice * quantity)}`}
+                {isOutOfStock ? (
+                  <>
+                    <AlertCircle className="h-5 w-5 mr-2 text-rose-500 shrink-0" />
+                    Sold Out • Currently Unavailable
+                  </>
+                ) : maxQuantity === 0 ? (
+                  'Max In Cart'
+                ) : (
+                  <>
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Add to Cart • {formatCurrency(activePrice * quantity)}
+                  </>
+                )}
               </Button>
 
               {/* Summary pills */}

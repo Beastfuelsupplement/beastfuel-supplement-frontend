@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Package, 
@@ -18,11 +18,13 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   Sparkles,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AdminLayout from './AdminLayout';
 import { useAdminStore } from '@/store/adminStore';
+import { DailyReportModal } from '@/components/admin/DailyReportModal';
 import {
   AreaChart,
   Area,
@@ -45,6 +47,7 @@ import { formatCurrency } from '@/lib/currency';
 const AdminDashboard = () => {
   const { getStats, orders, customers, products } = useAdminStore();
   const stats = getStats();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Generate monthly revenue data from orders
   const revenueData = useMemo(() => {
@@ -95,11 +98,29 @@ const AdminDashboard = () => {
     'hsl(var(--chart-orange))',
   ];
 
-  // Stock health radial
+  // Stock health radial (accurate variant-level awareness)
   const stockHealth = useMemo(() => {
-    const inStock = products.filter(p => p.stock > 10).length;
-    const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length;
-    const outOfStock = products.filter(p => p.stock === 0).length;
+    let outOfStock = 0;
+    let lowStock = 0;
+    let inStock = 0;
+
+    products.forEach((p) => {
+      const threshold = Number(p.lowStockThreshold ?? 5);
+      const totalStock = Number(p.stock ?? 0);
+      const variants = p.variants || [];
+
+      const hasSoldOut = totalStock === 0 || variants.some((v) => Number(v.stock) === 0);
+      const hasLow = totalStock <= threshold || variants.some((v) => Number(v.stock) <= threshold);
+
+      if (hasSoldOut) {
+        outOfStock++;
+      } else if (hasLow) {
+        lowStock++;
+      } else {
+        inStock++;
+      }
+    });
+
     const total = products.length || 1;
     return [
       { name: 'In Stock', value: Math.round((inStock / total) * 100), fill: 'hsl(var(--chart-emerald))' },
@@ -229,12 +250,22 @@ const AdminDashboard = () => {
               Real-time overview of your store performance
             </p>
           </div>
-          <Link to="/admin/products">
-            <Button className="bg-chart-blue hover:bg-chart-blue/90 text-white transition-all duration-300 shadow-lg shadow-chart-blue/25">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              onClick={() => setIsReportModalOpen(true)}
+              className="border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-bold shadow-xs h-10 px-4 transition-all flex items-center"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2 text-primary" />
+              <span>Daily Report & Stock Alerts</span>
             </Button>
-          </Link>
+            <Link to="/admin/products">
+              <Button className="bg-chart-blue hover:bg-chart-blue/90 text-white transition-all duration-300 shadow-lg shadow-chart-blue/25 h-10">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}
@@ -576,6 +607,12 @@ const AdminDashboard = () => {
           ))}
         </motion.div>
       </motion.div>
+
+      {/* Daily Sales Progress & Stock Alert Modal */}
+      <DailyReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+      />
     </AdminLayout>
   );
 };

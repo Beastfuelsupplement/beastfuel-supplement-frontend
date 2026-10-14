@@ -278,6 +278,46 @@ class ApiService {
       throw err;
     }
   }
+
+  // Reports & Inventory Restock
+  async getDailySummaryReport() {
+    return this.request<any>('/reports/daily-summary');
+  }
+
+  async sendDailyReportEmail(recipientEmail?: string) {
+    return this.request<{
+      success: boolean;
+      deliveryStatus: string;
+      message: string;
+      recipient: string;
+      subject: string;
+      date: string;
+      outOfStockCount: number;
+      todayRevenue: number;
+      todayOrdersCount: number;
+      todayUnitsSold: number;
+      summaryData: any;
+      previewHtml: string;
+    }>('/reports/send-daily-email', {
+      method: 'POST',
+      body: JSON.stringify({ recipientEmail }),
+    });
+  }
+
+  async restockVariant(params: {
+    productId: string;
+    variantId?: string;
+    sku?: string;
+    weight?: string;
+    flavor?: string;
+    newStock?: number;
+    addStock?: number;
+  }) {
+    return this.request<{ success: boolean; message: string; product: any }>('/reports/restock-variant', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
 }
 
 export const formatImageUrl = (url?: string): string => {
