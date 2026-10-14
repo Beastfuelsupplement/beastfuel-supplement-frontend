@@ -42,8 +42,8 @@ const CustomerModal = ({ isOpen, onClose, onSave, customer }: CustomerModalProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border border-border rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto m-4">
+    <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-display text-xl">
             {customer ? 'EDIT CUSTOMER' : 'ADD CUSTOMER'}

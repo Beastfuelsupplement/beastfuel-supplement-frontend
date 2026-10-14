@@ -13,8 +13,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: ConfirmMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border border-border rounded-lg w-full max-w-md m-4 p-6">
+    <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-xl w-full max-w-md p-6 shadow-2xl">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
             <AlertTriangle className="h-6 w-6 text-destructive" />

@@ -690,7 +690,7 @@ const AdminProducts = () => {
       {/* ================= VIEW PRODUCT DRAWER / MODAL ================= */}
       <AnimatePresence>
         {viewingProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 overflow-y-auto">
+          <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -862,6 +862,8 @@ const AdminProducts = () => {
                                         toast.error('Enter valid stock number');
                                         return;
                                       }
+                                      const currentStock = Number(v.stock) || 0;
+                                      const newTotal = currentStock + qty;
                                       setIsRestockingView(key);
                                       try {
                                         const res = await api.restockVariant({
@@ -869,9 +871,10 @@ const AdminProducts = () => {
                                           sku: v.sku,
                                           weight: v.weight,
                                           flavor: v.flavor,
-                                          newStock: qty,
+                                          addStock: qty,
                                         });
-                                        toast.success(res.message);
+                                        toast.success(res.message || `Added +${qty} units. New total: ${newTotal} units.`);
+                                        setViewRestockInputs({ ...viewRestockInputs, [key]: '' });
                                         setViewingProduct(res.product);
                                         refetchProducts();
                                       } catch (err: any) {
@@ -881,7 +884,7 @@ const AdminProducts = () => {
                                       }
                                     }}
                                   >
-                                    Restock
+                                    + Add Stock
                                   </Button>
                                 </div>
                               </td>

@@ -85,7 +85,7 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
 
   const handleQuickRestock = async (v: any) => {
     const key = v.sku || `${v.productId}-${v.weight}-${v.flavor}`;
-    const qtyStr = restockInputs[key] || '10';
+    const qtyStr = restockInputs[key] !== undefined ? restockInputs[key] : (v.stock === 0 ? '10' : '15');
     const qty = parseInt(qtyStr, 10);
 
     if (isNaN(qty) || qty <= 0) {
@@ -93,17 +93,24 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
       return;
     }
 
+    const currentStock = Number(v.stock) || 0;
+    const newStockTotal = currentStock + qty;
+
     setIsRestocking(key);
     try {
-      await api.restockVariant({
+      const res = await api.restockVariant({
         productId: v.productId,
+        variantId: v.variantId || v._id,
         sku: v.sku,
         weight: v.weight,
         flavor: v.flavor,
-        newStock: qty
+        addStock: qty
       });
 
-      toast.success(`Successfully restocked ${v.productName} (${v.weight} • ${v.flavor}) to ${qty} units!`);
+      toast.success(
+        res?.message ||
+        `Successfully restocked ${v.productName} (${v.weight} • ${v.flavor})! Added +${qty} units (${currentStock} existing + ${qty} new = ${newStockTotal} units).`
+      );
       // Clear input
       setRestockInputs(prev => ({ ...prev, [key]: '' }));
       // Refresh report
@@ -127,7 +134,7 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
   const topSellingList = sales.topSellingVariants || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-card border border-border/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
         
         {/* HEADER */}
@@ -340,21 +347,23 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
                                   type="number"
                                   min="1"
                                   step="1"
-                                  placeholder="10"
+                                  placeholder="+10"
                                   value={currentInput}
                                   onChange={e => setRestockInputs(prev => ({ ...prev, [key]: e.target.value }))}
                                   className="w-16 h-8 text-center bg-secondary border border-border rounded-lg text-xs font-bold"
+                                  title="Units to add to existing stock"
                                 />
                                 <Button
                                   size="sm"
                                   onClick={() => handleQuickRestock(v)}
                                   disabled={isThisRestocking}
                                   className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  title={`Add +${currentInput || '10'} units to current stock`}
                                 >
                                   {isThisRestocking ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                   ) : (
-                                    'Restock'
+                                    '+ Add Stock'
                                   )}
                                 </Button>
                               </div>
@@ -382,7 +391,7 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
                           <th className="p-3 text-left">Weight</th>
                           <th className="p-3 text-left">Flavor</th>
                           <th className="p-3 text-center">Remaining</th>
-                          <th className="p-3 text-right">Quick Restock</th>
+                          <th className="p-3 text-right">Quick Restock (+ Units)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
@@ -406,18 +415,26 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
                                   <input
                                     type="number"
                                     min="1"
+                                    step="1"
+                                    placeholder="+15"
                                     value={currentInput}
                                     onChange={e => setRestockInputs(prev => ({ ...prev, [key]: e.target.value }))}
                                     className="w-16 h-8 text-center bg-secondary border border-border rounded-lg text-xs font-bold"
+                                    title="Units to add to existing stock"
                                   />
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleQuickRestock(v)}
                                     disabled={isThisRestocking}
-                                    className="h-8 text-xs font-bold"
+                                    className="h-8 text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                                    title={`Add +${currentInput || '15'} units to current stock (${v.stock} current + ${currentInput || '15'} = ${(Number(v.stock) || 0) + (parseInt(currentInput, 10) || 15)})`}
                                   >
-                                    Add Stock
+                                    {isThisRestocking ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      '+ Add Stock'
+                                    )}
                                   </Button>
                                 </div>
                               </td>

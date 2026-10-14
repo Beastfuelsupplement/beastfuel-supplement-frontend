@@ -781,8 +781,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-card border border-border/80 rounded-2xl w-full max-w-6xl xl:max-w-7xl max-h-[95vh] h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+    <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-card border border-border/80 rounded-2xl w-full max-w-6xl max-h-[95vh] h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
         
         {/* ================= MODAL HEADER & STEP PROGRESS ================= */}
         <div className="border-b border-border bg-card/95 backdrop-blur-sm px-6 py-4">

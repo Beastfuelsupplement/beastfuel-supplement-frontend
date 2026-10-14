@@ -49,8 +49,8 @@ const OrderModal = ({ isOpen, onClose, order, onUpdateStatus, onUpdatePaymentSta
   if (!isOpen || !order) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+    <div className="fixed inset-0 lg:left-64 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-display text-xl">ORDER {order.id}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">

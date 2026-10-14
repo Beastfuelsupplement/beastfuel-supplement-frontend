@@ -64,7 +64,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <CreativeBackground accent="purple" />
       </div>
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 bg-card border-r border-border z-50">
+      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 bg-card border-r border-border z-40">
         <div className="p-6 border-b border-border">
           <Link to="/" className="flex items-center">
             <BrandLogo className="h-8 w-auto" />
@@ -101,7 +101,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-4">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-40 flex items-center justify-between px-4">
         <Link to="/" className="flex items-center">
           <BrandLogo className="h-7 w-auto" />
         </Link>
@@ -172,7 +172,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 relative z-10">
+      <main className="flex-1 lg:ml-64 relative">
         <div className="p-6 pt-20 lg:pt-6 min-h-screen">
           {children}
         </div>
