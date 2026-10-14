@@ -32,6 +32,15 @@ import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct } from '
 import { formatCurrency } from '@/lib/currency';
 import { formatImageUrl, api } from '@/lib/api';
 
+const formatWeight = (w?: string) => {
+  if (!w) return '1kg';
+  const clean = w.trim();
+  if (/^\d+(\.\d+)?$/.test(clean)) {
+    return `${clean}kg`;
+  }
+  return clean;
+};
+
 const AdminProducts = () => {
   // Fetch all products (including inactive if any) for the admin view
   const { data: products = [], isLoading, refetch: refetchProducts } = useProducts(false);
@@ -247,39 +256,42 @@ const AdminProducts = () => {
       <div className="space-y-8">
         {/* Header */}
         <motion.div
-          className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <div>
-            <h1 className="text-display text-3xl md:text-4xl bg-gradient-to-r from-amber-600 via-violet-600 to-rose-600 dark:from-amber-400 dark:via-violet-400 dark:to-rose-400 bg-clip-text text-transparent">
+            <h1 className="text-display text-2xl sm:text-3xl md:text-4xl bg-gradient-to-r from-amber-600 via-violet-600 to-rose-600 dark:from-amber-400 dark:via-violet-400 dark:to-rose-400 bg-clip-text text-transparent">
               SUPPLEMENT INVENTORY MANAGEMENT
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
               Manage product details, weight-based pricing, flavor stock matrices, and origins ({products.length} total products)
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <Button
               variant="outline"
               onClick={() => setIsReportModalOpen(true)}
-              className="font-bold shadow-xs h-11 px-4 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary transition-all flex items-center"
+              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
             >
-              <FileSpreadsheet className="h-4 w-4 mr-2 text-primary" />
-              <span>Daily Report & Stock Alerts</span>
+              <FileSpreadsheet className="h-4 w-4 text-primary shrink-0" />
+              <span>Daily Report & Alerts</span>
               {totalSoldOutVariants > 0 ? (
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black animate-pulse shadow-sm">
+                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black tracking-wider uppercase animate-pulse shadow-xs">
                   {totalSoldOutVariants} Sold Out
                 </span>
               ) : (
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                   All Stocked
                 </span>
               )}
             </Button>
-            <Button onClick={handleAddProduct} className="font-bold shadow-lg h-11 px-6">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Product
+            <Button 
+              onClick={handleAddProduct} 
+              className="h-11 px-5 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all rounded-xl flex items-center justify-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add New Product</span>
             </Button>
           </div>
         </motion.div>
@@ -454,53 +466,61 @@ const AdminProducts = () => {
                       </td>
 
                       {/* Price & Weights */}
-                      <td className="p-4">
-                        <div className="space-y-0.5">
+                      <td className="p-4 align-top">
+                        <div className="space-y-1.5">
                           <p className="font-bold text-sm text-foreground">
                             {formatCurrency(product.price)}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {weights.length} weight{weights.length > 1 ? 's' : ''}: {weights.join(', ')}
-                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {weights.map((w, idx) => (
+                              <span key={idx} className="px-2 py-0.5 rounded-md bg-secondary/80 border border-border/70 text-[10px] font-semibold text-foreground">
+                                {formatWeight(w)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </td>
 
                       {/* Flavor & Stock Breakdown Column */}
-                      <td className="p-4">
-                        <div className="space-y-2 min-w-[260px] max-w-[340px]">
-                          {/* Summary Status Badges */}
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                totalStock === 0
-                                  ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                  : isHealthy
-                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                              }`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-                              {totalStock} total units
-                            </span>
+                      <td className="p-4 align-top">
+                        <div className="space-y-2 min-w-[280px] max-w-[350px]">
+                          {/* Executive Status Header */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-foreground">
+                              <span
+                                className={`w-2 h-2 rounded-full shrink-0 ${
+                                  totalStock === 0
+                                    ? 'bg-rose-500 animate-pulse'
+                                    : isHealthy
+                                    ? 'bg-emerald-500'
+                                    : 'bg-amber-500 animate-pulse'
+                                }`}
+                              />
+                              <span>{totalStock} units total</span>
+                            </div>
 
-                            {soldOutVariants.length > 0 && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                {soldOutVariants.length} Sold Out
-                              </span>
-                            )}
-
-                            {lowStockVariants.length > 0 && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                <AlertTriangle className="w-2.5 h-2.5" />
-                                {lowStockVariants.length} Low Stock
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1">
+                              {soldOutVariants.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                                  {soldOutVariants.length} Sold Out
+                                </span>
+                              )}
+                              {lowStockVariants.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                  {lowStockVariants.length} Low
+                                </span>
+                              )}
+                              {isHealthy && variants.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                  {variants.length} Stocked
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          {/* Individual Variant Flavors Breakdown */}
+                          {/* Structured Flavor Inventory Rows */}
                           {variants.length > 0 ? (
-                            <div className="space-y-1">
+                            <div className="rounded-xl border border-border/80 bg-secondary/30 dark:bg-card/40 p-2 space-y-1.5">
                               {(() => {
                                 // Sort variants: sold out and low stock variants first, then in stock
                                 const sortedVariants = [...variants].sort((a, b) => {
@@ -516,50 +536,66 @@ const AdminProducts = () => {
                                 const trimmedQuery = searchQuery.trim().toLowerCase();
                                 const displayVariants = isExpanded
                                   ? sortedVariants
-                                  : sortedVariants.slice(0, 3);
+                                  : sortedVariants.slice(0, 2);
 
                                 return (
                                   <>
-                                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                    <div className="space-y-1">
                                       {displayVariants.map((v, i) => {
                                         const vStock = Number(v.stock);
                                         const vOut = vStock === 0;
                                         const vLow = vStock > 0 && vStock <= threshold;
+                                        const formattedWeight = formatWeight(v.weight);
                                         const isSearched =
                                           trimmedQuery &&
                                           ((v.flavor && v.flavor.toLowerCase().includes(trimmedQuery)) ||
-                                            (v.weight && v.weight.toLowerCase().includes(trimmedQuery)));
+                                            (formattedWeight && formattedWeight.toLowerCase().includes(trimmedQuery)));
 
                                         return (
                                           <div
                                             key={i}
-                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] border transition-all ${
+                                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
                                               isSearched
-                                                ? 'ring-2 ring-primary ring-offset-1 font-bold shadow-xs'
-                                                : ''
-                                            } ${
-                                              vOut
-                                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 font-bold'
+                                                ? 'ring-2 ring-primary bg-primary/10 border-primary font-bold shadow-xs'
+                                                : vOut
+                                                ? 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
                                                 : vLow
-                                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold'
-                                                : 'bg-secondary/80 text-foreground border-border/70 font-medium'
+                                                ? 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'
+                                                : 'bg-background/80 border-border/60 text-foreground'
                                             }`}
-                                            title={`Weight: ${v.weight} | Flavor: ${v.flavor} | Stock: ${vStock} units | Price: ${formatCurrency(v.price)}`}
                                           >
-                                            <span>{v.weight} {v.flavor}:</span>
-                                            {vOut ? (
-                                              <span className="text-rose-600 dark:text-rose-400 font-black">0 (Sold Out)</span>
-                                            ) : vLow ? (
-                                              <span className="text-amber-600 dark:text-amber-400 font-black">{vStock} (Low)</span>
-                                            ) : (
-                                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">{vStock}</span>
-                                            )}
+                                            <div className="flex items-center gap-1.5 truncate max-w-[170px]">
+                                              <span className="font-bold text-[11px] text-foreground">
+                                                {formattedWeight}
+                                              </span>
+                                              <span className="text-muted-foreground text-[10px]">•</span>
+                                              <span className="truncate text-[11px] font-medium text-foreground">
+                                                {v.flavor}
+                                              </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                              <span className="text-[11px] font-bold">
+                                                {vStock} units
+                                              </span>
+                                              {vOut ? (
+                                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white">
+                                                  Sold Out
+                                                </span>
+                                              ) : vLow ? (
+                                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                                  Low
+                                                </span>
+                                              ) : (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                              )}
+                                            </div>
                                           </div>
                                         );
                                       })}
                                     </div>
 
-                                    {variants.length > 3 && (
+                                    {variants.length > 2 && (
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -568,11 +604,11 @@ const AdminProducts = () => {
                                             [product.id]: !prev[product.id],
                                           }))
                                         }
-                                        className="text-[10px] text-primary hover:underline font-semibold flex items-center gap-1 pt-0.5 cursor-pointer"
+                                        className="w-full text-center py-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                                       >
                                         {isExpanded
                                           ? '▲ Show fewer variants'
-                                          : `▼ +${variants.length - 3} more flavor combinations...`}
+                                          : `▼ View all ${variants.length} flavor variants (${variants.length - 2} more)`}
                                       </button>
                                     )}
                                   </>
@@ -580,8 +616,8 @@ const AdminProducts = () => {
                               })()}
                             </div>
                           ) : (
-                            <div className="text-[10px] text-muted-foreground">
-                              {flavors.length > 0 && <span>Flavors: {flavors.join(', ')}</span>}
+                            <div className="text-xs text-muted-foreground italic p-2 bg-secondary/30 rounded-lg">
+                              {flavors.length > 0 ? `Flavors: ${flavors.join(', ')}` : 'Standard product inventory'}
                             </div>
                           )}
                         </div>

@@ -782,7 +782,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-card border border-border/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      <div className="bg-card border border-border/80 rounded-2xl w-full max-w-6xl xl:max-w-7xl max-h-[95vh] h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
         
         {/* ================= MODAL HEADER & STEP PROGRESS ================= */}
         <div className="border-b border-border bg-card/95 backdrop-blur-sm px-6 py-4">
@@ -1418,10 +1418,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-secondary/70 border-b border-border text-foreground font-bold">
-                          <th className="p-3 text-left min-w-[150px]">Weight Option</th>
-                          <th className="p-3 text-left min-w-[110px]">Price (Rs.)</th>
+                          <th className="p-3 text-left min-w-[170px]">Weight Option</th>
+                          <th className="p-3 text-left min-w-[130px]">Price (Rs.)</th>
                           {flavors.map(fl => (
-                            <th key={fl} className="p-3 text-center min-w-[145px]">
+                            <th key={fl} className="p-3 text-center min-w-[175px]">
                               {fl}
                             </th>
                           ))}
@@ -1505,7 +1505,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                       </div>
 
                                       {/* Stock input + Quick Zero / Restock toggle */}
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center justify-center gap-1 w-full">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateStockCell(wc.weight, fl, Math.max(0, currentVal - 1).toString())}
+                                          className="w-5 h-6 rounded bg-secondary hover:bg-secondary/80 text-foreground border border-border/80 text-[11px] font-bold flex items-center justify-center transition-colors shadow-2xs"
+                                          title="Decrease 1"
+                                        >
+                                          -
+                                        </button>
                                         <input
                                           type="number"
                                           min="0"
@@ -1517,7 +1525,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                             }
                                           }}
                                           onChange={e => handleUpdateStockCell(wc.weight, fl, e.target.value)}
-                                          className={`w-18 h-7 px-1.5 text-center bg-secondary border rounded-lg text-xs font-bold focus:ring-1 focus:ring-primary ${
+                                          className={`w-14 h-6 text-center bg-background border rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary ${
                                             isOut
                                               ? 'border-destructive/60 bg-destructive/5 text-destructive font-black'
                                               : isLow
@@ -1527,8 +1535,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                         />
                                         <button
                                           type="button"
+                                          onClick={() => handleUpdateStockCell(wc.weight, fl, (currentVal + 1).toString())}
+                                          className="w-5 h-6 rounded bg-secondary hover:bg-secondary/80 text-foreground border border-border/80 text-[11px] font-bold flex items-center justify-center transition-colors shadow-2xs"
+                                          title="Increase 1"
+                                        >
+                                          +
+                                        </button>
+                                        <button
+                                          type="button"
                                           onClick={() => handleUpdateStockCell(wc.weight, fl, isOut ? '10' : '0')}
-                                          className={`text-[9px] px-1.5 py-1 rounded-md font-bold transition-all border ${
+                                          className={`h-6 px-1.5 rounded text-[9px] font-bold border transition-all ${
                                             isOut
                                               ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
                                               : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
