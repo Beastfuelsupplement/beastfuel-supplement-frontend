@@ -27,7 +27,7 @@ export const useTheme = () => {
   return { theme, setTheme, toggleTheme };
 };
 
-export const ThemeToggle = () => {
+export const ThemeToggle = ({ className }: { className?: string }) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -35,7 +35,7 @@ export const ThemeToggle = () => {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="relative overflow-hidden"
+      className={`relative overflow-hidden ${className || ''}`}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       <AnimatePresence mode="wait">

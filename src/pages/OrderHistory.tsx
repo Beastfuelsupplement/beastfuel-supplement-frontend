@@ -150,9 +150,9 @@ const OrderHistory = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="relative">
+                    <div className="relative py-2">
                       {/* Progress Line */}
-                      <div className="absolute top-6 left-0 right-0 h-1 bg-secondary rounded-full">
+                      <div className="absolute top-6 sm:top-7 md:top-8 left-4 right-4 h-1 bg-secondary rounded-full -translate-y-1/2">
                         <div 
                           className="h-full bg-primary rounded-full transition-all duration-500"
                           style={{ 
@@ -166,7 +166,7 @@ const OrderHistory = () => {
                         {getStatusSteps(displayOrder.status).map((step, index) => (
                           <div key={step.status} className="flex flex-col items-center">
                             <div 
-                              className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
+                              className={`w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 transition-all bg-card ${
                                 step.completed 
                                   ? 'bg-primary border-primary text-primary-foreground' 
                                   : step.current
@@ -175,12 +175,12 @@ const OrderHistory = () => {
                               }`}
                             >
                               {step.completed ? (
-                                <CheckCircle className="h-5 w-5" />
+                                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                               ) : (
                                 getStatusIcon(step.status)
                               )}
                             </div>
-                            <span className={`mt-2 text-sm font-medium ${
+                            <span className={`mt-2 text-[10px] sm:text-xs md:text-sm font-semibold text-center ${
                               step.completed || step.current ? 'text-foreground' : 'text-muted-foreground'
                             }`}>
                               {step.status}
@@ -295,22 +295,22 @@ const OrderHistory = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all"
+                      className="glass-card p-4 sm:p-6 rounded-2xl cursor-pointer hover:border-primary/50 transition-all"
                       onClick={() => setSelectedOrder(order)}
                     >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
                             {getStatusIcon(order.status)}
-                            <span className="font-mono text-lg font-bold">
+                            <span className="font-mono text-base sm:text-lg font-bold">
                               #{order.id}
                             </span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold border ${getStatusColor(order.status)}`}>
                               {order.status}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
+                          <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                            <Calendar className="h-3.5 w-3.5" />
                             {new Date(order.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
@@ -319,12 +319,12 @@ const OrderHistory = () => {
                           </p>
                         </div>
                         
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">
+                        <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs text-muted-foreground">
                               {order.items.length} item{order.items.length > 1 ? 's' : ''}
                             </p>
-                            <p className="text-xl font-bold text-primary">
+                            <p className="text-lg sm:text-xl font-bold text-primary">
                               {formatCurrency(order.total)}
                             </p>
                           </div>

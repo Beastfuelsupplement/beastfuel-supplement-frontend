@@ -53,12 +53,12 @@ const Navbar = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
-      {/* Main Nav Container - seamless matching gray color */}
+      {/* Main Nav Container - inverted theme: dark in light mode, light in dark mode */}
       <div 
-        className={`transition-all duration-300 bg-background ${
+        className={`transition-all duration-300 bg-zinc-950 text-white dark:bg-white dark:text-zinc-900 ${
           isScrolled 
-            ? 'border-b border-border/50 shadow-xs py-2.5 sm:py-3' 
-            : 'py-3 sm:py-3.5'
+            ? 'border-b border-zinc-800/80 shadow-xl dark:border-zinc-200/90 dark:shadow-md py-2.5 sm:py-3' 
+            : 'border-b border-zinc-800/40 dark:border-zinc-200/40 py-3 sm:py-3.5'
         }`}
       >
         <nav className="container mx-auto px-4 flex items-center justify-between">
@@ -67,7 +67,7 @@ const Navbar = () => {
               className="flex items-center"
               whileHover={{ scale: 1.02 }}
             >
-              <BrandLogo className="h-10 sm:h-11 md:h-12 w-auto" />
+              <BrandLogo variant="inverted" className="h-10 sm:h-11 md:h-12 w-auto" />
             </motion.div>
           </Link>
 
@@ -82,8 +82,10 @@ const Navbar = () => {
             >
               <Link
                 to={link.href}
-                className={`relative px-5 py-2.5 text-sm font-medium uppercase tracking-[0.15em] transition-colors group ${
-                  isActive(link.href) ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`relative px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group ${
+                  isActive(link.href) 
+                    ? 'text-white dark:text-zinc-950 font-bold' 
+                    : 'text-zinc-400 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-950'
                 }`}
               >
                 {link.label}
@@ -97,10 +99,14 @@ const Navbar = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <ThemeToggle className="text-zinc-300 hover:text-white hover:bg-zinc-800/80 dark:text-zinc-700 dark:hover:text-zinc-950 dark:hover:bg-zinc-100" />
           
           <Link to="/cart" className="relative">
-            <Button variant="ghost" size="icon" className="relative group">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative group text-zinc-300 hover:text-white hover:bg-zinc-800/80 dark:text-zinc-700 dark:hover:text-zinc-950 dark:hover:bg-zinc-100"
+            >
               <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
               {totalItems > 0 && (
                 <motion.span 
@@ -115,7 +121,10 @@ const Navbar = () => {
           </Link>
           
           <Link to={isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : '/login'} className="hidden md:block">
-            <Button variant="glass" size="sm" className="gap-2">
+            <Button 
+              size="sm" 
+              className="gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700/80 dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 dark:border-zinc-300 shadow-sm font-semibold transition-all"
+            >
               <User className="h-4 w-4" />
               {isAuthenticated ? (isAdmin ? 'Admin' : user?.name?.split(' ')[0]) : 'Login'}
             </Button>
@@ -123,23 +132,23 @@ const Navbar = () => {
 
           {/* Animated Hamburger Button */}
           <button
-            className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-accent/50 transition-colors focus:outline-none"
+            className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 dark:hover:bg-zinc-100 transition-colors focus:outline-none"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
             <div className="w-6 h-5 relative flex flex-col justify-between">
               <motion.span
-                className="block h-0.5 w-6 bg-foreground rounded-full origin-left"
+                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full origin-left"
                 animate={isMenuOpen ? { rotate: 45, x: 1, y: -1 } : { rotate: 0, x: 0, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               />
               <motion.span
-                className="block h-0.5 w-6 bg-foreground rounded-full"
+                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full"
                 animate={isMenuOpen ? { opacity: 0, x: -16 } : { opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
               />
               <motion.span
-                className="block h-0.5 w-6 bg-foreground rounded-full origin-left"
+                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full origin-left"
                 animate={isMenuOpen ? { rotate: -45, x: 1, y: 1 } : { rotate: 0, x: 0, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               />
@@ -159,7 +168,7 @@ const Navbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 top-0 bg-background/60 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 top-0 bg-black/70 backdrop-blur-sm z-40 md:hidden"
               onClick={() => setIsMenuOpen(false)}
             />
 
@@ -169,25 +178,25 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-[280px] z-50 md:hidden bg-background/95 backdrop-blur-xl border-l border-border/50 shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] z-50 md:hidden bg-zinc-950 text-white dark:bg-white dark:text-zinc-900 border-l border-zinc-800 dark:border-zinc-200 shadow-2xl flex flex-col"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border/30">
-                <span className="text-sm uppercase tracking-[0.2em] text-muted-foreground font-semibold">Menu</span>
+              <div className="flex items-center justify-between p-5 border-b border-zinc-800/80 dark:border-zinc-200">
+                <span className="text-xs uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-bold">Menu</span>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/50 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 dark:hover:bg-zinc-100 transition-colors"
                   aria-label="Close menu"
                 >
                   <div className="w-4 h-4 relative">
-                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-foreground rounded-full rotate-45 -translate-y-1/2" />
-                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-foreground rounded-full -rotate-45 -translate-y-1/2" />
+                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white dark:bg-zinc-900 rounded-full rotate-45 -translate-y-1/2" />
+                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white dark:bg-zinc-900 rounded-full -rotate-45 -translate-y-1/2" />
                   </div>
                 </button>
               </div>
 
               {/* Navigation Links */}
-              <div className="p-4 flex flex-col gap-1">
+              <div className="p-4 flex flex-col gap-1.5 flex-1 overflow-y-auto">
                 {navLinks.map((link, index) => (
                   <motion.div
                     key={link.href}
@@ -197,10 +206,10 @@ const Navbar = () => {
                   >
                     <Link
                       to={link.href}
-                      className={`flex items-center gap-4 px-4 py-4 rounded-xl text-base font-medium uppercase tracking-wider transition-all duration-200 ${
+                      className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold uppercase tracking-wider transition-all duration-200 ${
                         isActive(link.href)
-                          ? 'bg-primary/10 text-primary border border-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/30'
+                          ? 'bg-primary/15 text-primary border border-primary/30 font-bold'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900 dark:text-zinc-600 dark:hover:text-zinc-950 dark:hover:bg-zinc-100'
                       }`}
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -209,7 +218,7 @@ const Navbar = () => {
                       {isActive(link.href) && (
                         <motion.div
                           layoutId="activeIndicator"
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                          className="ml-auto w-2 h-2 rounded-full bg-primary"
                         />
                       )}
                     </Link>
@@ -218,7 +227,7 @@ const Navbar = () => {
               </div>
 
               {/* Divider */}
-              <div className="mx-6 border-t border-border/30" />
+              <div className="mx-6 border-t border-zinc-800/80 dark:border-zinc-200" />
 
               {/* Account Button */}
               <div className="p-4">
@@ -231,7 +240,7 @@ const Navbar = () => {
                     to={isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : '/login'} 
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Button variant="hero" size="lg" className="w-full">
+                    <Button variant="hero" size="lg" className="w-full font-bold">
                       <User className="h-4 w-4 mr-2" />
                       {isAuthenticated ? (isAdmin ? 'Admin Panel' : 'My Account') : 'Login'}
                     </Button>
@@ -240,10 +249,8 @@ const Navbar = () => {
               </div>
 
               {/* Footer Branding */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20">
-                <div className="flex items-center justify-center">
-                  <BrandLogo className="h-7 w-auto opacity-75" />
-                </div>
+              <div className="p-5 border-t border-zinc-800/60 dark:border-zinc-200 flex items-center justify-center">
+                <BrandLogo variant="inverted" className="h-7 w-auto opacity-75" />
               </div>
             </motion.div>
           </>

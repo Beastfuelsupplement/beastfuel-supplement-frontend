@@ -184,67 +184,67 @@ const Dashboard = () => {
   return (
     <Layout accent="green">
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 bg-gradient-to-b from-chart-blue/10 via-chart-violet/5 to-transparent">
+      <section className="py-8 sm:py-12 md:py-16 bg-gradient-to-b from-chart-blue/10 via-chart-violet/5 to-transparent">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <h1 className="text-display text-4xl md:text-5xl lg:text-6xl mb-4">MY ACCOUNT</h1>
-            <p className="text-muted-foreground text-lg">
+            <h1 className="text-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-3 sm:mb-4">MY ACCOUNT</h1>
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
               Welcome back, <span className="text-chart-blue font-medium">{user.name}</span>
             </p>
             {/* Quick Stats Row */}
-            <div className="flex justify-center gap-6 mt-6">
+            <div className="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 md:gap-6 mt-4 sm:mt-6">
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 glass-card px-4 py-2"
+                className="flex items-center gap-2 glass-card px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold"
               >
-                <Package className="h-4 w-4 text-chart-blue" />
-                <span className="text-sm font-medium">{userOrders.length} Orders</span>
+                <Package className="h-4 w-4 text-chart-blue shrink-0" />
+                <span>{userOrders.length} Orders</span>
               </motion.div>
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-2 glass-card px-4 py-2"
+                className="flex items-center gap-2 glass-card px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold"
               >
-                <CreditCard className="h-4 w-4 text-chart-emerald" />
-                <span className="text-sm font-medium">{formatCurrency(userOrders.reduce((sum, o) => sum + o.total, 0))}</span>
+                <CreditCard className="h-4 w-4 text-chart-emerald shrink-0" />
+                <span>{formatCurrency(userOrders.reduce((sum, o) => sum + o.total, 0))}</span>
               </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      <div className="py-8 px-4">
+      <div className="py-6 sm:py-8 px-3 sm:px-4">
         <div className="max-w-6xl mx-auto">
 
-          <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="glass-card p-1 w-full md:w-auto grid grid-cols-3 md:inline-flex gap-1">
+          <Tabs defaultValue="orders" className="space-y-5 sm:space-y-6">
+            <TabsList className="glass-card p-1 sm:p-1.5 w-full md:w-auto grid grid-cols-3 md:inline-flex gap-1 sm:gap-1.5 rounded-2xl">
               <TabsTrigger 
                 value="orders" 
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold py-2 sm:py-2.5 rounded-xl transition-all"
               >
-                <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Orders</span>
+                <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span>Orders</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="profile"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold py-2 sm:py-2.5 rounded-xl transition-all"
               >
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Profile</span>
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span>Profile</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="preferences"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold py-2 sm:py-2.5 rounded-xl transition-all"
               >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Preferences</span>
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span>Preferences</span>
               </TabsTrigger>
             </TabsList>
 
@@ -255,10 +255,10 @@ const Dashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <div className="glass-card p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-display text-2xl">ORDER HISTORY</h2>
-                    <Button variant="glass" size="sm" onClick={() => navigate('/order-history')}>
+                <div className="glass-card p-4 sm:p-6 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <h2 className="text-display text-xl sm:text-2xl font-bold">ORDER HISTORY</h2>
+                    <Button variant="glass" size="sm" className="h-8 sm:h-9 text-xs font-semibold self-start sm:self-auto" onClick={() => navigate('/order-history')}>
                       View All Orders
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
@@ -266,9 +266,9 @@ const Dashboard = () => {
                   
                   {userOrders.length === 0 ? (
                     <div className="text-center py-12">
-                      <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-xl font-medium mb-2">No orders yet</h3>
-                      <p className="text-muted-foreground mb-6">
+                      <ShoppingBag className="h-14 sm:h-16 w-14 sm:w-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg sm:text-xl font-medium mb-2">No orders yet</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
                         Start shopping to see your orders here
                       </p>
                       <Button variant="hero" onClick={() => navigate('/products')}>
@@ -281,20 +281,20 @@ const Dashboard = () => {
                       {userOrders.map((order: Order) => (
                         <div
                           key={order.id}
-                          className="glass p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-colors"
+                          className="glass p-3.5 sm:p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-colors"
                         >
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                             <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className="font-mono text-sm text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+                                <span className="font-mono text-xs sm:text-sm text-muted-foreground font-semibold">
                                   #{order.id.slice(-8).toUpperCase()}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold border ${getStatusColor(order.status)}`}>
                                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                 </span>
                               </div>
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
+                              <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                                <Calendar className="h-3.5 w-3.5" />
                                 {new Date(order.createdAt).toLocaleDateString('en-US', {
                                   year: 'numeric',
                                   month: 'long',
@@ -302,18 +302,18 @@ const Dashboard = () => {
                                 })}
                               </p>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="text-sm text-muted-foreground">
+                            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
+                              <div className="text-left sm:text-right">
+                                <p className="text-xs text-muted-foreground">
                                   {order.items.length} item{order.items.length > 1 ? 's' : ''}
                                 </p>
-                                <p className="text-lg font-bold text-chart-emerald">
+                                <p className="text-base sm:text-lg font-bold text-chart-emerald">
                                   {formatCurrency(order.total)}
                                 </p>
                               </div>
-                              <Button variant="glass" size="sm" onClick={() => navigate(`/order-history/${order.id}`)}>
+                              <Button variant="glass" size="sm" className="h-8 sm:h-9 text-xs font-semibold" onClick={() => navigate(`/order-history/${order.id}`)}>
                                 View Details
-                                <ChevronRight className="h-4 w-4 ml-1" />
+                                <ChevronRight className="h-3.5 w-3.5 ml-1" />
                               </Button>
                             </div>
                           </div>
@@ -619,10 +619,10 @@ const Dashboard = () => {
 
       {/* Change Password Modal */}
       <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[94vw] max-w-md p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-display text-xl">CHANGE PASSWORD</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-display text-lg sm:text-xl">CHANGE PASSWORD</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Enter your new password below. Make sure it's strong and secure.
             </DialogDescription>
           </DialogHeader>
@@ -695,10 +695,10 @@ const Dashboard = () => {
 
       {/* Update Email Modal */}
       <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[94vw] max-w-md p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-display text-xl">UPDATE EMAIL</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-display text-lg sm:text-xl">UPDATE EMAIL</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Enter your new email address. You'll receive a confirmation email to verify the change.
             </DialogDescription>
           </DialogHeader>

@@ -3,10 +3,11 @@ import React from 'react';
 export interface BrandLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   /**
    * 'auto': Uses dark logo in light mode and light logo in dark mode
+   * 'inverted': Uses light logo in light mode and dark logo in dark mode (for inverted navbars)
    * 'light': Forces white logo (e.g. for forced dark containers)
    * 'dark': Forces dark logo (e.g. for forced light containers)
    */
-  variant?: 'auto' | 'light' | 'dark';
+  variant?: 'auto' | 'inverted' | 'light' | 'dark';
   className?: string;
   alt?: string;
 }
@@ -17,6 +18,26 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   alt = 'BEASTFUEL Supplements',
   ...props
 }) => {
+  if (variant === 'inverted') {
+    return (
+      <span className="inline-flex items-center bg-transparent">
+        {/* In Light Mode (Navbar is dark): Show light/white logo */}
+        <img
+          src="/beastfuel-logo-light.png"
+          alt={alt}
+          className={`block dark:hidden object-contain bg-transparent border-0 select-none ${className}`}
+          {...props}
+        />
+        {/* In Dark Mode (Navbar is light): Show dark logo */}
+        <img
+          src="/beastfuel-logo-dark.png"
+          alt={alt}
+          className={`hidden dark:block object-contain bg-transparent border-0 select-none ${className}`}
+          {...props}
+        />
+      </span>
+    );
+  }
   if (variant === 'light') {
     return (
       <img
