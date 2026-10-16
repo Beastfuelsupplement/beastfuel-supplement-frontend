@@ -26,6 +26,12 @@ export interface Order {
   shippingAddress?: string;
 }
 
+export interface DeletedOrder extends Order {
+  deletedAt: string;
+  deletedBy?: string;
+  deletionReason?: string;
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -76,7 +82,11 @@ interface AdminStore {
   addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => string;
   updateOrderStatus: (id: string, status: Order['status']) => void;
   updatePaymentStatus: (id: string, paymentStatus: Order['paymentStatus'], paymentDetails?: PaymentDetails) => void;
-  deleteOrder: (id: string) => void;
+  deleteOrder: (id: string, reason?: string, deletedBy?: string) => void;
+  deletedOrders: DeletedOrder[];
+  restoreOrder: (id: string) => void;
+  permanentlyDeleteOrder: (id: string) => void;
+  clearDeletedOrders: () => void;
   
   // Customers
   addCustomer: (customer: Omit<Customer, 'id' | 'orders' | 'totalSpent' | 'joinedAt'>) => void;
@@ -141,6 +151,7 @@ export const useAdminStore = create<AdminStore>()(
     (set, get) => ({
       products: initialProducts,
       orders: defaultOrders,
+      deletedOrders: [],
       customers: defaultCustomers,
       settings: defaultSettings,
 
@@ -267,10 +278,45 @@ export const useAdminStore = create<AdminStore>()(
         }));
       },
 
-      deleteOrder: (id) => {
+      deleteOrder: (id, reason = 'Admin deletion', deletedBy = 'Admin User') => {
+        const orderToDelete = get().orders.find((o) => o.id === id);
+        if (orderToDelete) {
+          const deletedRecord: DeletedOrder = {
+            ...orderToDelete,
+            deletedAt: new Date().toLocaleString(),
+            deletedBy,
+            deletionReason: reason,
+          };
+          set((state) => ({
+            orders: state.orders.filter((o) => o.id !== id),
+            deletedOrders: [deletedRecord, ...(state.deletedOrders || [])],
+          }));
+        } else {
+          set((state) => ({
+            orders: state.orders.filter((o) => o.id !== id),
+          }));
+        }
+      },
+
+      restoreOrder: (id) => {
+        const orderToRestore = get().deletedOrders?.find((o) => o.id === id);
+        if (orderToRestore) {
+          const { deletedAt, deletedBy, deletionReason, ...cleanOrder } = orderToRestore;
+          set((state) => ({
+            deletedOrders: (state.deletedOrders || []).filter((o) => o.id !== id),
+            orders: [cleanOrder as Order, ...state.orders],
+          }));
+        }
+      },
+
+      permanentlyDeleteOrder: (id) => {
         set((state) => ({
-          orders: state.orders.filter((o) => o.id !== id),
+          deletedOrders: (state.deletedOrders || []).filter((o) => o.id !== id),
         }));
+      },
+
+      clearDeletedOrders: () => {
+        set({ deletedOrders: [] });
       },
 
       // Customers

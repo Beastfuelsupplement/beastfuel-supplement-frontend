@@ -50,7 +50,11 @@ export const products: Product[] = [
       { weight: '5kg', price: 229.99, stock: 20, sku: 'ON-GSW-5KG' }
     ],
     stock: 145,
-    featured: true
+    featured: true,
+    hasOffer: true,
+    offerBadge: '20% OFF',
+    offerDiscount: 20,
+    originalPrice: 48.99,
   },
   {
     id: '2',
@@ -91,7 +95,11 @@ export const products: Product[] = [
       { weight: '4kg', price: 199.99, stock: 20, sku: 'BF-ISO-4KG' }
     ],
     stock: 110,
-    featured: true
+    featured: true,
+    hasOffer: true,
+    offerBadge: 'SPECIAL DEAL',
+    offerDiscount: 15,
+    originalPrice: 76.99,
   },
   {
     id: '4',

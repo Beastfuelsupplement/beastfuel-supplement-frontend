@@ -31,6 +31,11 @@ export interface Product {
   lowStockThreshold?: number;
   featured?: boolean;
   isActive?: boolean;
+  hasOffer?: boolean;
+  offerBadge?: string;
+  offerDiscount?: number;
+  originalPrice?: number;
+  offerPrice?: number;
   createdAt?: string;
   updatedAt?: string;
 }

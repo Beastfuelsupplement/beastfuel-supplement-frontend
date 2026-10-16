@@ -97,8 +97,14 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-primary/5 to-transparent" />
             </div>
 
-            {/* Category Badge - Top Left */}
+            {/* Category & Offer Badges - Top Left */}
             <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start z-10">
+              {product.hasOffer && (
+                <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-extrabold bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-full shadow-lg border border-rose-400/40 animate-pulse">
+                  <Sparkles className="w-3 h-3" />
+                  {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'SPECIAL OFFER')}
+                </span>
+              )}
               <motion.span 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -202,11 +208,18 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             
             {/* Price & Weight Row */}
             <div className="flex items-end justify-between gap-2 pt-1 border-t border-border/30">
-              <div className="flex items-baseline gap-1.5 sm:gap-2">
-                <span className="text-xl sm:text-2xl lg:text-3xl font-bold font-display text-foreground">
-                  {formatCurrencyParts(product.price).whole}
-                </span>
-                <span className="text-xs sm:text-sm text-muted-foreground">{formatCurrencyParts(product.price).decimal}</span>
+              <div className="flex flex-col">
+                {product.hasOffer && product.originalPrice && product.originalPrice > product.price && (
+                  <span className="text-[11px] sm:text-xs text-muted-foreground line-through font-semibold">
+                    Rs. {product.originalPrice.toLocaleString()}
+                  </span>
+                )}
+                <div className="flex items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-bold font-display text-foreground">
+                    {formatCurrencyParts(product.price).whole}
+                  </span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{formatCurrencyParts(product.price).decimal}</span>
+                </div>
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-2.5 py-0.5 sm:py-1 bg-secondary dark:bg-card rounded-full border border-border/30">
                 {product.weight || (product.weights && product.weights[0]) || 'Standard'}

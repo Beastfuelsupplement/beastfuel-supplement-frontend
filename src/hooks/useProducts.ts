@@ -49,6 +49,11 @@ export const mapApiToProduct = (p: any): Product => {
     stock: typeof p.stock === 'number' ? p.stock : variants.reduce((s: number, v: any) => s + v.stock, 0),
     featured: Boolean(p.featured),
     isActive: p.isActive !== false,
+    hasOffer: Boolean(p.hasOffer),
+    offerPrice: p.offerPrice ? Number(p.offerPrice) : undefined,
+    originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+    offerDiscount: p.offerDiscount ? Number(p.offerDiscount) : undefined,
+    offerBadge: p.offerBadge || (p.hasOffer ? 'SPECIAL DEAL' : undefined),
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -101,6 +106,11 @@ export const useAddProduct = () => {
         stock: product.stock,
         isActive: product.isActive !== false,
         featured: Boolean(product.featured),
+        hasOffer: Boolean(product.hasOffer),
+        offerBadge: product.offerBadge,
+        offerDiscount: product.offerDiscount,
+        originalPrice: product.originalPrice,
+        offerPrice: product.offerPrice,
       });
     },
     onSuccess: () => {
@@ -134,6 +144,11 @@ export const useUpdateProduct = () => {
         stock: updates.stock,
         isActive: updates.isActive !== false,
         featured: updates.featured,
+        hasOffer: updates.hasOffer,
+        offerBadge: updates.offerBadge,
+        offerDiscount: updates.offerDiscount,
+        originalPrice: updates.originalPrice,
+        offerPrice: updates.offerPrice,
       });
     },
     onSuccess: () => {

@@ -1,7 +1,8 @@
-import { X, Package, CreditCard, Banknote } from 'lucide-react';
+import { X, Package, CreditCard, Banknote, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Order, PaymentDetails } from '@/store/adminStore';
 import { formatCurrency } from '@/lib/currency';
+import { printSingleOrderInvoice } from '@/utils/orderReportPrinter';
 
 interface OrderModalProps {
   isOpen: boolean;
@@ -53,9 +54,20 @@ const OrderModal = ({ isOpen, onClose, order, onUpdateStatus, onUpdatePaymentSta
       <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-display text-xl">ORDER {order.id}</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => printSingleOrderInvoice(order)}
+              className="gap-1.5 text-xs font-semibold"
+            >
+              <Printer className="h-4 w-4 text-primary" />
+              <span>Print Invoice</span>
+            </Button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-md">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6">

@@ -114,6 +114,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
   ]);
   const [newWeightInput, setNewWeightInput] = useState('');
   const [newWeightPriceInput, setNewWeightPriceInput] = useState('');
+  
+  // Special Promotional Offer State
+  const [hasOffer, setHasOffer] = useState<boolean>(false);
+  const [offerBadge, setOfferBadge] = useState<string>('20% OFF');
+  const [offerDiscount, setOfferDiscount] = useState<string>('');
+  const [originalPrice, setOriginalPrice] = useState<string>('');
 
   // ================= STEP 3: FLAVORS & INVENTORY MATRIX =================
   const [flavors, setFlavors] = useState<string[]>(['Chocolate', 'Vanilla']);
@@ -168,6 +174,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCategory(product.category || '');
       setCountryOfOrigin(product.countryOfOrigin || '');
       setDescription(product.description || '');
+      setHasOffer(Boolean(product.hasOffer));
+      setOfferBadge(product.offerBadge || (product.hasOffer ? 'SPECIAL DEAL' : '20% OFF'));
+      setOfferDiscount(product.offerDiscount !== undefined && product.offerDiscount !== null ? String(product.offerDiscount) : '');
+      setOriginalPrice(product.originalPrice !== undefined && product.originalPrice !== null ? String(product.originalPrice) : '');
       setPrimaryImage(product.image || '');
       setImagePreview(product.image ? formatImageUrl(product.image) : null);
       setPrimaryFileName(null);
@@ -240,6 +250,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCategory('');
       setCountryOfOrigin('USA');
       setDescription('');
+      setHasOffer(false);
+      setOfferBadge('20% OFF');
+      setOfferDiscount('');
+      setOriginalPrice('');
       setLowStockThreshold(5);
       setWeightConfigs([
         { weight: '1kg', price: '7000' },
@@ -768,6 +782,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
       flavors: derivedFlavors.length > 0 ? derivedFlavors : flavors,
       variants: compiled,
       isActive: true,
+      hasOffer: Boolean(hasOffer),
+      offerBadge: hasOffer ? (offerBadge.trim() || 'SPECIAL DEAL') : undefined,
+      offerDiscount: hasOffer && offerDiscount ? Number(offerDiscount) : undefined,
+      originalPrice: hasOffer && originalPrice ? Number(originalPrice) : undefined,
+      offerPrice: hasOffer ? startingPrice : undefined,
     };
 
     try {
@@ -1075,6 +1094,92 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     Flavor must NEVER change the price. For each weight, enter one selling price. All flavors of the same product and weight automatically use this same price.
                   </p>
                 </div>
+              </div>
+
+              {/* SPECIAL PROMOTIONAL OFFER BOX */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-rose-500/10 via-amber-500/10 to-primary/10 border-2 border-rose-500/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center font-black text-sm">
+                      %
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        Special Promotional Offer
+                        {hasOffer && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white uppercase tracking-wider animate-pulse">
+                            Active Deal
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Promotes this product on the exclusive Offers page and highlights it across the store
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasOffer}
+                      onChange={e => setHasOffer(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                  </label>
+                </div>
+
+                {hasOffer && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-rose-500/20">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                        Offer Badge Label
+                      </label>
+                      <input
+                        type="text"
+                        value={offerBadge}
+                        onChange={e => setOfferBadge(e.target.value)}
+                        placeholder="e.g. 25% OFF or FLASH SALE"
+                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                        Discount % (Optional)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={offerDiscount}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setOfferDiscount(val);
+                          if (val && Number(val) > 0) {
+                            setOfferBadge(`${val}% OFF`);
+                          }
+                        }}
+                        placeholder="e.g. 20"
+                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                        Original Reference Price (Rs.)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={originalPrice}
+                        onChange={e => setOriginalPrice(e.target.value)}
+                        placeholder="e.g. 9500 (before discount)"
+                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Add New Weight Box */}

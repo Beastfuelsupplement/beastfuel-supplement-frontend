@@ -20,6 +20,7 @@ import {
   Calendar,
   FileSpreadsheet,
   Mail,
+  Flame,
 } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -438,9 +439,17 @@ const AdminProducts = () => {
                               <Award className="w-3 h-3 text-amber-500 shrink-0" />
                               <span>{brand}</span>
                             </div>
-                            <p className="font-bold text-foreground text-sm line-clamp-1">
-                              {product.name}
-                            </p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-bold text-foreground text-sm line-clamp-1">
+                                {product.name}
+                              </p>
+                              {product.hasOffer && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/30 text-[10px] font-extrabold uppercase">
+                                  <Flame className="w-2.5 h-2.5 fill-rose-500" />
+                                  {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'OFFER')}
+                                </span>
+                              )}
+                            </div>
                             {variants.length > 0 && (
                               <span className="text-[10px] text-muted-foreground font-medium">
                                 {variants.length} variant combination{variants.length > 1 ? 's' : ''}
@@ -468,9 +477,16 @@ const AdminProducts = () => {
                       {/* Price & Weights */}
                       <td className="p-4 align-top">
                         <div className="space-y-1.5">
-                          <p className="font-bold text-sm text-foreground">
-                            {formatCurrency(product.price)}
-                          </p>
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <span className="font-bold text-sm text-foreground">
+                              {formatCurrency(product.price)}
+                            </span>
+                            {product.originalPrice && product.originalPrice > product.price && (
+                              <span className="text-xs text-muted-foreground line-through">
+                                {formatCurrency(product.originalPrice)}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-1">
                             {weights.map((w, idx) => (
                               <span key={idx} className="px-2 py-0.5 rounded-md bg-secondary/80 border border-border/70 text-[10px] font-semibold text-foreground">

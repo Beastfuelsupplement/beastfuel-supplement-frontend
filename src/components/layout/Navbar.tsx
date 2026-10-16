@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Home, Package, Info } from 'lucide-react';
+import { ShoppingCart, User, Home, Package, Info, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +7,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { useProducts } from '@/hooks/useProducts';
+import { useAdminStore } from '@/store/adminStore';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +16,14 @@ const Navbar = () => {
   const totalItems = useCartStore((state) => state.getTotalItems());
   const { isAuthenticated, user, isAdmin } = useAuth();
   const location = useLocation();
+
+  // Check if any products have an active offer
+  const { data: apiProducts = [] } = useProducts(true);
+  const storeProducts = useAdminStore((state) => state.products);
+  const allProducts = apiProducts.length > 0 ? apiProducts : storeProducts;
+  const hasOffers = allProducts.some(
+    (p) => p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price)
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,6 +51,12 @@ const Navbar = () => {
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/products', label: 'Products', icon: Package },
+    ...(hasOffers ? [{ 
+      href: '/offers', 
+      label: 'Offers', 
+      icon: Flame, 
+      isOffer: true 
+    }] : []),
     { href: '/about', label: 'About', icon: Info },
   ];
 
@@ -53,12 +69,12 @@ const Navbar = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
-      {/* Main Nav Container - inverted theme: dark in light mode, light in dark mode */}
+      {/* Main Nav Container - always dark in both light and dark theme */}
       <div 
-        className={`transition-all duration-300 bg-zinc-950 text-white dark:bg-white dark:text-zinc-900 ${
+        className={`transition-all duration-300 bg-zinc-950 text-white ${
           isScrolled 
-            ? 'border-b border-zinc-800/80 shadow-xl dark:border-zinc-200/90 dark:shadow-md py-2.5 sm:py-3' 
-            : 'border-b border-zinc-800/40 dark:border-zinc-200/40 py-3 sm:py-3.5'
+            ? 'border-b border-zinc-800/80 shadow-xl py-2.5 sm:py-3' 
+            : 'border-b border-zinc-800/40 py-3 sm:py-3.5'
         }`}
       >
         <nav className="container mx-auto px-4 flex items-center justify-between">
@@ -67,7 +83,7 @@ const Navbar = () => {
               className="flex items-center"
               whileHover={{ scale: 1.02 }}
             >
-              <BrandLogo variant="inverted" className="h-10 sm:h-11 md:h-12 w-auto" />
+              <BrandLogo variant="light" className="h-10 sm:h-11 md:h-12 w-auto" />
             </motion.div>
           </Link>
 
@@ -82,13 +98,23 @@ const Navbar = () => {
             >
               <Link
                 to={link.href}
-                className={`relative px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group ${
+                className={`relative px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group flex items-center gap-1.5 ${
                   isActive(link.href) 
-                    ? 'text-white dark:text-zinc-950 font-bold' 
-                    : 'text-zinc-400 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-950'
+                    ? 'text-white font-bold' 
+                    : (link as any).isOffer
+                    ? 'text-rose-400 hover:text-white'
+                    : 'text-zinc-400 hover:text-white'
                 }`}
               >
+                {(link as any).isOffer && (
+                  <Flame className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
+                )}
                 {link.label}
+                {(link as any).isOffer && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-600 text-white tracking-wider animate-bounce">
+                    HOT
+                  </span>
+                )}
                 <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
                   isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full'
                 }`} />
@@ -99,13 +125,13 @@ const Navbar = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <ThemeToggle className="text-zinc-300 hover:text-white hover:bg-zinc-800/80 dark:text-zinc-700 dark:hover:text-zinc-950 dark:hover:bg-zinc-100" />
+          <ThemeToggle className="text-zinc-300 hover:text-white hover:bg-zinc-800/80" />
           
           <Link to="/cart" className="relative">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="relative group text-zinc-300 hover:text-white hover:bg-zinc-800/80 dark:text-zinc-700 dark:hover:text-zinc-950 dark:hover:bg-zinc-100"
+              className="relative group text-zinc-300 hover:text-white hover:bg-zinc-800/80"
             >
               <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
               {totalItems > 0 && (
@@ -123,7 +149,7 @@ const Navbar = () => {
           <Link to={isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : '/login'} className="hidden md:block">
             <Button 
               size="sm" 
-              className="gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700/80 dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 dark:border-zinc-300 shadow-sm font-semibold transition-all"
+              className="gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700/80 shadow-sm font-semibold transition-all"
             >
               <User className="h-4 w-4" />
               {isAuthenticated ? (isAdmin ? 'Admin' : user?.name?.split(' ')[0]) : 'Login'}
@@ -132,23 +158,23 @@ const Navbar = () => {
 
           {/* Animated Hamburger Button */}
           <button
-            className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 dark:hover:bg-zinc-100 transition-colors focus:outline-none"
+            className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 transition-colors focus:outline-none"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
             <div className="w-6 h-5 relative flex flex-col justify-between">
               <motion.span
-                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full origin-left"
+                className="block h-0.5 w-6 bg-white rounded-full origin-left"
                 animate={isMenuOpen ? { rotate: 45, x: 1, y: -1 } : { rotate: 0, x: 0, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               />
               <motion.span
-                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full"
+                className="block h-0.5 w-6 bg-white rounded-full"
                 animate={isMenuOpen ? { opacity: 0, x: -16 } : { opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
               />
               <motion.span
-                className="block h-0.5 w-6 bg-white dark:bg-zinc-900 rounded-full origin-left"
+                className="block h-0.5 w-6 bg-white rounded-full origin-left"
                 animate={isMenuOpen ? { rotate: -45, x: 1, y: 1 } : { rotate: 0, x: 0, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               />
@@ -178,19 +204,19 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] z-50 md:hidden bg-zinc-950 text-white dark:bg-white dark:text-zinc-900 border-l border-zinc-800 dark:border-zinc-200 shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] z-50 md:hidden bg-zinc-950 text-white border-l border-zinc-800 shadow-2xl flex flex-col"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-between p-5 border-b border-zinc-800/80 dark:border-zinc-200">
-                <span className="text-xs uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-bold">Menu</span>
+              <div className="flex items-center justify-between p-5 border-b border-zinc-800/80">
+                <span className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-bold">Menu</span>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 dark:hover:bg-zinc-100 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800/80 transition-colors"
                   aria-label="Close menu"
                 >
                   <div className="w-4 h-4 relative">
-                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white dark:bg-zinc-900 rounded-full rotate-45 -translate-y-1/2" />
-                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white dark:bg-zinc-900 rounded-full -rotate-45 -translate-y-1/2" />
+                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white rounded-full rotate-45 -translate-y-1/2" />
+                    <span className="absolute top-1/2 left-0 w-full h-0.5 bg-white rounded-full -rotate-45 -translate-y-1/2" />
                   </div>
                 </button>
               </div>
@@ -209,12 +235,19 @@ const Navbar = () => {
                       className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold uppercase tracking-wider transition-all duration-200 ${
                         isActive(link.href)
                           ? 'bg-primary/15 text-primary border border-primary/30 font-bold'
-                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900 dark:text-zinc-600 dark:hover:text-zinc-950 dark:hover:bg-zinc-100'
+                          : (link as any).isOffer
+                          ? 'text-rose-400 hover:text-white hover:bg-rose-500/10'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                       }`}
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <link.icon className={`h-5 w-5 ${isActive(link.href) ? 'text-primary' : ''}`} />
+                      <link.icon className={`h-5 w-5 ${isActive(link.href) ? 'text-primary' : (link as any).isOffer ? 'text-rose-500' : ''}`} />
                       {link.label}
+                      {(link as any).isOffer && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-600 text-white tracking-wider">
+                          HOT
+                        </span>
+                      )}
                       {isActive(link.href) && (
                         <motion.div
                           layoutId="activeIndicator"
@@ -227,7 +260,7 @@ const Navbar = () => {
               </div>
 
               {/* Divider */}
-              <div className="mx-6 border-t border-zinc-800/80 dark:border-zinc-200" />
+              <div className="mx-6 border-t border-zinc-800/80" />
 
               {/* Account Button */}
               <div className="p-4">
@@ -249,8 +282,8 @@ const Navbar = () => {
               </div>
 
               {/* Footer Branding */}
-              <div className="p-5 border-t border-zinc-800/60 dark:border-zinc-200 flex items-center justify-center">
-                <BrandLogo variant="inverted" className="h-7 w-auto opacity-75" />
+              <div className="p-5 border-t border-zinc-800/60 flex items-center justify-center">
+                <BrandLogo variant="light" className="h-7 w-auto opacity-75" />
               </div>
             </motion.div>
           </>

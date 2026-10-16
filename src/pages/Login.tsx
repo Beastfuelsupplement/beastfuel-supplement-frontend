@@ -15,6 +15,7 @@ const Login = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -106,14 +107,14 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        const result = await login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password, rememberMe);
         if (result.success) {
           toast.success('Logged in successfully!');
         } else {
           toast.error(result.error || 'Login failed');
         }
       } else {
-        const result = await register(formData.name, formData.email, formData.password);
+        const result = await register(formData.name, formData.email, formData.password, rememberMe);
         if (result.success) {
           toast.success('Account created successfully!');
         } else {
@@ -264,10 +265,19 @@ const Login = () => {
                 )}
                 {!isLogin && formData.password && <PasswordStrengthIndicator />}
                 {isLogin && (
-                  <div className="text-right">
+                  <div className="flex items-center justify-between mt-3 pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                      />
+                      <span>Remember me</span>
+                    </label>
                     <Link 
                       to="/forgot-password" 
-                      className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+                      className="text-xs sm:text-sm text-muted-foreground hover:text-foreground hover:underline"
                     >
                       Forgot password?
                     </Link>

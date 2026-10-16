@@ -1,21 +1,36 @@
+import { 
+  setAuthSession, 
+  clearAuthSession, 
+  checkSessionValidity, 
+  STORAGE_KEYS 
+} from '@/utils/sessionManager';
+
 // API service layer for connecting to the Node.js backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
   private token: string | null = null;
 
-  setToken(token: string | null) {
+  setToken(token: string | null, remember: boolean = false) {
     this.token = token;
     if (token) {
-      localStorage.setItem('auth_token', token);
+      setAuthSession(token, remember);
     } else {
-      localStorage.removeItem('auth_token');
+      clearAuthSession();
     }
   }
 
   getToken(): string | null {
     if (!this.token) {
-      this.token = localStorage.getItem('auth_token');
+      if (typeof window !== 'undefined') {
+        const validity = checkSessionValidity();
+        if (!validity.valid) {
+          this.token = null;
+          return null;
+        }
+        this.token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || 
+                     (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) : null);
+      }
     }
     return this.token;
   }
@@ -37,6 +52,12 @@ class ApiService {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        this.setToken(null);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+      }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
     }

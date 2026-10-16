@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, Flame } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -313,11 +313,34 @@ const ProductDetails = () => {
                 </span>
               </div>
 
+              {/* Special Offer Alert Banner if product has an offer */}
+              {product.hasOffer && (
+                <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-amber-500/15 to-rose-500/15 border-2 border-rose-500/40 flex items-center justify-between gap-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-wider">
+                    <Flame className="w-4 h-4 fill-rose-500 animate-pulse" />
+                    <span>Special Offer: {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'SPECIAL DEAL')}</span>
+                  </div>
+                  <Link to="/offers" className="text-xs font-bold text-rose-500 hover:underline">
+                    All Offers →
+                  </Link>
+                </div>
+              )}
+
               {/* Price display with variant awareness */}
-              <div className="flex items-baseline gap-3 mb-6">
+              <div className="flex items-baseline gap-3 mb-6 flex-wrap">
                 <p className="text-3xl sm:text-4xl font-bold font-display text-foreground">
                   {formatCurrency(activePrice)}
                 </p>
+                {product.hasOffer && product.originalPrice && product.originalPrice > activePrice && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg text-muted-foreground line-through font-semibold">
+                      {formatCurrency(product.originalPrice)}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                      Save {formatCurrency(product.originalPrice - activePrice)} ({product.offerDiscount || Math.round(((product.originalPrice - activePrice) / product.originalPrice) * 100)}% OFF)
+                    </span>
+                  </div>
+                )}
                 {activeVariant && (
                   <span className="text-xs text-muted-foreground bg-secondary px-2.5 py-1 rounded-full border border-border/50">
                     Price for {selectedWeight}
