@@ -14,7 +14,8 @@ import {
   Package, 
   ShoppingCart,
   Star,
-  Zap
+  Zap,
+  Gift
 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -33,10 +34,12 @@ const Offers = () => {
   // Combine products from API or local store
   const allProducts: Product[] = apiProducts.length > 0 ? apiProducts : storeProducts;
 
-  // Filter products that have an active offer
-  const offerProducts = allProducts.filter(
-    (p) => p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price)
-  );
+  // Filter products that have an active offer (and not expired)
+  const offerProducts = allProducts.filter((p) => {
+    const hasAnyOffer = p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price);
+    const isExpired = p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now();
+    return hasAnyOffer && !isExpired;
+  });
 
   // Live countdown timer state (24-hour cycle)
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 32, seconds: 45 });
@@ -217,7 +220,11 @@ const Offers = () => {
                       <div className="bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 text-white px-4 py-2 flex items-center justify-between text-xs font-black uppercase tracking-wider shadow-md">
                         <span className="flex items-center gap-1.5">
                           <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
-                          {product.offerBadge || `${discount}% OFF SPECIAL DEAL`}
+                          {product.offerBadge || (
+                            product.offerDiscountType === 'fixed' && product.offerDiscountAmount
+                              ? `SAVE Rs. ${Number(product.offerDiscountAmount).toLocaleString()}`
+                              : `${discount}% OFF SPECIAL DEAL`
+                          )}
                         </span>
                         <span className="bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
                           Save {formatCurrency(savings)}
@@ -294,9 +301,25 @@ const Offers = () => {
 
                           <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border/40 font-semibold text-emerald-600 dark:text-emerald-400">
                             <span>Your Total Savings:</span>
-                            <span>{formatCurrency(savings)} ({discount}% OFF)</span>
+                            <span>{product.offerDiscountType === 'fixed' && product.offerDiscountAmount ? `Save Rs. ${Number(product.offerDiscountAmount).toLocaleString()}` : `${formatCurrency(savings)} (${discount}% OFF)`}</span>
                           </div>
                         </div>
+
+                        {/* Free Companion Gift Banner */}
+                        {product.offerFreeProduct && (
+                          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                            <Gift className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span className="truncate">Includes Free: {product.offerFreeProduct}</span>
+                          </div>
+                        )}
+
+                        {/* Offer Expiry Date */}
+                        {product.offerEndDate && (
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span>Offer ends {new Date(product.offerEndDate).toLocaleDateString()}</span>
+                          </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="grid grid-cols-2 gap-2.5 pt-2">

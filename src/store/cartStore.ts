@@ -9,6 +9,25 @@ export interface ProductVariant {
   price: number;
   stock: number;
   sku?: string;
+  hasOffer?: boolean;
+  originalPrice?: number;
+  offerDiscount?: number;
+  offerDiscountType?: 'percentage' | 'fixed';
+  offerDiscountAmount?: number;
+  offerBadge?: string;
+  offerFreeProduct?: string;
+}
+
+export interface WeightOffer {
+  weight: string;
+  hasOffer: boolean;
+  price?: number;
+  originalPrice?: number;
+  offerDiscount?: number;
+  offerDiscountType?: 'percentage' | 'fixed';
+  offerDiscountAmount?: number;
+  offerBadge?: string;
+  offerFreeProduct?: string;
 }
 
 export interface Product {
@@ -32,8 +51,15 @@ export interface Product {
   featured?: boolean;
   isActive?: boolean;
   hasOffer?: boolean;
+  offerScope?: 'all' | 'weights';
+  weightOffers?: WeightOffer[];
   offerBadge?: string;
   offerDiscount?: number;
+  offerDiscountType?: 'percentage' | 'fixed';
+  offerDiscountAmount?: number;
+  offerStartDate?: string;
+  offerEndDate?: string;
+  offerFreeProduct?: string;
   originalPrice?: number;
   offerPrice?: number;
   createdAt?: string;

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye, Star, Sparkles, Globe, Award } from 'lucide-react';
+import { ShoppingCart, Eye, Star, Sparkles, Globe, Award, Gift, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/store/cartStore';
 import { useCartStore } from '@/store/cartStore';
@@ -27,6 +27,9 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const countryOrigin = product.countryOfOrigin || 'USA';
   const weightsCount = product.weights?.length || (product.weight ? 1 : 0);
   const flavorsCount = product.flavors?.length || (product.flavor ? 1 : 0);
+
+  const isOfferExpired = Boolean(product.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now());
+  const isOfferActive = Boolean(product.hasOffer && !isOfferExpired);
 
   // Find first available in-stock variant for smooth quick-add
   const inStockVariant = product.variants?.find((v) => Number(v.stock) > 0);
@@ -99,10 +102,16 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
             {/* Category & Offer Badges - Top Left */}
             <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start z-10">
-              {product.hasOffer && (
+              {isOfferActive && (
                 <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-extrabold bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-full shadow-lg border border-rose-400/40 animate-pulse">
-                  <Sparkles className="w-3 h-3" />
-                  {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'SPECIAL OFFER')}
+                  <Flame className="w-3 h-3 fill-white" />
+                  {product.offerBadge || (
+                    product.offerDiscountType === 'fixed' && product.offerDiscountAmount
+                      ? `SAVE Rs. ${Number(product.offerDiscountAmount).toLocaleString()}`
+                      : product.offerDiscount
+                      ? `${product.offerDiscount}% OFF`
+                      : 'SPECIAL DEAL'
+                  )}
                 </span>
               )}
               <motion.span 
@@ -196,20 +205,27 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 </div>
               )}
 
-              {/* Highlighted Country of Origin */}
-              <div className="mt-2.5 flex items-center">
+              {/* Highlighted Country of Origin & Free Companion Gift */}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] sm:text-xs font-semibold rounded-md bg-secondary/80 dark:bg-card border border-border/80 text-foreground shadow-xs">
                   <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   <span className="text-muted-foreground font-medium">Origin:</span>
                   <span className="font-bold text-foreground uppercase tracking-wide">{countryOrigin}</span>
                 </span>
+
+                {isOfferActive && product.offerFreeProduct && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-xs">
+                    <Gift className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>+ Free: {product.offerFreeProduct}</span>
+                  </span>
+                )}
               </div>
             </div>
             
             {/* Price & Weight Row */}
             <div className="flex items-end justify-between gap-2 pt-1 border-t border-border/30">
               <div className="flex flex-col">
-                {product.hasOffer && product.originalPrice && product.originalPrice > product.price && (
+                {isOfferActive && product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-[11px] sm:text-xs text-muted-foreground line-through font-semibold">
                     Rs. {product.originalPrice.toLocaleString()}
                   </span>

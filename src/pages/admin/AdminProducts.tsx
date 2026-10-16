@@ -444,17 +444,30 @@ const AdminProducts = () => {
                                 {product.name}
                               </p>
                               {product.hasOffer && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/30 text-[10px] font-extrabold uppercase">
-                                  <Flame className="w-2.5 h-2.5 fill-rose-500" />
-                                  {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'OFFER')}
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                  product.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now()
+                                    ? 'bg-muted text-muted-foreground border border-border line-through'
+                                    : 'bg-rose-500/10 text-rose-500 border border-rose-500/30'
+                                }`}>
+                                  <Flame className="w-2.5 h-2.5 fill-current" />
+                                  {product.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now()
+                                    ? 'OFFER EXPIRED'
+                                    : product.offerBadge || (product.offerDiscountType === 'fixed' && product.offerDiscountAmount ? `Save Rs. ${Number(product.offerDiscountAmount).toLocaleString()}` : product.offerDiscount ? `${product.offerDiscount}% OFF` : 'OFFER')}
                                 </span>
                               )}
                             </div>
-                            {variants.length > 0 && (
-                              <span className="text-[10px] text-muted-foreground font-medium">
-                                {variants.length} variant combination{variants.length > 1 ? 's' : ''}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {variants.length > 0 && (
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  {variants.length} variant combination{variants.length > 1 ? 's' : ''}
+                                </span>
+                              )}
+                              {product.hasOffer && product.offerFreeProduct && (
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                  • 🎁 + Free {product.offerFreeProduct}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>

@@ -22,7 +22,8 @@ const Navbar = () => {
   const storeProducts = useAdminStore((state) => state.products);
   const allProducts = apiProducts.length > 0 ? apiProducts : storeProducts;
   const hasOffers = allProducts.some(
-    (p) => p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price)
+    (p) => (p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price)) &&
+           (!p.offerEndDate || new Date(p.offerEndDate).getTime() > Date.now())
   );
 
   useEffect(() => {

@@ -28,6 +28,12 @@ import {
   HardDrive,
   FileImage,
   FolderUp,
+  Gift,
+  Clock,
+  Flame,
+  Calendar,
+  Percent,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product, ProductVariant } from '@/store/cartStore';
@@ -73,6 +79,13 @@ const PRESET_COUNTRIES = [
 export interface WeightPriceConfig {
   weight: string;
   price: string;
+  hasOffer?: boolean;
+  originalPrice?: string;
+  offerDiscount?: string;
+  offerDiscountType?: 'percentage' | 'fixed';
+  offerDiscountAmount?: string;
+  offerBadge?: string;
+  offerFreeProduct?: string;
 }
 
 export interface VariantCell {
@@ -117,8 +130,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
   
   // Special Promotional Offer State
   const [hasOffer, setHasOffer] = useState<boolean>(false);
+  const [offerScope, setOfferScope] = useState<'all' | 'weights'>('all');
   const [offerBadge, setOfferBadge] = useState<string>('20% OFF');
   const [offerDiscount, setOfferDiscount] = useState<string>('');
+  const [offerDiscountType, setOfferDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [offerDiscountAmount, setOfferDiscountAmount] = useState<string>('');
+  const [offerEndDate, setOfferEndDate] = useState<string>('');
+  const [offerFreeProduct, setOfferFreeProduct] = useState<string>('');
   const [originalPrice, setOriginalPrice] = useState<string>('');
 
   // ================= STEP 3: FLAVORS & INVENTORY MATRIX =================
@@ -175,8 +193,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCountryOfOrigin(product.countryOfOrigin || '');
       setDescription(product.description || '');
       setHasOffer(Boolean(product.hasOffer));
+      setOfferScope(product.offerScope || 'all');
       setOfferBadge(product.offerBadge || (product.hasOffer ? 'SPECIAL DEAL' : '20% OFF'));
       setOfferDiscount(product.offerDiscount !== undefined && product.offerDiscount !== null ? String(product.offerDiscount) : '');
+      setOfferDiscountType(product.offerDiscountType || 'percentage');
+      setOfferDiscountAmount(product.offerDiscountAmount !== undefined && product.offerDiscountAmount !== null ? String(product.offerDiscountAmount) : '');
+      setOfferEndDate(product.offerEndDate ? new Date(product.offerEndDate).toISOString().slice(0, 16) : '');
+      setOfferFreeProduct(product.offerFreeProduct || '');
       setOriginalPrice(product.originalPrice !== undefined && product.originalPrice !== null ? String(product.originalPrice) : '');
       setPrimaryImage(product.image || '');
       setImagePreview(product.image ? formatImageUrl(product.image) : null);
@@ -211,10 +234,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
       // Build weight configs from variants or fallback
       const wConfigs: WeightPriceConfig[] = wList.map(w => {
         const matchingVariant = product.variants?.find(v => v.weight === w);
+        const matchingWeightOffer = product.weightOffers?.find(wo => wo.weight === w);
         const p = matchingVariant?.price ?? product.price ?? 5000;
         return {
           weight: w,
           price: p.toString(),
+          hasOffer: matchingWeightOffer ? Boolean(matchingWeightOffer.hasOffer) : (matchingVariant?.hasOffer !== undefined ? Boolean(matchingVariant.hasOffer) : Boolean(product.hasOffer)),
+          originalPrice: matchingWeightOffer?.originalPrice ? String(matchingWeightOffer.originalPrice) : (matchingVariant?.originalPrice ? String(matchingVariant.originalPrice) : ''),
+          offerDiscount: matchingWeightOffer?.offerDiscount ? String(matchingWeightOffer.offerDiscount) : (matchingVariant?.offerDiscount ? String(matchingVariant.offerDiscount) : ''),
+          offerDiscountType: matchingWeightOffer?.offerDiscountType || matchingVariant?.offerDiscountType || 'percentage',
+          offerDiscountAmount: matchingWeightOffer?.offerDiscountAmount ? String(matchingWeightOffer.offerDiscountAmount) : (matchingVariant?.offerDiscountAmount ? String(matchingVariant.offerDiscountAmount) : ''),
+          offerBadge: matchingWeightOffer?.offerBadge || matchingVariant?.offerBadge || '',
+          offerFreeProduct: matchingWeightOffer?.offerFreeProduct || matchingVariant?.offerFreeProduct || '',
         };
       });
       setWeightConfigs(wConfigs.length > 0 ? wConfigs : [{ weight: '1kg', price: '7000' }]);
@@ -251,8 +282,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setCountryOfOrigin('USA');
       setDescription('');
       setHasOffer(false);
+      setOfferScope('all');
       setOfferBadge('20% OFF');
       setOfferDiscount('');
+      setOfferDiscountType('percentage');
+      setOfferDiscountAmount('');
+      setOfferEndDate('');
+      setOfferFreeProduct('');
       setOriginalPrice('');
       setLowStockThreshold(5);
       setWeightConfigs([
@@ -450,6 +486,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setStockMatrix(updated);
     setProducedMatrix(updatedProd);
     toast.success(`Added weight option: ${w} at Rs. ${p}`);
+  };
+
+  const handleUpdateWeightOffer = (index: number, patch: Partial<WeightPriceConfig>) => {
+    setWeightConfigs(prev =>
+      prev.map((wc, i) => (i === index ? { ...wc, ...patch } : wc))
+    );
   };
 
   const handleRemoveWeight = (wToRemove: string) => {
@@ -749,13 +791,53 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     setIsSubmittingInternal(true);
 
-    const compiled: ProductVariant[] = compiledVariants.map(v => ({
-      weight: v.weight,
-      flavor: v.flavor,
-      price: v.price,
-      stock: v.stock,
-      sku: v.sku,
-    }));
+    const weightOffers = weightConfigs.map(wc => {
+      const isWeightOfferActive = offerScope === 'all' ? Boolean(hasOffer) : Boolean(wc.hasOffer);
+      return {
+        weight: wc.weight,
+        hasOffer: isWeightOfferActive,
+        price: Number(wc.price) || 0,
+        originalPrice: offerScope === 'weights'
+          ? (wc.originalPrice ? Number(wc.originalPrice) : undefined)
+          : (originalPrice ? Number(originalPrice) : undefined),
+        offerDiscount: offerScope === 'weights'
+          ? (wc.offerDiscount ? Number(wc.offerDiscount) : undefined)
+          : (offerDiscount ? Number(offerDiscount) : undefined),
+        offerDiscountType: offerScope === 'weights' ? (wc.offerDiscountType || 'percentage') : offerDiscountType,
+        offerDiscountAmount: offerScope === 'weights'
+          ? (wc.offerDiscountAmount ? Number(wc.offerDiscountAmount) : undefined)
+          : (offerDiscountAmount ? Number(offerDiscountAmount) : undefined),
+        offerBadge: offerScope === 'weights' ? (wc.offerBadge || offerBadge) : offerBadge,
+        offerFreeProduct: offerScope === 'weights' ? (wc.offerFreeProduct || offerFreeProduct) : offerFreeProduct,
+      };
+    });
+
+    const isAnyOfferActive = hasOffer && (offerScope === 'all' || weightOffers.some(wo => wo.hasOffer));
+
+    const compiled: ProductVariant[] = compiledVariants.map(v => {
+      const matchingWc = weightConfigs.find(wc => wc.weight === v.weight);
+      const isWeightOfferActive = offerScope === 'all' ? Boolean(hasOffer) : Boolean(matchingWc?.hasOffer);
+      return {
+        weight: v.weight,
+        flavor: v.flavor,
+        price: v.price,
+        stock: v.stock,
+        sku: v.sku,
+        hasOffer: isWeightOfferActive,
+        originalPrice: offerScope === 'weights'
+          ? (matchingWc?.originalPrice ? Number(matchingWc.originalPrice) : undefined)
+          : (originalPrice ? Number(originalPrice) : undefined),
+        offerDiscount: offerScope === 'weights'
+          ? (matchingWc?.offerDiscount ? Number(matchingWc.offerDiscount) : undefined)
+          : (offerDiscount ? Number(offerDiscount) : undefined),
+        offerDiscountType: offerScope === 'weights' ? (matchingWc?.offerDiscountType || 'percentage') : offerDiscountType,
+        offerDiscountAmount: offerScope === 'weights'
+          ? (matchingWc?.offerDiscountAmount ? Number(matchingWc.offerDiscountAmount) : undefined)
+          : (offerDiscountAmount ? Number(offerDiscountAmount) : undefined),
+        offerBadge: offerScope === 'weights' ? (matchingWc?.offerBadge || offerBadge) : offerBadge,
+        offerFreeProduct: offerScope === 'weights' ? (matchingWc?.offerFreeProduct || offerFreeProduct) : offerFreeProduct,
+      };
+    });
 
     const allImagesList = Array.from(
       new Set([primaryImage.trim(), ...galleryImages.map(img => img.trim()).filter(Boolean)])
@@ -782,9 +864,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
       flavors: derivedFlavors.length > 0 ? derivedFlavors : flavors,
       variants: compiled,
       isActive: true,
-      hasOffer: Boolean(hasOffer),
+      hasOffer: Boolean(isAnyOfferActive),
+      offerScope: isAnyOfferActive ? offerScope : 'all',
+      weightOffers: isAnyOfferActive ? weightOffers : [],
       offerBadge: hasOffer ? (offerBadge.trim() || 'SPECIAL DEAL') : undefined,
-      offerDiscount: hasOffer && offerDiscount ? Number(offerDiscount) : undefined,
+      offerDiscountType: hasOffer ? offerDiscountType : undefined,
+      offerDiscount: hasOffer && offerDiscountType === 'percentage' && offerDiscount ? Number(offerDiscount) : undefined,
+      offerDiscountAmount: hasOffer && offerDiscountType === 'fixed' && offerDiscountAmount ? Number(offerDiscountAmount) : undefined,
+      offerEndDate: hasOffer && offerEndDate ? new Date(offerEndDate).toISOString() : undefined,
+      offerFreeProduct: hasOffer && offerFreeProduct.trim() ? offerFreeProduct.trim() : undefined,
       originalPrice: hasOffer && originalPrice ? Number(originalPrice) : undefined,
       offerPrice: hasOffer ? startingPrice : undefined,
     };
@@ -1100,20 +1188,27 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <div className="p-5 rounded-2xl bg-gradient-to-br from-rose-500/10 via-amber-500/10 to-primary/10 border-2 border-rose-500/30 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center font-black text-sm">
-                      %
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center font-black text-sm shadow-md">
+                      <Flame className="w-5 h-5 fill-white" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                         Special Promotional Offer
                         {hasOffer && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white uppercase tracking-wider animate-pulse">
-                            Active Deal
-                          </span>
+                          offerEndDate && new Date(offerEndDate).getTime() < Date.now() ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-destructive text-destructive-foreground uppercase tracking-wider">
+                              Deal Expired
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white uppercase tracking-wider animate-pulse flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              Active Deal
+                            </span>
+                          )
                         )}
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        Promotes this product on the exclusive Offers page and highlights it across the store
+                        Promotes this product on the exclusive Offers page with custom discounts, duration, and bonus gifts
                       </p>
                     </div>
                   </div>
@@ -1122,7 +1217,17 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     <input
                       type="checkbox"
                       checked={hasOffer}
-                      onChange={e => setHasOffer(e.target.checked)}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setHasOffer(checked);
+                        if (checked && !offerEndDate) {
+                          // Default to 7 days duration on enable
+                          const d = new Date();
+                          d.setDate(d.getDate() + 7);
+                          const pad = (n: number) => String(n).padStart(2, '0');
+                          setOfferEndDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                        }
+                      }}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
@@ -1130,53 +1235,504 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </div>
 
                 {hasOffer && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-rose-500/20">
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
-                        Offer Badge Label
-                      </label>
-                      <input
-                        type="text"
-                        value={offerBadge}
-                        onChange={e => setOfferBadge(e.target.value)}
-                        placeholder="e.g. 25% OFF or FLASH SALE"
-                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
-                      />
+                  <div className="space-y-4 pt-4 border-t border-rose-500/20 animate-in fade-in duration-200">
+                    {/* OFFER SCOPE SELECTOR: ALL WEIGHTS VS PER-WEIGHT */}
+                    <div className="p-3.5 rounded-xl bg-background/60 border border-border space-y-2">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <Sliders className="w-3.5 h-3.5 text-primary" />
+                          Offer Application Scope (By Weight)
+                        </label>
+                        <span className="text-[10px] text-muted-foreground font-semibold">
+                          {offerScope === 'all'
+                            ? 'Same offer applies to all weight options'
+                            : 'Customized offers and discounts per weight option'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 max-w-md">
+                        <button
+                          type="button"
+                          onClick={() => setOfferScope('all')}
+                          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                            offerScope === 'all'
+                              ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                              : 'bg-background hover:bg-secondary border-border text-foreground'
+                          }`}
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          Apply to All Weights
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOfferScope('weights')}
+                          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                            offerScope === 'weights'
+                              ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                              : 'bg-background hover:bg-secondary border-border text-foreground'
+                          }`}
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          Customize Per Weight
+                        </button>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
-                        Discount % (Optional)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={offerDiscount}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setOfferDiscount(val);
-                          if (val && Number(val) > 0) {
-                            setOfferBadge(`${val}% OFF`);
-                          }
-                        }}
-                        placeholder="e.g. 20"
-                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
-                      />
+                    {offerScope === 'weights' ? (
+                      /* PER-WEIGHT CUSTOMIZATION CARDS */
+                      <div className="space-y-3 pt-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            Individual Offer Settings per Weight:
+                          </p>
+                          <span className="text-[10px] text-muted-foreground">
+                            Enable offer on specific weights & set unique discounts or free gifts
+                          </span>
+                        </div>
+
+                        <div className="space-y-2.5">
+                          {weightConfigs.map((wc, idx) => {
+                            const isWeightActive = wc.hasOffer ?? true;
+                            const discType = wc.offerDiscountType || 'percentage';
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-3.5 rounded-xl border transition-all ${
+                                  isWeightActive
+                                    ? 'bg-background/90 border-rose-500/40 shadow-xs'
+                                    : 'bg-secondary/30 border-border opacity-70'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between pb-2 border-b border-border/50">
+                                  <div className="flex items-center gap-2.5 flex-wrap">
+                                    <span className="px-2.5 py-1 rounded-lg bg-secondary text-foreground text-xs font-black border border-border">
+                                      {wc.weight}
+                                    </span>
+                                    <span className="text-xs font-bold text-foreground">
+                                      Selling Price: Rs. {Number(wc.price || 0).toLocaleString()}
+                                    </span>
+                                    {isWeightActive ? (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                                        Offer Active
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+                                        Regular Price (No Offer)
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={isWeightActive}
+                                      onChange={e => handleUpdateWeightOffer(idx, { hasOffer: e.target.checked })}
+                                      className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600"></div>
+                                  </label>
+                                </div>
+
+                                {isWeightActive && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-2.5">
+                                    <div>
+                                      <label className="block text-[10px] font-bold uppercase text-foreground mb-1">
+                                        Discount Type
+                                      </label>
+                                      <select
+                                        value={discType}
+                                        onChange={e => handleUpdateWeightOffer(idx, { offerDiscountType: e.target.value as any })}
+                                        className="w-full h-8 px-2 bg-background border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-rose-500"
+                                      >
+                                        <option value="percentage">% Percentage Off</option>
+                                        <option value="fixed">Fixed Rs. Deduct</option>
+                                      </select>
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-bold uppercase text-foreground mb-1">
+                                        {discType === 'percentage' ? 'Discount %' : 'Deduct Amount (Rs.)'}
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={discType === 'percentage' ? (wc.offerDiscount || '') : (wc.offerDiscountAmount || '')}
+                                        onChange={e => {
+                                          const val = e.target.value;
+                                          if (discType === 'percentage') {
+                                            handleUpdateWeightOffer(idx, {
+                                              offerDiscount: val,
+                                              offerBadge: val ? `${val}% OFF` : wc.offerBadge,
+                                            });
+                                          } else {
+                                            handleUpdateWeightOffer(idx, {
+                                              offerDiscountAmount: val,
+                                              offerBadge: val ? `SAVE Rs. ${Number(val).toLocaleString()}` : wc.offerBadge,
+                                            });
+                                          }
+                                        }}
+                                        placeholder={discType === 'percentage' ? 'e.g. 20' : 'e.g. 1500'}
+                                        className="w-full h-8 px-2 bg-background border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-rose-500"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <div className="flex items-center justify-between mb-1">
+                                        <label className="text-[10px] font-bold uppercase text-foreground">
+                                          Original Ref (Rs.)
+                                        </label>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const cur = Number(wc.price || 0);
+                                            if (discType === 'fixed' && wc.offerDiscountAmount) {
+                                              handleUpdateWeightOffer(idx, { originalPrice: String(cur + Number(wc.offerDiscountAmount)) });
+                                            } else if (discType === 'percentage' && wc.offerDiscount) {
+                                              const pct = Number(wc.offerDiscount);
+                                              if (pct < 100) {
+                                                handleUpdateWeightOffer(idx, { originalPrice: String(Math.round(cur / (1 - pct / 100))) });
+                                              }
+                                            }
+                                          }}
+                                          className="text-[9px] font-bold text-primary hover:underline"
+                                        >
+                                          Auto-Calc
+                                        </button>
+                                      </div>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={wc.originalPrice || ''}
+                                        onChange={e => handleUpdateWeightOffer(idx, { originalPrice: e.target.value })}
+                                        placeholder="e.g. 9500"
+                                        className="w-full h-8 px-2 bg-background border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-rose-500"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-bold uppercase text-foreground mb-1">
+                                        Bonus Gift for {wc.weight}
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={wc.offerFreeProduct || ''}
+                                        onChange={e => handleUpdateWeightOffer(idx, { offerFreeProduct: e.target.value })}
+                                        placeholder="e.g. Free Shaker Bottle"
+                                        className="w-full h-8 px-2 bg-background border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-emerald-500"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      /* GLOBAL INPUTS FOR ALL WEIGHTS */
+                      <>
+                        {/* 1. DISCOUNT TYPE SELECTOR */}
+                        <div className="space-y-1.5">
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground">
+                            Offer Discount Type
+                          </label>
+                          <div className="grid grid-cols-2 gap-2 max-w-md">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOfferDiscountType('percentage');
+                                if (offerDiscount && Number(offerDiscount) > 0) {
+                                  setOfferBadge(`${offerDiscount}% OFF`);
+                                }
+                              }}
+                              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                                offerDiscountType === 'percentage'
+                                  ? 'bg-rose-500 text-white border-rose-600 shadow-sm'
+                                  : 'bg-background hover:bg-secondary border-border text-foreground'
+                              }`}
+                            >
+                              <Percent className="w-3.5 h-3.5" />
+                              Percentage (%) Off
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOfferDiscountType('fixed');
+                                if (offerDiscountAmount && Number(offerDiscountAmount) > 0) {
+                                  setOfferBadge(`SAVE Rs. ${Number(offerDiscountAmount).toLocaleString()}`);
+                                }
+                              }}
+                              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                                offerDiscountType === 'fixed'
+                                  ? 'bg-rose-500 text-white border-rose-600 shadow-sm'
+                                  : 'bg-background hover:bg-secondary border-border text-foreground'
+                              }`}
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                              Fixed Cash Deduct (Rs.)
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 2. VALUE & BADGE INPUTS */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {offerDiscountType === 'percentage' ? (
+                            <div>
+                              <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                                Discount %
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={offerDiscount}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setOfferDiscount(val);
+                                  if (val && Number(val) > 0) {
+                                    setOfferBadge(`${val}% OFF`);
+                                  }
+                                }}
+                                placeholder="e.g. 20"
+                                className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                              />
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {['10', '15', '20', '25', '30', '50'].map(pct => (
+                                  <button
+                                    key={pct}
+                                    type="button"
+                                    onClick={() => {
+                                      setOfferDiscount(pct);
+                                      setOfferBadge(`${pct}% OFF`);
+                                    }}
+                                    className="px-1.5 py-0.5 rounded bg-secondary hover:bg-rose-500/20 text-[10px] font-bold text-foreground border border-border/50"
+                                  >
+                                    {pct}%
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                                Deduct Amount (Rs.)
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={offerDiscountAmount}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setOfferDiscountAmount(val);
+                                  if (val && Number(val) > 0) {
+                                    setOfferBadge(`SAVE Rs. ${Number(val).toLocaleString()}`);
+                                  }
+                                }}
+                                placeholder="e.g. 1500"
+                                className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                              />
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {['500', '1000', '1500', '2000', '3000'].map(amt => (
+                                  <button
+                                    key={amt}
+                                    type="button"
+                                    onClick={() => {
+                                      setOfferDiscountAmount(amt);
+                                      setOfferBadge(`SAVE Rs. ${Number(amt).toLocaleString()}`);
+                                    }}
+                                    className="px-1.5 py-0.5 rounded bg-secondary hover:bg-rose-500/20 text-[10px] font-bold text-foreground border border-border/50"
+                                  >
+                                    Rs.{amt}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
+                              Offer Badge Label
+                            </label>
+                            <input
+                              type="text"
+                              value={offerBadge}
+                              onChange={e => setOfferBadge(e.target.value)}
+                              placeholder="e.g. 25% OFF or FLASH SALE"
+                              className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                            />
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {['SPECIAL DEAL', 'FLASH SALE', 'MEGA DISCOUNT', 'HOT DEAL'].map(b => (
+                                <button
+                                  key={b}
+                                  type="button"
+                                  onClick={() => setOfferBadge(b)}
+                                  className="px-1.5 py-0.5 rounded bg-secondary hover:bg-rose-500/20 text-[10px] font-bold text-foreground border border-border/50"
+                                >
+                                  {b}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground">
+                                Original Reference Price (Rs.)
+                              </label>
+                              {weightConfigs[0]?.price && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const current = Number(weightConfigs[0].price);
+                                    if (offerDiscountType === 'fixed' && offerDiscountAmount) {
+                                      setOriginalPrice(String(current + Number(offerDiscountAmount)));
+                                    } else if (offerDiscountType === 'percentage' && offerDiscount) {
+                                      const pct = Number(offerDiscount);
+                                      if (pct < 100) {
+                                        setOriginalPrice(String(Math.round(current / (1 - pct / 100))));
+                                      }
+                                    }
+                                  }}
+                                  className="text-[10px] font-bold text-primary hover:underline"
+                                >
+                                  Auto-Calc
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              type="number"
+                              min="1"
+                              value={originalPrice}
+                              onChange={e => setOriginalPrice(e.target.value)}
+                              placeholder="e.g. 9500 (before discount)"
+                              className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              Shown crossed-out next to offer price
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* 3. OFFER DURATION & EXPIRATION CONTROLS */}
+                    <div className="p-3.5 rounded-xl bg-background/60 border border-border space-y-2.5">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          Offer Time Duration & Expiration
+                        </label>
+                        {offerEndDate && (
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            new Date(offerEndDate).getTime() < Date.now()
+                              ? 'bg-destructive/15 text-destructive border border-destructive/30'
+                              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                          }`}>
+                            {new Date(offerEndDate).getTime() < Date.now()
+                              ? 'Expired'
+                              : `Ends ${new Date(offerEndDate).toLocaleDateString()} at ${new Date(offerEndDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                        <div className="sm:col-span-6">
+                          <input
+                            type="datetime-local"
+                            value={offerEndDate}
+                            onChange={e => setOfferEndDate(e.target.value)}
+                            className="w-full h-9 px-3 bg-background border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-rose-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-6 flex flex-wrap gap-1.5">
+                          {[
+                            { label: '24h Flash', hours: 24 },
+                            { label: '3 Days', hours: 72 },
+                            { label: '7 Days', hours: 168 },
+                            { label: '14 Days', hours: 336 },
+                            { label: '30 Days', hours: 720 },
+                          ].map(item => (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setHours(d.getHours() + item.hours);
+                                const pad = (n: number) => String(n).padStart(2, '0');
+                                setOfferEndDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-secondary hover:bg-rose-500/20 text-[10px] font-bold text-foreground border border-border/60 transition-colors"
+                            >
+                              +{item.label}
+                            </button>
+                          ))}
+                          {offerEndDate && (
+                            <button
+                              type="button"
+                              onClick={() => setOfferEndDate('')}
+                              className="px-2 py-1 rounded-lg bg-secondary hover:bg-destructive/20 text-[10px] font-bold text-muted-foreground hover:text-destructive border border-border/60 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-foreground mb-1">
-                        Original Reference Price (Rs.)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={originalPrice}
-                        onChange={e => setOriginalPrice(e.target.value)}
-                        placeholder="e.g. 9500 (before discount)"
-                        className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-rose-500"
-                      />
+                    {/* 4. FREE COMPANION GIFT / BONUS PRODUCT */}
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <Gift className="w-3.5 h-3.5 text-emerald-500" />
+                          Bonus Free Gift / Companion Product (Optional)
+                        </label>
+                        {offerFreeProduct && (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                            Bonus Included
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <input
+                          type="text"
+                          value={offerFreeProduct}
+                          onChange={e => setOfferFreeProduct(e.target.value)}
+                          placeholder="e.g. Free 700ml BeastFuel Shaker Bottle or 100g Creatine Monohydrate"
+                          className="w-full h-10 px-3 bg-background border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {[
+                            'Free 700ml Gym Shaker Bottle',
+                            'Free 100g Creatine Monohydrate',
+                            'Free BEASTFUEL Lifting Straps',
+                            'Free Pre-Workout Sachet Pack',
+                            'Free Gym Hand Towel',
+                          ].map(gift => (
+                            <button
+                              key={gift}
+                              type="button"
+                              onClick={() => setOfferFreeProduct(gift)}
+                              className="px-2 py-0.5 rounded-md bg-secondary hover:bg-emerald-500/20 text-[10px] font-bold text-foreground border border-border/60 transition-colors flex items-center gap-1"
+                            >
+                              <Plus className="w-2.5 h-2.5 text-emerald-500" />
+                              {gift}
+                            </button>
+                          ))}
+                          {offerFreeProduct && (
+                            <button
+                              type="button"
+                              onClick={() => setOfferFreeProduct('')}
+                              className="px-2 py-0.5 rounded-md bg-secondary hover:bg-destructive/20 text-[10px] font-bold text-muted-foreground hover:text-destructive border border-border/60 transition-colors"
+                            >
+                              Remove Gift
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, Flame } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, Flame, Gift, Clock } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,9 @@ const ProductDetails = () => {
   const { data: product, isLoading } = useProduct(id);
   const { data: allProducts = [] } = useProducts();
   const { averageRating, totalReviews } = useReviews(id || '');
+
+  const isOfferExpired = Boolean(product?.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now());
+  const isOfferActive = Boolean(product?.hasOffer && !isOfferExpired);
 
   // Extract all photos (primary + gallery)
   const allImages = useMemo(() => {
@@ -124,6 +127,69 @@ const ProductDetails = () => {
 
   const activePrice = activeVariant ? activeVariant.price : (product?.price ?? 0);
   const activeStock = activeVariant ? activeVariant.stock : (product?.stock ?? 0);
+
+  // Compute offer specific to the currently selected weight
+  const currentWeightOffer = useMemo(() => {
+    if (!product) return null;
+    const currentWeight = (selectedWeight || (availableWeights.length > 0 ? availableWeights[0] : '')).trim().toLowerCase();
+
+    // 1. Check if product has explicit weightOffers matching current weight
+    if (product.weightOffers && product.weightOffers.length > 0) {
+      const match = product.weightOffers.find(
+        (wo) => wo.weight.trim().toLowerCase() === currentWeight
+      );
+      if (match) {
+        return {
+          hasOffer: Boolean(match.hasOffer),
+          originalPrice: match.originalPrice,
+          offerDiscount: match.offerDiscount,
+          offerDiscountType: match.offerDiscountType,
+          offerDiscountAmount: match.offerDiscountAmount,
+          offerBadge: match.offerBadge,
+          offerFreeProduct: match.offerFreeProduct,
+        };
+      }
+    }
+
+    // 2. Check activeVariant
+    if (activeVariant && activeVariant.hasOffer !== undefined) {
+      return {
+        hasOffer: Boolean(activeVariant.hasOffer),
+        originalPrice: activeVariant.originalPrice,
+        offerDiscount: activeVariant.offerDiscount,
+        offerDiscountType: activeVariant.offerDiscountType,
+        offerDiscountAmount: activeVariant.offerDiscountAmount,
+        offerBadge: activeVariant.offerBadge,
+        offerFreeProduct: activeVariant.offerFreeProduct,
+      };
+    }
+
+    // 3. If scope is explicitly 'weights' and no match was found, then this weight has NO offer
+    if (product.offerScope === 'weights') {
+      return null;
+    }
+
+    // 4. Fallback to global product offer
+    if (product.hasOffer) {
+      return {
+        hasOffer: true,
+        originalPrice: product.originalPrice,
+        offerDiscount: product.offerDiscount,
+        offerDiscountType: product.offerDiscountType,
+        offerDiscountAmount: product.offerDiscountAmount,
+        offerBadge: product.offerBadge,
+        offerFreeProduct: product.offerFreeProduct,
+      };
+    }
+
+    return null;
+  }, [product, selectedWeight, availableWeights, activeVariant]);
+
+  const isCurrentWeightOfferActive = Boolean(
+    !isOfferExpired &&
+    currentWeightOffer &&
+    currentWeightOffer.hasOffer !== false
+  );
 
   const cartItemId = product
     ? `${product.id}-${selectedWeight || product.weight || 'Standard'}-${selectedFlavor || product.flavor || 'default'}`
@@ -313,16 +379,31 @@ const ProductDetails = () => {
                 </span>
               </div>
 
-              {/* Special Offer Alert Banner if product has an offer */}
-              {product.hasOffer && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-amber-500/15 to-rose-500/15 border-2 border-rose-500/40 flex items-center justify-between gap-3 shadow-sm">
+              {/* Special Offer Alert Banner if product has an active offer for the selected weight */}
+              {isCurrentWeightOfferActive && (
+                <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-amber-500/15 to-rose-500/15 border-2 border-rose-500/40 flex items-center justify-between gap-3 shadow-sm flex-wrap">
                   <div className="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-wider">
-                    <Flame className="w-4 h-4 fill-rose-500 animate-pulse" />
-                    <span>Special Offer: {product.offerBadge || (product.offerDiscount ? `${product.offerDiscount}% OFF` : 'SPECIAL DEAL')}</span>
+                    <Flame className="w-4 h-4 fill-rose-500 animate-pulse shrink-0" />
+                    <span>Special Offer ({selectedWeight}): {currentWeightOffer?.offerBadge || (
+                      currentWeightOffer?.offerDiscountType === 'fixed' && currentWeightOffer?.offerDiscountAmount
+                        ? `Save Rs. ${Number(currentWeightOffer.offerDiscountAmount).toLocaleString()}`
+                        : currentWeightOffer?.offerDiscount
+                        ? `${currentWeightOffer.offerDiscount}% OFF`
+                        : 'SPECIAL DEAL'
+                    )}</span>
                   </div>
-                  <Link to="/offers" className="text-xs font-bold text-rose-500 hover:underline">
-                    All Offers →
-                  </Link>
+
+                  <div className="flex items-center gap-3">
+                    {product?.offerEndDate && (
+                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        Ends {new Date(product.offerEndDate).toLocaleDateString()}
+                      </span>
+                    )}
+                    <Link to="/offers" className="text-xs font-bold text-rose-500 hover:underline">
+                      All Offers →
+                    </Link>
+                  </div>
                 </div>
               )}
 
@@ -331,13 +412,13 @@ const ProductDetails = () => {
                 <p className="text-3xl sm:text-4xl font-bold font-display text-foreground">
                   {formatCurrency(activePrice)}
                 </p>
-                {product.hasOffer && product.originalPrice && product.originalPrice > activePrice && (
-                  <div className="flex items-center gap-2">
+                {isCurrentWeightOfferActive && currentWeightOffer?.originalPrice && currentWeightOffer.originalPrice > activePrice && (
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-lg text-muted-foreground line-through font-semibold">
-                      {formatCurrency(product.originalPrice)}
+                      {formatCurrency(currentWeightOffer.originalPrice)}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500/15 text-rose-500 border border-rose-500/30">
-                      Save {formatCurrency(product.originalPrice - activePrice)} ({product.offerDiscount || Math.round(((product.originalPrice - activePrice) / product.originalPrice) * 100)}% OFF)
+                      Save {formatCurrency(currentWeightOffer.originalPrice - activePrice)} {currentWeightOffer?.offerDiscount ? `(${currentWeightOffer.offerDiscount}% OFF)` : ''}
                     </span>
                   </div>
                 )}
@@ -348,11 +429,31 @@ const ProductDetails = () => {
                 )}
               </div>
 
+              {/* Free Companion Gift Box */}
+              {isCurrentWeightOfferActive && (currentWeightOffer?.offerFreeProduct || product?.offerFreeProduct) && (
+                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/40 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                    <Gift className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      Free Bonus Companion Gift ({selectedWeight}) Included
+                    </span>
+                    <p className="text-sm font-bold text-foreground">
+                      {currentWeightOffer?.offerFreeProduct || product?.offerFreeProduct}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                    FREE
+                  </span>
+                </div>
+              )}
+
               <p className="text-muted-foreground leading-relaxed mb-6">
-                {product.description}
+                {product?.description}
               </p>
 
-              {/* 1. WEIGHT SELECTION (Chips/Buttons) */}
+              {/* 1. WEIGHT SELECTION (Chips/Buttons with Offer Highlights) */}
               {availableWeights.length > 0 && (
                 <div className="mb-6 p-4 rounded-xl bg-secondary/40 border border-border/60">
                   <div className="flex items-center justify-between mb-2.5">
@@ -367,6 +468,20 @@ const ProductDetails = () => {
                   <div className="flex flex-wrap gap-2.5">
                     {availableWeights.map((w) => {
                       const isSelected = selectedWeight === w;
+                      const matchWo = product?.weightOffers?.find(wo => wo.weight.trim().toLowerCase() === w.trim().toLowerCase());
+                      const hasWOffer = !isOfferExpired && (
+                        matchWo 
+                          ? Boolean(matchWo.hasOffer)
+                          : (product?.offerScope !== 'weights' && Boolean(product?.hasOffer))
+                      );
+                      const wBadge = matchWo?.offerBadge || (
+                        matchWo?.offerDiscountType === 'fixed' && matchWo?.offerDiscountAmount
+                          ? `Rs.${matchWo.offerDiscountAmount} OFF`
+                          : matchWo?.offerDiscount
+                          ? `${matchWo.offerDiscount}% OFF`
+                          : product?.offerBadge || 'OFFER'
+                      );
+
                       return (
                         <button
                           key={w}
@@ -380,6 +495,16 @@ const ProductDetails = () => {
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{w}</span>
+                          {hasWOffer && (
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 uppercase ${
+                              isSelected
+                                ? 'bg-black/30 text-white'
+                                : 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
+                            }`}>
+                              <Flame className="w-2.5 h-2.5 fill-current" />
+                              {wBadge}
+                            </span>
+                          )}
                         </button>
                       );
                     })}
