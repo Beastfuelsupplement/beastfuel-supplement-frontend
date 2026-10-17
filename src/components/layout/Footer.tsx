@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Youtube, Mail, ArrowUpRight, MapPin, Phone, Clock } from 'lucide-react';
+import { Instagram, Twitter, Youtube, Facebook, Mail, ArrowUpRight, MapPin, Phone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { useSettings } from '@/hooks/useSettings';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { settings } = useSettings();
+
+  const socialLinksConfig = [
+    { icon: Instagram, label: 'Instagram', href: settings.socialLinks?.instagram },
+    { icon: Twitter, label: 'Twitter', href: settings.socialLinks?.twitter },
+    { icon: Youtube, label: 'Youtube', href: settings.socialLinks?.youtube },
+    { icon: Facebook, label: 'Facebook', href: settings.socialLinks?.facebook },
+  ].filter((s) => Boolean(s.href && s.href.trim() && s.href !== '#'));
 
   return (
     <footer className="relative bg-card border-t border-border overflow-hidden">
@@ -22,25 +31,26 @@ const Footer = () => {
               <BrandLogo className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.
+              {settings.tagline || 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.'}
             </p>
-            <div className="flex gap-3">
-              {[
-                { icon: Instagram, label: 'Instagram', href: '#' },
-                { icon: Twitter, label: 'Twitter', href: '#' },
-                { icon: Youtube, label: 'Youtube', href: '#' },
-              ].map((social) => (
-                <motion.a
-                  key={social.label}
-                  href={social.href}
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  aria-label={social.label}
-                >
-                  <social.icon className="h-4 w-4" />
-                </motion.a>
-              ))}
-            </div>
+            {socialLinksConfig.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {socialLinksConfig.map((social) => (
+                  <motion.a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+                    aria-label={social.label}
+                    title={social.label}
+                  >
+                    <social.icon className="h-4 w-4" />
+                  </motion.a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -96,19 +106,33 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <span className="text-sm text-muted-foreground">123 Fitness Street, Gym City, GC 12345</span>
+                <span className="text-sm text-muted-foreground leading-relaxed">
+                  {settings.storeAddress || '123 Fitness Street, Gym City, GC 12345'}
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">+1 (555) 123-4567</span>
+                <a
+                  href={`tel:${(settings.storePhone || '+1 (555) 123-4567').replace(/[^0-9+]/g, '')}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {settings.storePhone || '+1 (555) 123-4567'}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">support@beastfuel.com</span>
+                <a
+                  href={`mailto:${settings.storeEmail || 'support@beastfuel.com'}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {settings.storeEmail || 'support@beastfuel.com'}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Clock className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">Mon - Fri: 9AM - 6PM</span>
+                <span className="text-sm text-muted-foreground">
+                  {settings.workingHours || 'Mon - Fri: 9AM - 6PM'}
+                </span>
               </li>
             </ul>
           </div>

@@ -52,9 +52,21 @@ export interface PaymentMethod {
 
 export interface StoreSettings {
   storeName: string;
+  tagline?: string;
   storeEmail: string;
   storePhone: string;
   storeAddress: string;
+  workingHours?: string;
+  weekendHours?: string;
+  contactSubtext?: string;
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    youtube?: string;
+    facebook?: string;
+    whatsapp?: string;
+    tiktok?: string;
+  };
   currency: string;
   timezone: string;
   emailNotifications: boolean;
@@ -117,11 +129,23 @@ const defaultPaymentMethods: PaymentMethod[] = [
 
 const defaultSettings: StoreSettings = {
   storeName: 'BEASTFUEL Supplements',
-  storeEmail: 'contact@beastfuel.com',
+  tagline: 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.',
+  storeEmail: 'support@beastfuel.com',
   storePhone: '+1 (555) 123-4567',
   storeAddress: '123 Fitness Street, Gym City, GC 12345',
-  currency: 'USD',
-  timezone: 'America/New_York',
+  workingHours: 'Mon - Fri: 9AM - 6PM',
+  weekendHours: 'Sat - Sun: Closed',
+  contactSubtext: 'We reply within 24 hours',
+  socialLinks: {
+    instagram: 'https://instagram.com/beastfuel',
+    twitter: 'https://twitter.com/beastfuel',
+    youtube: 'https://youtube.com/@beastfuel',
+    facebook: 'https://facebook.com/beastfuel',
+    whatsapp: '',
+    tiktok: '',
+  },
+  currency: 'LKR',
+  timezone: 'Asia/Colombo',
   emailNotifications: true,
   orderNotifications: true,
   marketingEmails: false,

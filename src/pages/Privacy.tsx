@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { Shield, Lock, Eye, Database, Cookie, Mail } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { useSettings } from '@/hooks/useSettings';
 
 const Privacy = () => {
+  const { settings } = useSettings();
   const sections = [
     {
       icon: Database,
@@ -62,16 +64,16 @@ You can control cookie preferences through your browser settings.`
 • Opt-out of marketing communications
 • Export your data in a portable format
       
-To exercise these rights, please contact us at privacy@beastfuel.com.`
+To exercise these rights, please contact us at ${settings.storeEmail || 'support@beastfuel.com'}.`
     },
     {
       icon: Mail,
       title: 'Contact Us',
       content: `If you have any questions about this Privacy Policy or our data practices, please contact us:
       
-Email: privacy@beastfuel.com
-Address: 123 Fitness Street, New York, NY 10001
-Phone: +1 (555) 123-4567
+Email: ${settings.storeEmail || 'support@beastfuel.com'}
+Address: ${settings.storeAddress || '123 Fitness Street, Gym City, GC 12345'}
+Phone: ${settings.storePhone || '+1 (555) 123-4567'}
 
 We will respond to your inquiry within 30 days.`
     }

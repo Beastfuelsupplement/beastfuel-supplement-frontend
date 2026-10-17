@@ -8,9 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { contactFormSchema } from '@/lib/validations';
 import { z } from 'zod';
+import { useSettings } from '@/hooks/useSettings';
 
 const Contact = () => {
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -73,26 +75,26 @@ const Contact = () => {
     {
       icon: Mail,
       title: 'Email',
-      details: 'support@beastfuel.com',
-      subtext: 'We reply within 24 hours',
+      details: settings.storeEmail || 'support@beastfuel.com',
+      subtext: settings.contactSubtext || 'We reply within 24 hours',
     },
     {
       icon: Phone,
       title: 'Phone',
-      details: '+1 (555) 123-4567',
-      subtext: 'Mon-Fri, 9am-6pm EST',
+      details: settings.storePhone || '+1 (555) 123-4567',
+      subtext: settings.workingHours || 'Mon-Fri, 9am-6pm EST',
     },
     {
       icon: MapPin,
       title: 'Address',
-      details: '123 Fitness Street',
-      subtext: 'New York, NY 10001',
+      details: settings.storeAddress ? settings.storeAddress.split(',')[0] : '123 Fitness Street',
+      subtext: settings.storeAddress ? settings.storeAddress.split(',').slice(1).join(',').trim() || 'Gym City, GC 12345' : 'New York, NY 10001',
     },
     {
       icon: Clock,
       title: 'Business Hours',
-      details: 'Mon-Fri: 9am-6pm',
-      subtext: 'Sat-Sun: Closed',
+      details: settings.workingHours || 'Mon-Fri: 9am-6pm',
+      subtext: settings.weekendHours || 'Sat-Sun: Closed',
     },
   ];
 
