@@ -162,18 +162,23 @@ export default function Brands() {
                 >
                   <div className="w-full h-20 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center p-2 mb-3 group-hover:scale-105 transition-transform overflow-hidden shadow-inner relative">
                     {fb.logo ? (
-                      <img
-                        src={formatImageUrl(fb.logo)}
-                        alt={fb.name}
-                        className="max-h-16 w-auto max-w-[85%] object-contain filter contrast-125"
-                        loading="lazy"
-                        onError={(e) => {
-                          // Fallback to text initials if image fails
-                          (e.target as HTMLElement).style.display = 'none';
-                          const fallbackEl = document.getElementById(`fallback-featured-${fb._id}`);
-                          if (fallbackEl) fallbackEl.style.display = 'flex';
-                        }}
-                      />
+                      <div
+                        id={`featured-logo-wrap-${fb._id}`}
+                        className="w-full h-full rounded-lg bg-white flex items-center justify-center p-1.5 shadow-inner overflow-hidden"
+                      >
+                        <img
+                          src={formatImageUrl(fb.logo)}
+                          alt={fb.name}
+                          className="w-full h-full max-h-16 object-contain filter contrast-125"
+                          loading="lazy"
+                          onError={() => {
+                            const wrapEl = document.getElementById(`featured-logo-wrap-${fb._id}`);
+                            if (wrapEl) wrapEl.style.display = 'none';
+                            const fallbackEl = document.getElementById(`fallback-featured-${fb._id}`);
+                            if (fallbackEl) fallbackEl.style.display = 'flex';
+                          }}
+                        />
+                      </div>
                     ) : null}
                     <div
                       id={`fallback-featured-${fb._id}`}
@@ -368,17 +373,23 @@ export default function Brands() {
                     {/* Logo Showcase Area - Big prominent icon size filling the container */}
                     <div className="w-full h-32 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800/80 flex items-center justify-center p-3 mb-4 group-hover:scale-[1.02] transition-transform duration-300 shadow-sm relative overflow-hidden">
                       {brand.logo ? (
-                        <img
-                          src={formatImageUrl(brand.logo)}
-                          alt={brand.name}
-                          className="max-h-24 w-auto max-w-[85%] object-contain filter contrast-125"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                            const fallbackEl = document.getElementById(`fallback-monogram-${brand._id}`);
-                            if (fallbackEl) fallbackEl.style.display = 'flex';
-                          }}
-                        />
+                        <div
+                          id={`brand-logo-wrap-${brand._id}`}
+                          className="w-full h-full rounded-lg bg-white flex items-center justify-center p-2.5 shadow-inner overflow-hidden"
+                        >
+                          <img
+                            src={formatImageUrl(brand.logo)}
+                            alt={brand.name}
+                            className="w-full h-full max-h-24 object-contain filter contrast-125"
+                            loading="lazy"
+                            onError={() => {
+                              const wrapEl = document.getElementById(`brand-logo-wrap-${brand._id}`);
+                              if (wrapEl) wrapEl.style.display = 'none';
+                              const fallbackEl = document.getElementById(`fallback-monogram-${brand._id}`);
+                              if (fallbackEl) fallbackEl.style.display = 'flex';
+                            }}
+                          />
+                        </div>
                       ) : null}
 
                       {/* Monogram Fallback filling the full big icon container size */}
