@@ -106,8 +106,8 @@ export default function Brands() {
               <ShieldCheck className="w-4 h-4" />
               100% Verified Authentic Brands
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-foreground leading-[1.05]">
-              Shop By <span className="bg-gradient-to-r from-red-500 via-amber-500 to-primary bg-clip-text text-transparent">Brand</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white leading-[1.05]">
+              Shop By <span className="text-white">Brand</span>
             </h1>
             <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
               Explore authentic, lab-tested supplements from globally acclaimed sports nutrition giants. 
@@ -130,7 +130,7 @@ export default function Brands() {
               <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Authorized Retailer</div>
             </div>
             <div className="p-3.5 rounded-xl bg-card/60 border border-border/60 backdrop-blur-sm">
-              <div className="text-2xl font-black text-amber-500">Fast</div>
+              <div className="text-2xl font-black text-white">Fast</div>
               <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Islandwide Delivery</div>
             </div>
           </div>
@@ -160,23 +160,28 @@ export default function Brands() {
                   to={`/products?brand=${encodeURIComponent(fb.name)}`}
                   className="group relative flex flex-col items-center justify-center p-4 rounded-2xl bg-card/60 hover:bg-card border border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 text-center"
                 >
-                  <div className="w-full h-20 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center p-3 mb-3 group-hover:scale-105 transition-transform overflow-hidden shadow-inner">
+                  <div className="w-full h-20 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center p-2 mb-3 group-hover:scale-105 transition-transform overflow-hidden shadow-inner relative">
                     {fb.logo ? (
                       <img
                         src={formatImageUrl(fb.logo)}
                         alt={fb.name}
-                        className="max-h-14 max-w-full object-contain filter contrast-125"
+                        className="max-h-16 w-auto max-w-[85%] object-contain filter contrast-125"
                         loading="lazy"
                         onError={(e) => {
                           // Fallback to text initials if image fails
                           (e.target as HTMLElement).style.display = 'none';
+                          const fallbackEl = document.getElementById(`fallback-featured-${fb._id}`);
+                          if (fallbackEl) fallbackEl.style.display = 'flex';
                         }}
                       />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-amber-500 flex items-center justify-center text-white font-black text-lg shadow-sm">
-                        {fb.name.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    ) : null}
+                    <div
+                      id={`fallback-featured-${fb._id}`}
+                      style={{ display: fb.logo ? 'none' : 'flex' }}
+                      className="w-full h-full rounded-lg bg-gradient-to-br from-red-600 via-rose-600 to-amber-500 flex items-center justify-center text-white font-black text-xl shadow-inner tracking-wider"
+                    >
+                      {fb.name.substring(0, 2).toUpperCase()}
+                    </div>
                   </div>
                   <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1">
                     {fb.name}
@@ -360,13 +365,13 @@ export default function Brands() {
                       )}
                     </div>
 
-                    {/* Logo Showcase Area */}
-                    <div className="w-full h-32 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800/80 flex items-center justify-center p-4 mb-4 group-hover:scale-[1.02] transition-transform duration-300 shadow-sm relative overflow-hidden">
+                    {/* Logo Showcase Area - Big prominent icon size filling the container */}
+                    <div className="w-full h-32 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800/80 flex items-center justify-center p-3 mb-4 group-hover:scale-[1.02] transition-transform duration-300 shadow-sm relative overflow-hidden">
                       {brand.logo ? (
                         <img
                           src={formatImageUrl(brand.logo)}
                           alt={brand.name}
-                          className="max-h-20 max-w-full object-contain filter contrast-125"
+                          className="max-h-24 w-auto max-w-[85%] object-contain filter contrast-125"
                           loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLElement).style.display = 'none';
@@ -376,11 +381,11 @@ export default function Brands() {
                         />
                       ) : null}
 
-                      {/* Monogram Fallback if no logo or failed image */}
+                      {/* Monogram Fallback filling the full big icon container size */}
                       <div
                         id={`fallback-monogram-${brand._id}`}
                         style={{ display: brand.logo ? 'none' : 'flex' }}
-                        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-amber-500 text-white font-black text-2xl items-center justify-center shadow-md uppercase tracking-wider"
+                        className="w-full h-full rounded-lg bg-gradient-to-br from-red-600 via-rose-600 to-amber-500 text-white font-black text-3xl items-center justify-center shadow-inner uppercase tracking-widest"
                       >
                         {brand.name.substring(0, 2).toUpperCase()}
                       </div>

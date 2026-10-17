@@ -112,9 +112,9 @@ const Offers = () => {
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             </div>
 
-            <h1 className="text-display text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-foreground mb-4">
+            <h1 className="text-display text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white mb-4">
               SPECIAL OFFERS <br className="hidden sm:block" />
-              <span className="bg-gradient-to-r from-rose-600 via-amber-500 to-rose-500 bg-clip-text text-transparent">
+              <span className="text-white">
                 & FLASH DEALS
               </span>
             </h1>
