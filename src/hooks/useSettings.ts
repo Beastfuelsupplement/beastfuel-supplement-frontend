@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
+export interface SocialMediaAccount {
+  id: string;
+  platform: 'instagram' | 'twitter' | 'youtube' | 'facebook' | 'whatsapp' | 'tiktok' | 'linkedin' | 'discord' | 'telegram' | 'website' | string;
+  label: string;
+  url: string;
+  enabled: boolean;
+}
+
 export interface SocialLinks {
   instagram: string;
   twitter: string;
@@ -18,6 +26,7 @@ export interface SiteSettings {
   workingHours: string;
   weekendHours: string;
   contactSubtext: string;
+  socialMediaAccounts: SocialMediaAccount[];
   socialLinks: SocialLinks;
   currency: string;
   timezone: string;
@@ -34,6 +43,12 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   workingHours: 'Mon - Fri: 9AM - 6PM',
   weekendHours: 'Sat - Sun: Closed',
   contactSubtext: 'We reply within 24 hours',
+  socialMediaAccounts: [
+    { id: 'soc-1', platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/beastfuel', enabled: true },
+    { id: 'soc-2', platform: 'twitter', label: 'Twitter / X', url: 'https://twitter.com/beastfuel', enabled: true },
+    { id: 'soc-3', platform: 'youtube', label: 'YouTube', url: 'https://youtube.com/@beastfuel', enabled: true },
+    { id: 'soc-4', platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/beastfuel', enabled: true },
+  ],
   socialLinks: {
     instagram: 'https://instagram.com/beastfuel',
     twitter: 'https://twitter.com/beastfuel',
@@ -60,6 +75,9 @@ export function useSettings() {
         return {
           ...DEFAULT_SITE_SETTINGS,
           ...parsed,
+          socialMediaAccounts: Array.isArray(parsed.socialMediaAccounts) && parsed.socialMediaAccounts.length > 0
+            ? parsed.socialMediaAccounts
+            : DEFAULT_SITE_SETTINGS.socialMediaAccounts,
           socialLinks: {
             ...DEFAULT_SITE_SETTINGS.socialLinks,
             ...(parsed.socialLinks || {}),
@@ -84,9 +102,24 @@ export function useSettings() {
         throw new Error(`Failed to load settings: ${res.statusText}`);
       }
       const data = await res.json();
+      
+      // Auto-reconstruct socialMediaAccounts if only legacy socialLinks existed
+      let accounts = data.socialMediaAccounts;
+      if (!Array.isArray(accounts) || accounts.length === 0) {
+        const fallbackList: SocialMediaAccount[] = [];
+        if (data.socialLinks?.instagram) fallbackList.push({ id: 'soc-1', platform: 'instagram', label: 'Instagram', url: data.socialLinks.instagram, enabled: true });
+        if (data.socialLinks?.twitter) fallbackList.push({ id: 'soc-2', platform: 'twitter', label: 'Twitter / X', url: data.socialLinks.twitter, enabled: true });
+        if (data.socialLinks?.youtube) fallbackList.push({ id: 'soc-3', platform: 'youtube', label: 'YouTube', url: data.socialLinks.youtube, enabled: true });
+        if (data.socialLinks?.facebook) fallbackList.push({ id: 'soc-4', platform: 'facebook', label: 'Facebook', url: data.socialLinks.facebook, enabled: true });
+        if (data.socialLinks?.whatsapp) fallbackList.push({ id: 'soc-5', platform: 'whatsapp', label: 'WhatsApp', url: data.socialLinks.whatsapp, enabled: true });
+        if (data.socialLinks?.tiktok) fallbackList.push({ id: 'soc-6', platform: 'tiktok', label: 'TikTok', url: data.socialLinks.tiktok, enabled: true });
+        accounts = fallbackList.length > 0 ? fallbackList : DEFAULT_SITE_SETTINGS.socialMediaAccounts;
+      }
+
       const merged: SiteSettings = {
         ...DEFAULT_SITE_SETTINGS,
         ...data,
+        socialMediaAccounts: accounts,
         socialLinks: {
           ...DEFAULT_SITE_SETTINGS.socialLinks,
           ...(data.socialLinks || {}),
@@ -111,6 +144,7 @@ export function useSettings() {
       const newMerged: SiteSettings = {
         ...settings,
         ...updates,
+        socialMediaAccounts: updates.socialMediaAccounts || settings.socialMediaAccounts,
         socialLinks: {
           ...settings.socialLinks,
           ...(updates.socialLinks || {}),
@@ -143,6 +177,7 @@ export function useSettings() {
       const finalSettings: SiteSettings = {
         ...DEFAULT_SITE_SETTINGS,
         ...savedData,
+        socialMediaAccounts: Array.isArray(savedData.socialMediaAccounts) ? savedData.socialMediaAccounts : newMerged.socialMediaAccounts,
         socialLinks: {
           ...DEFAULT_SITE_SETTINGS.socialLinks,
           ...(savedData.socialLinks || {}),
@@ -151,7 +186,6 @@ export function useSettings() {
       setSettings(finalSettings);
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(finalSettings));
 
-      // Broadcast update event across any listening components
       window.dispatchEvent(new CustomEvent('settings:updated', { detail: finalSettings }));
       return true;
     } catch (err: any) {
@@ -166,7 +200,6 @@ export function useSettings() {
   useEffect(() => {
     fetchSettings();
 
-    // Listen for updates from other parts of the app (e.g. admin settings page)
     const handleSettingsUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<SiteSettings>;
       if (customEvent.detail) {

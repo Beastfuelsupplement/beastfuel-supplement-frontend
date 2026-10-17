@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Store, 
   Bell, 
@@ -21,14 +21,61 @@ import {
   Facebook, 
   ExternalLink,
   MessageCircle,
-  Video
+  Video,
+  Globe,
+  Linkedin,
+  Send,
+  Gamepad2,
+  Eye,
+  EyeOff,
+  Link2
 } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAdminStore, PaymentMethod } from '@/store/adminStore';
 import { checkAndNotifyLowStock } from '@/utils/stockNotification';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings, SocialMediaAccount } from '@/hooks/useSettings';
+
+const AVAILABLE_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'twitter', label: 'Twitter / X' },
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'discord', label: 'Discord' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'website', label: 'Website / Custom Link' },
+];
+
+const getPlatformIcon = (platform: string = '') => {
+  switch (platform.toLowerCase()) {
+    case 'instagram':
+      return { icon: Instagram, color: 'text-pink-500', bg: 'bg-pink-500/10 border-pink-500/20', defaultLabel: 'Instagram' };
+    case 'twitter':
+    case 'x':
+      return { icon: Twitter, color: 'text-sky-400', bg: 'bg-sky-400/10 border-sky-400/20', defaultLabel: 'Twitter / X' };
+    case 'youtube':
+      return { icon: Youtube, color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/20', defaultLabel: 'YouTube' };
+    case 'facebook':
+      return { icon: Facebook, color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20', defaultLabel: 'Facebook' };
+    case 'whatsapp':
+      return { icon: MessageCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20', defaultLabel: 'WhatsApp' };
+    case 'tiktok':
+      return { icon: Video, color: 'text-purple-400', bg: 'bg-purple-400/10 border-purple-400/20', defaultLabel: 'TikTok' };
+    case 'linkedin':
+      return { icon: Linkedin, color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20', defaultLabel: 'LinkedIn' };
+    case 'telegram':
+      return { icon: Send, color: 'text-cyan-400', bg: 'bg-cyan-400/10 border-cyan-400/20', defaultLabel: 'Telegram' };
+    case 'discord':
+      return { icon: Gamepad2, color: 'text-indigo-400', bg: 'bg-indigo-400/10 border-indigo-400/20', defaultLabel: 'Discord' };
+    case 'website':
+    default:
+      return { icon: Globe, color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/20', defaultLabel: 'Website Link' };
+  }
+};
 
 const AdminSettings = () => {
   const { settings, updateSettings, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, products } = useAdminStore();
@@ -42,15 +89,26 @@ const AdminSettings = () => {
     workingHours: apiSettings.workingHours || settings.workingHours || 'Mon - Fri: 9AM - 6PM',
     weekendHours: apiSettings.weekendHours || settings.weekendHours || 'Sat - Sun: Closed',
     contactSubtext: apiSettings.contactSubtext || settings.contactSubtext || 'We reply within 24 hours',
-    socialLinks: {
-      instagram: apiSettings.socialLinks?.instagram || settings.socialLinks?.instagram || 'https://instagram.com/beastfuel',
-      twitter: apiSettings.socialLinks?.twitter || settings.socialLinks?.twitter || 'https://twitter.com/beastfuel',
-      youtube: apiSettings.socialLinks?.youtube || settings.socialLinks?.youtube || 'https://youtube.com/@beastfuel',
-      facebook: apiSettings.socialLinks?.facebook || settings.socialLinks?.facebook || 'https://facebook.com/beastfuel',
-      whatsapp: apiSettings.socialLinks?.whatsapp || settings.socialLinks?.whatsapp || '',
-      tiktok: apiSettings.socialLinks?.tiktok || settings.socialLinks?.tiktok || '',
-    },
   });
+
+  // Dynamic social media accounts list
+  const [socialAccounts, setSocialAccounts] = useState<SocialMediaAccount[]>(() => {
+    if (apiSettings.socialMediaAccounts && apiSettings.socialMediaAccounts.length > 0) {
+      return apiSettings.socialMediaAccounts;
+    }
+    return [
+      { id: 'soc-1', platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/beastfuel', enabled: true },
+      { id: 'soc-2', platform: 'twitter', label: 'Twitter / X', url: 'https://twitter.com/beastfuel', enabled: true },
+      { id: 'soc-3', platform: 'youtube', label: 'YouTube', url: 'https://youtube.com/@beastfuel', enabled: true },
+      { id: 'soc-4', platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/beastfuel', enabled: true },
+    ];
+  });
+
+  // New account form state
+  const [isAddingSocial, setIsAddingSocial] = useState(false);
+  const [newSocialPlatform, setNewSocialPlatform] = useState('website');
+  const [newSocialLabel, setNewSocialLabel] = useState('');
+  const [newSocialUrl, setNewSocialUrl] = useState('');
 
   // Sync when API settings load or change
   useEffect(() => {
@@ -69,14 +127,55 @@ const AdminSettings = () => {
         timezone: apiSettings.timezone || prev.timezone,
         adminEmail: apiSettings.adminEmail || prev.adminEmail,
         lowStockThreshold: apiSettings.lowStockThreshold || prev.lowStockThreshold,
-        socialLinks: {
-          ...prev.socialLinks,
-          ...(apiSettings.socialLinks || {}),
-        },
       }));
+
+      if (Array.isArray(apiSettings.socialMediaAccounts) && apiSettings.socialMediaAccounts.length > 0) {
+        setSocialAccounts(apiSettings.socialMediaAccounts);
+      }
     }
   }, [apiSettings]);
 
+  // Social account handlers
+  const handleAddNewSocialAccount = () => {
+    if (!newSocialUrl.trim()) {
+      toast.error('Please enter a valid URL for the new link');
+      return;
+    }
+
+    const platformMeta = getPlatformIcon(newSocialPlatform);
+    const newAcc: SocialMediaAccount = {
+      id: `soc-${Date.now()}`,
+      platform: newSocialPlatform,
+      label: newSocialLabel.trim() || platformMeta.defaultLabel,
+      url: newSocialUrl.trim(),
+      enabled: true,
+    };
+
+    setSocialAccounts((prev) => [...prev, newAcc]);
+    setNewSocialUrl('');
+    setNewSocialLabel('');
+    setIsAddingSocial(false);
+    toast.success(`Added ${newAcc.label}! Click "Save All Changes" to publish.`);
+  };
+
+  const handleUpdateSocialAccount = (id: string, updates: Partial<SocialMediaAccount>) => {
+    setSocialAccounts((prev) =>
+      prev.map((acc) => (acc.id === id ? { ...acc, ...updates } : acc))
+    );
+  };
+
+  const handleDeleteSocialAccount = (id: string, label: string) => {
+    setSocialAccounts((prev) => prev.filter((acc) => acc.id !== id));
+    toast.info(`Removed ${label || 'account'}. Click "Save All Changes" to apply.`);
+  };
+
+  const handleToggleSocialAccount = (id: string) => {
+    setSocialAccounts((prev) =>
+      prev.map((acc) => (acc.id === id ? { ...acc, enabled: !acc.enabled } : acc))
+    );
+  };
+
+  // Payment methods state
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [editingPayment, setEditingPayment] = useState<PaymentMethod | null>(null);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
@@ -129,7 +228,7 @@ const AdminSettings = () => {
         workingHours: localSettings.workingHours,
         weekendHours: localSettings.weekendHours,
         contactSubtext: localSettings.contactSubtext,
-        socialLinks: localSettings.socialLinks,
+        socialMediaAccounts: socialAccounts,
         currency: localSettings.currency,
         timezone: localSettings.timezone,
         adminEmail: localSettings.adminEmail,
@@ -137,10 +236,12 @@ const AdminSettings = () => {
       });
 
       // 2. Update local state store
-      updateSettings(localSettings);
+      updateSettings({
+        ...localSettings,
+      });
 
       if (success) {
-        toast.success('Settings & contact information updated across the entire website!');
+        toast.success('Settings, contact details & social links updated across website!');
       } else {
         toast.success('Settings saved to local storage!');
       }
@@ -149,16 +250,6 @@ const AdminSettings = () => {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleSocialLinkChange = (key: keyof typeof localSettings.socialLinks, value: string) => {
-    setLocalSettings((prev) => ({
-      ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [key]: value,
-      },
-    }));
   };
 
   const handleAddPaymentMethod = () => {
@@ -196,6 +287,11 @@ const AdminSettings = () => {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'payments', label: 'Payments', icon: CreditCard },
   ];
+
+  // Active accounts for live preview
+  const livePreviewAccounts = socialAccounts.filter(
+    (acc) => Boolean(acc.enabled && acc.url && acc.url.trim() !== '')
+  );
 
   return (
     <AdminLayout>
@@ -241,10 +337,10 @@ const AdminSettings = () => {
             {/* Quick Helper Note */}
             <div className="mt-4 p-4 rounded-xl bg-secondary/50 border border-border/60 text-xs text-muted-foreground space-y-2">
               <div className="font-bold text-foreground flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5 text-primary" /> Real-Time Sync
+                <Store className="w-3.5 h-3.5 text-primary" /> Dynamic Real-Time Sync
               </div>
               <p>
-                Updating contact info and social links updates the website footer, contact page, and email receipts immediately for all visitors.
+                Add or remove any social media or website link. When removed or disabled, the icon automatically vanishes from the footer and the remaining icons adjust their spacing smoothly.
               </p>
             </div>
           </div>
@@ -269,7 +365,7 @@ const AdminSettings = () => {
                         WEBSITE CONTACT INFORMATION
                       </h2>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        These details appear in the Website Footer and Contact Us page
+                        These details appear in the Website Footer and Contact page. If any field is cleared, that line will automatically disappear and collapse the space.
                       </p>
                     </div>
 
@@ -371,210 +467,324 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  {/* Section 2: Social Media Links */}
+                  {/* Section 2: Dynamic Social Media & Website Accounts */}
                   <div className="space-y-4 pt-4 border-t border-border/80">
-                    <div className="border-b border-border/80 pb-3">
-                      <h2 className="text-display text-xl flex items-center gap-2">
-                        <Share2 className="w-5 h-5 text-primary" />
-                        SOCIAL MEDIA ACCOUNTS & LINKS
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Connect your brand handles. Clicking these icons in the footer opens your direct profiles.
-                      </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/80 pb-3">
+                      <div>
+                        <h2 className="text-display text-xl flex items-center gap-2">
+                          <Share2 className="w-5 h-5 text-primary" />
+                          SOCIAL MEDIA ACCOUNTS & WEBSITE LINKS
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Add new accounts, change links, or remove existing accounts. Spacing in the website footer will automatically adjust.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setIsAddingSocial(!isAddingSocial)}
+                        className="gap-1.5 shrink-0 uppercase tracking-wider font-bold text-xs"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add New Link
+                      </Button>
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {/* Instagram */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <Instagram className="w-3.5 h-3.5 text-pink-500" /> Instagram URL
-                          </label>
-                          {localSettings.socialLinks.instagram && (
-                            <a
-                              href={localSettings.socialLinks.instagram}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
-                            >
-                              Test <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
+                    {/* Add Account Inline Form */}
+                    <AnimatePresence>
+                      {isAddingSocial && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 rounded-xl bg-secondary/80 border border-primary/40 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                                <Plus className="w-3.5 h-3.5" /> Add New Social Media Account or Website
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => setIsAddingSocial(false)}
+                                className="text-xs text-muted-foreground hover:text-foreground"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="grid sm:grid-cols-3 gap-3">
+                              <div>
+                                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
+                                  Platform Type
+                                </label>
+                                <select
+                                  value={newSocialPlatform}
+                                  onChange={(e) => {
+                                    setNewSocialPlatform(e.target.value);
+                                    const meta = getPlatformIcon(e.target.value);
+                                    if (!newSocialLabel) setNewSocialLabel(meta.defaultLabel);
+                                  }}
+                                  className="w-full h-10 px-3 bg-background border border-border rounded-lg text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                >
+                                  {AVAILABLE_PLATFORMS.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
+                                  Account Label / Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newSocialLabel}
+                                  onChange={(e) => setNewSocialLabel(e.target.value)}
+                                  placeholder={getPlatformIcon(newSocialPlatform).defaultLabel}
+                                  className="w-full h-10 px-3 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
+                                  Target Web URL
+                                </label>
+                                <input
+                                  type="url"
+                                  value={newSocialUrl}
+                                  onChange={(e) => setNewSocialUrl(e.target.value)}
+                                  placeholder="https://..."
+                                  className="w-full h-10 px-3 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsAddingSocial(false)}
+                                className="text-xs"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleAddNewSocialAccount}
+                                className="text-xs font-bold uppercase tracking-wider"
+                              >
+                                Add Account
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Social Accounts List */}
+                    <div className="space-y-3">
+                      {socialAccounts.length === 0 ? (
+                        <div className="p-8 text-center rounded-xl bg-secondary/30 border border-dashed border-border/80 text-muted-foreground">
+                          <p className="text-sm">No social media links or websites configured yet.</p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsAddingSocial(true)}
+                            className="mt-3 gap-1.5"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Your First Link
+                          </Button>
                         </div>
-                        <input
-                          type="url"
-                          value={localSettings.socialLinks.instagram}
-                          onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
-                          placeholder="https://instagram.com/beastfuel"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                      ) : (
+                        socialAccounts.map((account) => {
+                          const meta = getPlatformIcon(account.platform);
+                          const Icon = meta.icon;
 
-                      {/* Twitter / X */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <Twitter className="w-3.5 h-3.5 text-sky-400" /> Twitter / X URL
-                          </label>
-                          {localSettings.socialLinks.twitter && (
-                            <a
-                              href={localSettings.socialLinks.twitter}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
+                          return (
+                            <div
+                              key={account.id}
+                              className={`p-3.5 rounded-xl border transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                                account.enabled
+                                  ? 'bg-secondary/40 border-border hover:border-primary/40'
+                                  : 'bg-muted/30 border-dashed border-border/60 opacity-60'
+                              }`}
                             >
-                              Test <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-                        <input
-                          type="url"
-                          value={localSettings.socialLinks.twitter}
-                          onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
-                          placeholder="https://twitter.com/beastfuel"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                {/* Platform Icon Badge */}
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.bg}`}>
+                                  <Icon className={`w-5 h-5 ${meta.color}`} />
+                                </div>
 
-                      {/* YouTube */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <Youtube className="w-3.5 h-3.5 text-red-500" /> YouTube Channel URL
-                          </label>
-                          {localSettings.socialLinks.youtube && (
-                            <a
-                              href={localSettings.socialLinks.youtube}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
-                            >
-                              Test <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-                        <input
-                          type="url"
-                          value={localSettings.socialLinks.youtube}
-                          onChange={(e) => handleSocialLinkChange('youtube', e.target.value)}
-                          placeholder="https://youtube.com/@beastfuel"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 min-w-0">
+                                  {/* Platform Selector & Label */}
+                                  <div className="flex gap-2">
+                                    <select
+                                      value={account.platform}
+                                      onChange={(e) =>
+                                        handleUpdateSocialAccount(account.id, {
+                                          platform: e.target.value,
+                                          label: account.label || getPlatformIcon(e.target.value).defaultLabel,
+                                        })
+                                      }
+                                      className="h-9 px-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary shrink-0"
+                                    >
+                                      {AVAILABLE_PLATFORMS.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                          {p.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <input
+                                      type="text"
+                                      value={account.label}
+                                      onChange={(e) =>
+                                        handleUpdateSocialAccount(account.id, { label: e.target.value })
+                                      }
+                                      placeholder="Account Label"
+                                      className="h-9 px-2.5 bg-background border border-border rounded-lg text-xs text-foreground flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                  </div>
 
-                      {/* Facebook */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <Facebook className="w-3.5 h-3.5 text-blue-500" /> Facebook Page URL
-                          </label>
-                          {localSettings.socialLinks.facebook && (
-                            <a
-                              href={localSettings.socialLinks.facebook}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
-                            >
-                              Test <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-                        <input
-                          type="url"
-                          value={localSettings.socialLinks.facebook}
-                          onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
-                          placeholder="https://facebook.com/beastfuel"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                                  {/* URL Input */}
+                                  <div className="relative">
+                                    <input
+                                      type="url"
+                                      value={account.url}
+                                      onChange={(e) =>
+                                        handleUpdateSocialAccount(account.id, { url: e.target.value })
+                                      }
+                                      placeholder="https://..."
+                                      className="w-full h-9 pl-3 pr-8 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                    {account.url && (
+                                      <a
+                                        href={account.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title="Test this link"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
 
-                      {/* WhatsApp (Optional) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp Direct Link (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={localSettings.socialLinks.whatsapp || ''}
-                          onChange={(e) => handleSocialLinkChange('whatsapp', e.target.value)}
-                          placeholder="https://wa.me/94771234567"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                              {/* Action Buttons: Toggle Active & Delete */}
+                              <div className="flex items-center gap-1.5 self-end md:self-auto shrink-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleToggleSocialAccount(account.id)}
+                                  className={`h-9 px-2.5 text-xs gap-1.5 ${
+                                    account.enabled
+                                      ? 'text-emerald-500 hover:text-emerald-400 bg-emerald-500/10'
+                                      : 'text-muted-foreground hover:text-foreground bg-muted'
+                                  }`}
+                                  title={account.enabled ? 'Click to Disable from website' : 'Click to Enable on website'}
+                                >
+                                  {account.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                  <span>{account.enabled ? 'Active' : 'Hidden'}</span>
+                                </Button>
 
-                      {/* TikTok (Optional) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                          <Video className="w-3.5 h-3.5 text-purple-400" /> TikTok Profile URL (Optional)
-                        </label>
-                        <input
-                          type="url"
-                          value={localSettings.socialLinks.tiktok || ''}
-                          onChange={(e) => handleSocialLinkChange('tiktok', e.target.value)}
-                          placeholder="https://tiktok.com/@beastfuel"
-                          className="w-full h-11 px-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteSocialAccount(account.id, account.label)}
+                                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  title="Delete Account"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
                   {/* Section 3: Live Preview of Website Footer Area */}
                   <div className="pt-4 border-t border-border/80">
-                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-                      <span>Live Footer Preview (How it looks on webpage)</span>
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center justify-between">
+                      <span>Live Footer Preview (Auto-adjusts instantly as accounts are added/removed)</span>
+                      <span className="text-[11px] font-normal text-primary">
+                        {livePreviewAccounts.length} {livePreviewAccounts.length === 1 ? 'icon' : 'icons'} visible
+                      </span>
                     </div>
 
                     <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 text-white space-y-4">
                       <div className="grid sm:grid-cols-2 gap-6">
-                        {/* Brand & Social Preview */}
+                        {/* Brand & Dynamic Social Preview */}
                         <div className="space-y-3">
                           <div className="text-lg font-black tracking-wider text-white">BEASTFUEL</div>
-                          <p className="text-xs text-zinc-400 leading-relaxed">
-                            {localSettings.tagline || 'Fuel Your Ascent. Premium supplements for peak performance.'}
-                          </p>
-                          <div className="flex gap-2 pt-1">
-                            {localSettings.socialLinks.instagram && (
-                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300">
-                                <Instagram className="w-4 h-4 text-pink-400" />
-                              </div>
-                            )}
-                            {localSettings.socialLinks.twitter && (
-                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300">
-                                <Twitter className="w-4 h-4 text-sky-400" />
-                              </div>
-                            )}
-                            {localSettings.socialLinks.youtube && (
-                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300">
-                                <Youtube className="w-4 h-4 text-red-500" />
-                              </div>
-                            )}
-                            {localSettings.socialLinks.facebook && (
-                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300">
-                                <Facebook className="w-4 h-4 text-blue-500" />
-                              </div>
-                            )}
-                          </div>
+                          {localSettings.tagline && (
+                            <p className="text-xs text-zinc-400 leading-relaxed">
+                              {localSettings.tagline}
+                            </p>
+                          )}
+
+                          {/* Dynamic Icons Preview with auto-spacing */}
+                          {livePreviewAccounts.length > 0 ? (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {livePreviewAccounts.map((account) => {
+                                const meta = getPlatformIcon(account.platform);
+                                const Icon = meta.icon;
+                                return (
+                                  <div
+                                    key={account.id}
+                                    title={account.label || account.platform}
+                                    className="w-8 h-8 rounded-lg bg-zinc-800/90 border border-zinc-700/60 flex items-center justify-center transition-all hover:scale-105 shadow-sm"
+                                  >
+                                    <Icon className={`w-4 h-4 ${meta.color}`} />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-zinc-500 italic pt-1">
+                              No social accounts visible in footer
+                            </div>
+                          )}
                         </div>
 
-                        {/* Contact Block Preview */}
+                        {/* Contact Block Preview (Auto-collapses empty items) */}
                         <div className="space-y-2.5">
                           <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">CONTACT</div>
-                          <div className="text-xs text-zinc-300 flex items-center gap-2">
-                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span>{localSettings.storeAddress || '123 Fitness Street, Gym City, GC 12345'}</span>
-                          </div>
-                          <div className="text-xs text-zinc-300 flex items-center gap-2">
-                            <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span>{localSettings.storePhone || '+1 (555) 123-4567'}</span>
-                          </div>
-                          <div className="text-xs text-zinc-300 flex items-center gap-2">
-                            <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span>{localSettings.storeEmail || 'support@beastfuel.com'}</span>
-                          </div>
-                          <div className="text-xs text-zinc-300 flex items-center gap-2">
-                            <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span>{localSettings.workingHours || 'Mon - Fri: 9AM - 6PM'}</span>
-                          </div>
+                          {localSettings.storeAddress?.trim() && (
+                            <div className="text-xs text-zinc-300 flex items-center gap-2">
+                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span>{localSettings.storeAddress}</span>
+                            </div>
+                          )}
+                          {localSettings.storePhone?.trim() && (
+                            <div className="text-xs text-zinc-300 flex items-center gap-2">
+                              <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span>{localSettings.storePhone}</span>
+                            </div>
+                          )}
+                          {localSettings.storeEmail?.trim() && (
+                            <div className="text-xs text-zinc-300 flex items-center gap-2">
+                              <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span>{localSettings.storeEmail}</span>
+                            </div>
+                          )}
+                          {localSettings.workingHours?.trim() && (
+                            <div className="text-xs text-zinc-300 flex items-center gap-2">
+                              <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span>{localSettings.workingHours}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

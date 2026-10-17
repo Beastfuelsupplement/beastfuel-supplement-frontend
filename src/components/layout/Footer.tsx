@@ -1,20 +1,68 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Youtube, Facebook, Mail, ArrowUpRight, MapPin, Phone, Clock } from 'lucide-react';
+import { 
+  Instagram, 
+  Twitter, 
+  Youtube, 
+  Facebook, 
+  Mail, 
+  ArrowUpRight, 
+  MapPin, 
+  Phone, 
+  Clock, 
+  Globe, 
+  MessageCircle, 
+  Video, 
+  Linkedin, 
+  Send, 
+  Gamepad2 
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { useSettings } from '@/hooks/useSettings';
 
+const getPlatformIcon = (platform: string = '') => {
+  switch (platform.toLowerCase()) {
+    case 'instagram':
+      return Instagram;
+    case 'twitter':
+    case 'x':
+      return Twitter;
+    case 'youtube':
+      return Youtube;
+    case 'facebook':
+      return Facebook;
+    case 'whatsapp':
+      return MessageCircle;
+    case 'tiktok':
+      return Video;
+    case 'linkedin':
+      return Linkedin;
+    case 'telegram':
+      return Send;
+    case 'discord':
+      return Gamepad2;
+    case 'website':
+    default:
+      return Globe;
+  }
+};
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const { settings } = useSettings();
 
-  const socialLinksConfig = [
-    { icon: Instagram, label: 'Instagram', href: settings.socialLinks?.instagram },
-    { icon: Twitter, label: 'Twitter', href: settings.socialLinks?.twitter },
-    { icon: Youtube, label: 'Youtube', href: settings.socialLinks?.youtube },
-    { icon: Facebook, label: 'Facebook', href: settings.socialLinks?.facebook },
-  ].filter((s) => Boolean(s.href && s.href.trim() && s.href !== '#'));
+  // Dynamic active social & website links list: filter out disabled or empty URLs
+  const activeSocialAccounts = (
+    Array.isArray(settings.socialMediaAccounts) && settings.socialMediaAccounts.length > 0
+      ? settings.socialMediaAccounts
+      : [
+          { id: '1', platform: 'instagram', label: 'Instagram', url: settings.socialLinks?.instagram, enabled: true },
+          { id: '2', platform: 'twitter', label: 'Twitter', url: settings.socialLinks?.twitter, enabled: true },
+          { id: '3', platform: 'youtube', label: 'Youtube', url: settings.socialLinks?.youtube, enabled: true },
+          { id: '4', platform: 'facebook', label: 'Facebook', url: settings.socialLinks?.facebook, enabled: true },
+        ]
+  ).filter((acc) => Boolean(acc && acc.enabled && acc.url && acc.url.trim() !== '' && acc.url !== '#'));
 
   return (
     <footer className="relative bg-card border-t border-border overflow-hidden">
@@ -30,25 +78,32 @@ const Footer = () => {
             <Link to="/" className="inline-flex items-center">
               <BrandLogo className="h-10 w-auto" />
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              {settings.tagline || 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.'}
-            </p>
-            {socialLinksConfig.length > 0 && (
-              <div className="flex flex-wrap gap-3">
-                {socialLinksConfig.map((social) => (
-                  <motion.a
-                    key={social.label}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
-                    aria-label={social.label}
-                    title={social.label}
-                  >
-                    <social.icon className="h-4 w-4" />
-                  </motion.a>
-                ))}
+            {settings.tagline?.trim() && (
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+                {settings.tagline}
+              </p>
+            )}
+
+            {/* Dynamic Social Icons: auto-adjusts spacing, disappears when removed */}
+            {activeSocialAccounts.length > 0 && (
+              <div className="flex flex-wrap gap-2.5 items-center">
+                {activeSocialAccounts.map((account) => {
+                  const Icon = getPlatformIcon(account.platform);
+                  return (
+                    <motion.a
+                      key={account.id || account.label}
+                      href={account.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+                      aria-label={account.label || account.platform}
+                      title={account.label || account.platform}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </motion.a>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -100,40 +155,48 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Dynamic Contact Info: hides cleared items and auto-adjusts layout */}
           <div className="space-y-5">
             <h4 className="text-display text-lg tracking-wider text-foreground">Contact</h4>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <span className="text-sm text-muted-foreground leading-relaxed">
-                  {settings.storeAddress || '123 Fitness Street, Gym City, GC 12345'}
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
-                <a
-                  href={`tel:${(settings.storePhone || '+1 (555) 123-4567').replace(/[^0-9+]/g, '')}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {settings.storePhone || '+1 (555) 123-4567'}
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
-                <a
-                  href={`mailto:${settings.storeEmail || 'support@beastfuel.com'}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {settings.storeEmail || 'support@beastfuel.com'}
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">
-                  {settings.workingHours || 'Mon - Fri: 9AM - 6PM'}
-                </span>
-              </li>
+              {settings.storeAddress?.trim() && (
+                <li className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <span className="text-sm text-muted-foreground leading-relaxed">
+                    {settings.storeAddress}
+                  </span>
+                </li>
+              )}
+              {settings.storePhone?.trim() && (
+                <li className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 text-primary shrink-0" />
+                  <a
+                    href={`tel:${settings.storePhone.replace(/[^0-9+]/g, '')}`}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {settings.storePhone}
+                  </a>
+                </li>
+              )}
+              {settings.storeEmail?.trim() && (
+                <li className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 text-primary shrink-0" />
+                  <a
+                    href={`mailto:${settings.storeEmail}`}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {settings.storeEmail}
+                  </a>
+                </li>
+              )}
+              {settings.workingHours?.trim() && (
+                <li className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-sm text-muted-foreground">
+                    {settings.workingHours}
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -161,22 +224,12 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} BEASTFUEL Supplements. All rights reserved.
+            © {currentYear} {settings.storeName || 'BEASTFUEL Supplements'}. All rights reserved.
           </p>
-          <div className="flex flex-wrap justify-center gap-6">
-            {[
-              { name: 'Privacy Policy', path: '/privacy' },
-              { name: 'Terms of Service', path: '/terms' },
-              { name: 'Cookies', path: '/cookies' },
-            ].map((item) => (
-              <Link 
-                key={item.name}
-                to={item.path}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
           </div>
         </div>
       </div>
