@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Product } from '@/store/cartStore';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
-import { formatCurrencyParts } from '@/lib/currency';
+import { formatCurrency, formatCurrencyParts } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
 import { calculateOfferPricing } from '@/lib/pricing';
 
@@ -231,7 +231,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               <div className="flex flex-col">
                 {pricing.hasOffer && pricing.savings > 0 && (
                   <span className="text-[11px] sm:text-xs text-muted-foreground line-through font-semibold">
-                    Rs. {pricing.regularPrice.toLocaleString()}
+                    {formatCurrency(pricing.regularPrice)}
                   </span>
                 )}
                 <div className="flex items-baseline gap-1.5 sm:gap-2">

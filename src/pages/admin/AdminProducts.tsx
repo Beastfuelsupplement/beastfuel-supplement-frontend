@@ -463,7 +463,7 @@ const AdminProducts = () => {
                                   <Flame className="w-2.5 h-2.5 fill-current" />
                                   {product.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now()
                                     ? 'OFFER EXPIRED'
-                                    : product.offerBadge || (product.offerDiscountType === 'fixed' && product.offerDiscountAmount ? `Save Rs. ${Number(product.offerDiscountAmount).toLocaleString()}` : product.offerDiscount ? `${product.offerDiscount}% OFF` : 'OFFER')}
+                                    : product.offerBadge || (product.offerDiscountType === 'fixed' && product.offerDiscountAmount ? `Save ${formatCurrency(product.offerDiscountAmount)}` : product.offerDiscount ? `${product.offerDiscount}% OFF` : 'OFFER')}
                                 </span>
                               )}
                             </div>

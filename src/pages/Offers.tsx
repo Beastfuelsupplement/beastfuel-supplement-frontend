@@ -318,7 +318,7 @@ const Offers = () => {
                             <span>
                               {pricing.savings > 0
                                 ? `${formatCurrency(pricing.savings)} (${pricing.discountPercentage}% OFF)`
-                                : 'Rs. 0.00 (0% OFF)'}
+                                : `${formatCurrency(0)} (0% OFF)`}
                             </span>
                           </div>
                         </div>

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import ProductReviews from '@/components/reviews/ProductReviews';
 import StarRating from '@/components/reviews/StarRating';
 import { useReviews } from '@/hooks/useReviews';
-import { formatCurrency } from '@/lib/currency';
+import { formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
 import { calculateOfferPricing } from '@/lib/pricing';
 
@@ -488,7 +488,7 @@ const ProductDetails = () => {
                       );
                       const wBadge = matchWo?.offerBadge || (
                         matchWo?.offerDiscountType === 'fixed' && matchWo?.offerDiscountAmount
-                          ? `Rs.${matchWo.offerDiscountAmount} OFF`
+                          ? `${formatCurrency(matchWo.offerDiscountAmount)} OFF`
                           : matchWo?.offerDiscount
                           ? `${matchWo.offerDiscount}% OFF`
                           : product?.offerBadge || 'OFFER'
@@ -692,7 +692,7 @@ const ProductDetails = () => {
               <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
                 <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg border border-border/40">
                   <Truck className="h-4 w-4 text-blue-500 shrink-0" />
-                  <span>Free shipping on orders over Rs. 50</span>
+                  <span>Free shipping on orders over {formatCurrency(FREE_SHIPPING_THRESHOLD)}</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg border border-border/40">
                   <Shield className="h-4 w-4 text-emerald-500 shrink-0" />

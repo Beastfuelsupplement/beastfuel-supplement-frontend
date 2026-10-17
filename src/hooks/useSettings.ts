@@ -20,6 +20,7 @@ export interface SocialLinks {
 export interface SiteSettings {
   storeName: string;
   tagline: string;
+  country?: string;
   storeEmail: string;
   storePhone: string;
   storeAddress: string;
@@ -37,6 +38,7 @@ export interface SiteSettings {
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   storeName: 'BEASTFUEL Supplements',
   tagline: 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.',
+  country: 'Sri Lanka',
   storeEmail: 'support@beastfuel.com',
   storePhone: '+1 (555) 123-4567',
   storeAddress: '123 Fitness Street, Gym City, GC 12345',

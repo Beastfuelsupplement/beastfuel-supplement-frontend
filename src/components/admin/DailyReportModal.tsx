@@ -73,7 +73,7 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
       const res = await api.sendDailyReportEmail(recipientEmail);
       if (res.success) {
         toast.success(
-          `End-of-day report sent to ${recipientEmail}! (${res.outOfStockCount} out-of-stock items, Rs. ${Number(res.todayRevenue).toLocaleString()} revenue)`
+          `End-of-day report sent to ${recipientEmail}! (${res.outOfStockCount} out-of-stock items, ${formatCurrency(res.todayRevenue)} revenue)`
         );
       }
     } catch (err: any) {

@@ -36,6 +36,11 @@ import { toast } from 'sonner';
 import { useAdminStore, PaymentMethod } from '@/store/adminStore';
 import { checkAndNotifyLowStock } from '@/utils/stockNotification';
 import { useSettings, SocialMediaAccount } from '@/hooks/useSettings';
+import { 
+  SUPPORTED_CURRENCIES, 
+  COUNTRY_DEFAULTS, 
+  TIMEZONE_OPTIONS 
+} from '@/lib/currency';
 
 const AVAILABLE_PLATFORMS = [
   { id: 'instagram', label: 'Instagram' },
@@ -85,6 +90,7 @@ const AdminSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState({
     ...settings,
+    country: apiSettings.country || (settings as any).country || 'Sri Lanka',
     tagline: apiSettings.tagline || settings.tagline || 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.',
     workingHours: apiSettings.workingHours || settings.workingHours || 'Mon - Fri: 9AM - 6PM',
     weekendHours: apiSettings.weekendHours || settings.weekendHours || 'Sat - Sun: Closed',
@@ -115,6 +121,7 @@ const AdminSettings = () => {
     if (apiSettings) {
       setLocalSettings((prev) => ({
         ...prev,
+        country: apiSettings.country || prev.country || 'Sri Lanka',
         storeName: apiSettings.storeName || prev.storeName,
         tagline: apiSettings.tagline || prev.tagline,
         storeEmail: apiSettings.storeEmail || prev.storeEmail,
@@ -134,6 +141,33 @@ const AdminSettings = () => {
       }
     }
   }, [apiSettings]);
+
+  // Country change: Automatically configure corresponding Currency & Timezone
+  const handleCountryChange = (newCountry: string) => {
+    const defaults = COUNTRY_DEFAULTS[newCountry];
+    setLocalSettings((prev) => ({
+      ...prev,
+      country: newCountry,
+      currency: defaults ? defaults.currency : prev.currency,
+      timezone: defaults ? defaults.timezone : prev.timezone,
+    }));
+    if (defaults) {
+      toast.info(`Updated to ${newCountry} (Currency: ${defaults.currency}, Timezone: ${defaults.timezone})`);
+    }
+  };
+
+  // Currency change: Automatically set default matching Timezone
+  const handleCurrencyChange = (newCurrency: string) => {
+    const config = SUPPORTED_CURRENCIES[newCurrency];
+    setLocalSettings((prev) => ({
+      ...prev,
+      currency: newCurrency,
+      timezone: config?.defaultTimezone || prev.timezone,
+    }));
+    if (config?.defaultTimezone) {
+      toast.info(`Switched currency to ${newCurrency} (${config.symbol}) — Timezone set to ${config.defaultTimezone}`);
+    }
+  };
 
   // Social account handlers
   const handleAddNewSocialAccount = () => {
@@ -222,6 +256,7 @@ const AdminSettings = () => {
       const success = await updateApiSettings({
         storeName: localSettings.storeName,
         tagline: localSettings.tagline,
+        country: localSettings.country,
         storeEmail: localSettings.storeEmail,
         storePhone: localSettings.storePhone,
         storeAddress: localSettings.storeAddress,
@@ -235,15 +270,31 @@ const AdminSettings = () => {
         lowStockThreshold: localSettings.lowStockThreshold,
       });
 
-      // 2. Update local state store
+      // 2. Update local state store and instant currency cache
       updateSettings({
         ...localSettings,
       });
 
+      try {
+        localStorage.setItem('beastfuel_currency', localSettings.currency);
+        window.dispatchEvent(
+          new CustomEvent('settings:updated', {
+            detail: {
+              currency: localSettings.currency,
+              timezone: localSettings.timezone,
+              country: localSettings.country,
+            },
+          })
+        );
+        window.dispatchEvent(new Event('storage'));
+      } catch {
+        // storage fallback
+      }
+
       if (success) {
-        toast.success('Settings, contact details & social links updated across website!');
+        toast.success(`Settings saved! Currency updated to ${localSettings.currency} across all pages and emails.`);
       } else {
-        toast.success('Settings saved to local storage!');
+        toast.success(`Settings saved to browser storage! Currency set to ${localSettings.currency}.`);
       }
     } catch (err: any) {
       toast.error('Failed to save settings: ' + err.message);
@@ -808,32 +859,60 @@ const AdminSettings = () => {
                       />
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      {/* Country Selection */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Country / Region</label>
+                        <select
+                          value={localSettings.country || 'Sri Lanka'}
+                          onChange={(e) => handleCountryChange(e.target.value)}
+                          className="w-full h-12 px-4 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary font-medium"
+                        >
+                          {Object.keys(COUNTRY_DEFAULTS).map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Auto-sets default currency & timezone
+                        </p>
+                      </div>
+
+                      {/* Currency Selection */}
                       <div>
                         <label className="block text-sm font-medium mb-2">Currency</label>
                         <select
                           value={localSettings.currency}
-                          onChange={(e) => setLocalSettings({ ...localSettings, currency: e.target.value })}
-                          className="w-full h-12 px-4 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                          onChange={(e) => handleCurrencyChange(e.target.value)}
+                          className="w-full h-12 px-4 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary font-medium"
                         >
-                          <option value="LKR">LKR (Rs.)</option>
-                          <option value="USD">USD ($)</option>
-                          <option value="EUR">EUR (€)</option>
-                          <option value="GBP">GBP (£)</option>
+                          {Object.values(SUPPORTED_CURRENCIES).map((curr) => (
+                            <option key={curr.code} value={curr.code}>
+                              {curr.code} ({curr.symbol}) - {curr.name}
+                            </option>
+                          ))}
                         </select>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Replaces Rs. with {SUPPORTED_CURRENCIES[localSettings.currency]?.symbol || localSettings.currency} on all pages & emails
+                        </p>
                       </div>
+
+                      {/* Timezone Selection */}
                       <div>
                         <label className="block text-sm font-medium mb-2">Timezone</label>
                         <select
                           value={localSettings.timezone}
                           onChange={(e) => setLocalSettings({ ...localSettings, timezone: e.target.value })}
-                          className="w-full h-12 px-4 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full h-12 px-4 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary font-medium"
                         >
-                          <option value="Asia/Colombo">Sri Lanka (Colombo)</option>
-                          <option value="America/New_York">Eastern Time (US)</option>
-                          <option value="America/Los_Angeles">Pacific Time (US)</option>
-                          <option value="Europe/London">London (UK)</option>
+                          {TIMEZONE_OPTIONS.map((tz) => (
+                            <option key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </option>
+                          ))}
                         </select>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Used for orders, timestamps & daily email alerts
+                        </p>
                       </div>
                     </div>
                   </div>

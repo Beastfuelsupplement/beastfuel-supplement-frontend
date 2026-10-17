@@ -14,6 +14,8 @@
  *    - Checkout
  */
 
+import { formatCurrency } from './currency';
+
 export interface OfferPricingResult {
   hasOffer: boolean;
   regularPrice: number;
@@ -83,7 +85,7 @@ export function calculateOfferPricing(
 
   const defaultBadge =
     discountType === 'fixed'
-      ? `SAVE Rs. ${Number(discountAmount).toLocaleString()}`
+      ? `SAVE ${formatCurrency(discountAmount)}`
       : `${discountPercentage}% OFF`;
 
   const badge = offer?.offerBadge?.trim() || defaultBadge;

@@ -7,6 +7,7 @@ import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import heroBg from '@/assets/hero-bg.jpg';
 import { useRef } from 'react';
+import { useCurrency, formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
 
 
 const Index = () => {
@@ -22,8 +23,11 @@ const Index = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
+  const { currency } = useCurrency();
+  const freeShippingMin = currency === 'LKR' ? 15000 : FREE_SHIPPING_THRESHOLD;
+
   const features = [
-    { icon: Truck, title: 'Free Shipping', description: 'Orders over Rs. 15,000' },
+    { icon: Truck, title: 'Free Shipping', description: `Orders over ${formatCurrency(freeShippingMin)}` },
     { icon: Shield, title: 'Lab Tested', description: '100% quality verified' },
     { icon: Award, title: 'Premium Quality', description: 'Best ingredients' },
     { icon: Zap, title: 'Fast Results', description: 'Feel the difference' },

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FileText, ShoppingCart, CreditCard, Truck, RotateCcw, AlertCircle, Scale } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
 
 const Terms = () => {
   const sections = [
@@ -37,7 +38,7 @@ Orders are binding once confirmed. We will send an email confirmation upon order
       icon: Truck,
       title: 'Shipping Policy',
       content: `• Orders are processed within 1-2 business days
-• Free shipping on orders over Rs. 50
+• Free shipping on orders over ${formatCurrency(FREE_SHIPPING_THRESHOLD)}
 • Standard shipping: 5-7 business days
 • Express shipping: 2-3 business days
 • International shipping may take 10-14 business days
