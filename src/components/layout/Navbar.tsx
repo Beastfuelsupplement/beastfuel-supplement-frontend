@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Home, Package, Info, Flame } from 'lucide-react';
+import { ShoppingCart, User, Home, Package, Info, Flame, Award, ChevronDown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,23 +8,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { useProducts } from '@/hooks/useProducts';
+import { useBrands } from '@/hooks/useBrands';
+import { formatImageUrl } from '@/lib/api';
 import { useAdminStore } from '@/store/adminStore';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isBrandsDropdownOpen, setIsBrandsDropdownOpen] = useState(false);
   const totalItems = useCartStore((state) => state.getTotalItems());
   const { isAuthenticated, user, isAdmin } = useAuth();
   const location = useLocation();
+
+  // Brands data for quick navigation
+  const { data: brands = [] } = useBrands();
 
   // Check if any products have an active offer
   const { data: apiProducts = [] } = useProducts(true);
   const storeProducts = useAdminStore((state) => state.products);
   const allProducts = apiProducts.length > 0 ? apiProducts : storeProducts;
-  const hasOffers = allProducts.some(
-    (p) => (p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price)) &&
-           (!p.offerEndDate || new Date(p.offerEndDate).getTime() > Date.now())
-  );
+  const hasOffers = allProducts.some((p) => {
+    const isExpired = Boolean(p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now());
+    return !isExpired && Boolean(
+      p.hasOffer ||
+      (p.offerDiscount !== undefined && Number(p.offerDiscount) > 0) ||
+      (p.offerDiscountAmount !== undefined && Number(p.offerDiscountAmount) > 0)
+    );
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,6 +62,7 @@ const Navbar = () => {
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/products', label: 'Products', icon: Package },
+    { href: '/brands', label: 'Brands', icon: Award, isBrandNav: true },
     ...(hasOffers ? [{ 
       href: '/offers', 
       label: 'Offers', 
@@ -90,38 +101,140 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link, index) => (
-            <motion.div
-              key={link.href}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-            >
-              <Link
-                to={link.href}
-                className={`relative px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group flex items-center gap-1.5 ${
-                  isActive(link.href) 
-                    ? 'text-white font-bold' 
-                    : (link as any).isOffer
-                    ? 'text-rose-400 hover:text-white'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
+          {navLinks.map((link, index) => {
+            const isBrandLink = (link as any).isBrandNav;
+
+            if (isBrandLink) {
+              return (
+                <div
+                  key={link.href}
+                  className="relative group"
+                  onMouseEnter={() => setIsBrandsDropdownOpen(true)}
+                  onMouseLeave={() => setIsBrandsDropdownOpen(false)}
+                >
+                  <Link
+                    to={link.href}
+                    className={`relative px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group flex items-center gap-1 ${
+                      isActive(link.href) ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                    <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180 opacity-70" />
+                    <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
+                      isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`} />
+                  </Link>
+
+                  {/* Brands Hover Mega Dropdown */}
+                  <AnimatePresence>
+                    {isBrandsDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 w-80 pt-2 z-50"
+                      >
+                        <div className="rounded-2xl bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 shadow-2xl p-4 text-white space-y-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                              Shop By Brand
+                            </span>
+                            <Link
+                              to="/brands"
+                              onClick={() => setIsBrandsDropdownOpen(false)}
+                              className="text-[10px] font-bold uppercase text-primary hover:underline"
+                            >
+                              All Brands ({brands.length}) →
+                            </Link>
+                          </div>
+
+                          {/* Quick brand list */}
+                          <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                            {brands.slice(0, 8).map((b) => (
+                              <Link
+                                key={b._id}
+                                to={`/products?brand=${encodeURIComponent(b.name)}`}
+                                onClick={() => setIsBrandsDropdownOpen(false)}
+                                className="flex items-center gap-2 p-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800/60 hover:border-primary/40 transition-all text-left group/item"
+                              >
+                                <div className="w-7 h-7 rounded-lg bg-white/95 dark:bg-zinc-950 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                                  {b.logo ? (
+                                    <img
+                                      src={formatImageUrl(b.logo)}
+                                      alt={b.name}
+                                      className="max-h-full max-w-full object-contain"
+                                    />
+                                  ) : (
+                                    <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-100">
+                                      {b.name.substring(0, 2).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-bold text-zinc-200 group-hover/item:text-primary truncate">
+                                    {b.name}
+                                  </div>
+                                  <div className="text-[10px] text-zinc-500">
+                                    {b.productCount || 0} items
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+
+                          <div className="pt-2 border-t border-zinc-800/80">
+                            <Link
+                              to="/brands"
+                              onClick={() => setIsBrandsDropdownOpen(false)}
+                              className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider transition-colors border border-primary/20"
+                            >
+                              <Award className="w-3.5 h-3.5" />
+                              View All Brands Directory
+                            </Link>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
+            return (
+              <motion.div
+                key={link.href}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
               >
-                {(link as any).isOffer && (
-                  <Flame className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
-                )}
-                {link.label}
-                {(link as any).isOffer && (
-                  <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-600 text-white tracking-wider animate-bounce">
-                    HOT
-                  </span>
-                )}
-                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
-                  isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full'
-                }`} />
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  to={link.href}
+                  className={`relative px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.15em] transition-colors group flex items-center gap-1.5 ${
+                    isActive(link.href) 
+                      ? 'text-white font-bold' 
+                      : (link as any).isOffer
+                      ? 'text-rose-400 hover:text-white'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {(link as any).isOffer && (
+                    <Flame className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
+                  )}
+                  {link.label}
+                  {(link as any).isOffer && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-600 text-white tracking-wider animate-bounce">
+                      HOT
+                    </span>
+                  )}
+                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
+                    isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`} />
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Actions */}

@@ -28,10 +28,12 @@ import { toast } from 'sonner';
 import ProductModal from '@/components/admin/ProductModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { DailyReportModal } from '@/components/admin/DailyReportModal';
+import AdminBrandsModal from '@/components/admin/AdminBrandsModal';
 import { Product } from '@/store/cartStore';
 import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { formatCurrency } from '@/lib/currency';
 import { formatImageUrl, api } from '@/lib/api';
+import { calculateOfferPricing } from '@/lib/pricing';
 
 const formatWeight = (w?: string) => {
   if (!w) return '1kg';
@@ -58,6 +60,7 @@ const AdminProducts = () => {
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isBrandManagerOpen, setIsBrandManagerOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [viewRestockInputs, setViewRestockInputs] = useState<Record<string, string>>({});
@@ -287,6 +290,14 @@ const AdminProducts = () => {
                 </span>
               )}
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsBrandManagerOpen(true)}
+              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
+            >
+              <Award className="h-4 w-4 text-amber-500 shrink-0" />
+              <span>Manage Brands</span>
+            </Button>
             <Button 
               onClick={handleAddProduct} 
               className="h-11 px-5 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all rounded-xl flex items-center justify-center gap-2"
@@ -491,14 +502,33 @@ const AdminProducts = () => {
                       <td className="p-4 align-top">
                         <div className="space-y-1.5">
                           <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="font-bold text-sm text-foreground">
-                              {formatCurrency(product.price)}
-                            </span>
-                            {product.originalPrice && product.originalPrice > product.price && (
-                              <span className="text-xs text-muted-foreground line-through">
-                                {formatCurrency(product.originalPrice)}
-                              </span>
-                            )}
+                            {(() => {
+                              const pPricing = calculateOfferPricing(product.price, {
+                                hasOffer: product.hasOffer,
+                                offerDiscount: product.offerDiscount,
+                                offerDiscountType: product.offerDiscountType,
+                                offerDiscountAmount: product.offerDiscountAmount,
+                                offerEndDate: product.offerEndDate,
+                                offerBadge: product.offerBadge,
+                              });
+                              if (pPricing.hasOffer && pPricing.savings > 0) {
+                                return (
+                                  <>
+                                    <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                                      {formatCurrency(pPricing.offerPrice)}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground line-through">
+                                      {formatCurrency(pPricing.regularPrice)}
+                                    </span>
+                                  </>
+                                );
+                              }
+                              return (
+                                <span className="font-bold text-sm text-foreground">
+                                  {formatCurrency(product.price)}
+                                </span>
+                              );
+                            })()}
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {weights.map((w, idx) => (
@@ -976,6 +1006,12 @@ const AdminProducts = () => {
         onConfirm={confirmDelete}
         title="Delete Supplement Product"
         message={`Are you sure you want to delete "${deleteConfirm.product?.name}"? All associated weight-and-flavor inventory variants will also be safely removed.`}
+      />
+
+      {/* Brand & Logo Manager Modal */}
+      <AdminBrandsModal
+        isOpen={isBrandManagerOpen}
+        onClose={() => setIsBrandManagerOpen(false)}
       />
     </AdminLayout>
   );

@@ -110,7 +110,7 @@ class ApiService {
     return this.request<any[]>(`/products${queryStr ? `?${queryStr}` : ''}`);
   }
 
-  async getBrands() {
+  async getProductBrands() {
     return this.request<string[]>('/products/brands');
   }
 
@@ -339,6 +339,51 @@ class ApiService {
       body: JSON.stringify(params),
     });
   }
+
+  // Brands
+  async getBrands(): Promise<BrandItem[]> {
+    return this.request<BrandItem[]>('/brands');
+  }
+
+  async getBrand(idOrSlug: string): Promise<{ brand: BrandItem; products: any[] }> {
+    return this.request<{ brand: BrandItem; products: any[] }>(`/brands/${idOrSlug}`);
+  }
+
+  async createBrand(brandData: Partial<BrandItem>): Promise<BrandItem> {
+    return this.request<BrandItem>('/brands', {
+      method: 'POST',
+      body: JSON.stringify(brandData),
+    });
+  }
+
+  async updateBrand(id: string, brandData: Partial<BrandItem>): Promise<BrandItem> {
+    return this.request<BrandItem>(`/brands/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(brandData),
+    });
+  }
+
+  async deleteBrand(id: string, force = false): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/brands/${id}${force ? '?force=true' : ''}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export interface BrandItem {
+  _id: string;
+  name: string;
+  slug?: string;
+  logo?: string;
+  description?: string;
+  countryOfOrigin?: string;
+  website?: string;
+  featured?: boolean;
+  order?: number;
+  productCount?: number;
+  isDynamic?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const formatImageUrl = (url?: string): string => {

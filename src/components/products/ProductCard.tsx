@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
 import { formatCurrencyParts } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
+import { calculateOfferPricing } from '@/lib/pricing';
 
 interface ProductCardProps {
   product: Product;
@@ -28,15 +29,24 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const weightsCount = product.weights?.length || (product.weight ? 1 : 0);
   const flavorsCount = product.flavors?.length || (product.flavor ? 1 : 0);
 
-  const isOfferExpired = Boolean(product.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now());
-  const isOfferActive = Boolean(product.hasOffer && !isOfferExpired);
-
   // Find first available in-stock variant for smooth quick-add
   const inStockVariant = product.variants?.find((v) => Number(v.stock) > 0);
   const matchingVariant = inStockVariant || product.variants?.[0];
   const defaultWeight = matchingVariant?.weight || product.weights?.[0] || product.weight || '1kg';
   const defaultFlavor = matchingVariant?.flavor || product.flavors?.[0] || product.flavor || 'Standard';
-  const defaultPrice = matchingVariant ? matchingVariant.price : product.price;
+  const defaultRegularPrice = matchingVariant ? matchingVariant.price : product.price;
+
+  const pricing = calculateOfferPricing(defaultRegularPrice, {
+    hasOffer: product.hasOffer,
+    offerDiscount: product.offerDiscount,
+    offerDiscountType: product.offerDiscountType,
+    offerDiscountAmount: product.offerDiscountAmount,
+    offerEndDate: product.offerEndDate,
+    offerBadge: product.offerBadge,
+  });
+
+  const defaultPrice = pricing.offerPrice;
+  const isOfferActive = pricing.hasOffer;
   const defaultStock = matchingVariant ? Number(matchingVariant.stock) : (product.stock ?? 0);
 
   // Variant-level actual stock calculation
@@ -102,16 +112,10 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
             {/* Category & Offer Badges - Top Left */}
             <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-1.5 items-start z-10">
-              {isOfferActive && (
+              {pricing.hasOffer && (
                 <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-extrabold bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-full shadow-lg border border-rose-400/40 animate-pulse">
                   <Flame className="w-3 h-3 fill-white" />
-                  {product.offerBadge || (
-                    product.offerDiscountType === 'fixed' && product.offerDiscountAmount
-                      ? `SAVE Rs. ${Number(product.offerDiscountAmount).toLocaleString()}`
-                      : product.offerDiscount
-                      ? `${product.offerDiscount}% OFF`
-                      : 'SPECIAL DEAL'
-                  )}
+                  {pricing.badge}
                 </span>
               )}
               <motion.span 
@@ -225,16 +229,16 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             {/* Price & Weight Row */}
             <div className="flex items-end justify-between gap-2 pt-1 border-t border-border/30">
               <div className="flex flex-col">
-                {isOfferActive && product.originalPrice && product.originalPrice > product.price && (
+                {pricing.hasOffer && pricing.savings > 0 && (
                   <span className="text-[11px] sm:text-xs text-muted-foreground line-through font-semibold">
-                    Rs. {product.originalPrice.toLocaleString()}
+                    Rs. {pricing.regularPrice.toLocaleString()}
                   </span>
                 )}
                 <div className="flex items-baseline gap-1.5 sm:gap-2">
                   <span className="text-xl sm:text-2xl lg:text-3xl font-bold font-display text-foreground">
-                    {formatCurrencyParts(product.price).whole}
+                    {formatCurrencyParts(pricing.offerPrice).whole}
                   </span>
-                  <span className="text-xs sm:text-sm text-muted-foreground">{formatCurrencyParts(product.price).decimal}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{formatCurrencyParts(pricing.offerPrice).decimal}</span>
                 </div>
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-2.5 py-0.5 sm:py-1 bg-secondary dark:bg-card rounded-full border border-border/30">

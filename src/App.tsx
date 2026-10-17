@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
+import Brands from "./pages/Brands";
 import Offers from "./pages/Offers";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -45,6 +46,7 @@ const AnimatedRoutes = () => {
         <Route path="/" element={wrap(Index)} />
         <Route path="/products" element={wrap(Products)} />
         <Route path="/products/:id" element={wrap(ProductDetails)} />
+        <Route path="/brands" element={wrap(Brands)} />
         <Route path="/offers" element={wrap(Offers)} />
         <Route path="/cart" element={wrap(Cart)} />
         <Route path="/checkout" element={wrap(Checkout)} />

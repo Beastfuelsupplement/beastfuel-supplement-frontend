@@ -40,6 +40,9 @@ import { Product, ProductVariant } from '@/store/cartStore';
 import { categories, brands } from '@/data/products';
 import { api, API_BASE_URL, formatImageUrl } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
+import { calculateOfferPricing } from '@/lib/pricing';
+import { useBrands } from '@/hooks/useBrands';
+import AdminBrandsModal from '@/components/admin/AdminBrandsModal';
 import { toast } from 'sonner';
 
 interface ProductModalProps {
@@ -178,8 +181,20 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
 
+  // Dynamic Brands from backend + static fallbacks
+  const { data: dbBrands = [] } = useBrands();
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+
   // Brand and Category list
-  const existingBrands = useMemo(() => Array.from(new Set(brands.filter(b => b !== 'All'))), []);
+  const existingBrands = useMemo(() => {
+    const list = new Set(dbBrands.map(b => b.name).concat(brands.filter(b => b !== 'All')));
+    return Array.from(list);
+  }, [dbBrands]);
+
+  const selectedBrandObj = useMemo(() => {
+    return dbBrands.find(b => b.name.toLowerCase() === (brand || '').trim().toLowerCase());
+  }, [dbBrands, brand]);
+
   const existingCategories = useMemo(() => Array.from(new Set(categories.filter(c => c !== 'All'))), []);
 
   // Initialize or reset form state when modal opens or product changes
@@ -793,13 +808,21 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     const weightOffers = weightConfigs.map(wc => {
       const isWeightOfferActive = offerScope === 'all' ? Boolean(hasOffer) : Boolean(wc.hasOffer);
+      const wBasePrice = Number(wc.price) || 0;
+      const wPricing = calculateOfferPricing(wBasePrice, isWeightOfferActive ? {
+        hasOffer: true,
+        offerDiscount: offerScope === 'weights' ? (wc.offerDiscount ? Number(wc.offerDiscount) : undefined) : (offerDiscount ? Number(offerDiscount) : undefined),
+        offerDiscountType: offerScope === 'weights' ? (wc.offerDiscountType || 'percentage') : offerDiscountType,
+        offerDiscountAmount: offerScope === 'weights' ? (wc.offerDiscountAmount ? Number(wc.offerDiscountAmount) : undefined) : (offerDiscountAmount ? Number(offerDiscountAmount) : undefined),
+        offerEndDate,
+      } : null);
+
       return {
         weight: wc.weight,
         hasOffer: isWeightOfferActive,
-        price: Number(wc.price) || 0,
-        originalPrice: offerScope === 'weights'
-          ? (wc.originalPrice ? Number(wc.originalPrice) : undefined)
-          : (originalPrice ? Number(originalPrice) : undefined),
+        price: wBasePrice,
+        originalPrice: wBasePrice,
+        offerPrice: isWeightOfferActive ? wPricing.offerPrice : undefined,
         offerDiscount: offerScope === 'weights'
           ? (wc.offerDiscount ? Number(wc.offerDiscount) : undefined)
           : (offerDiscount ? Number(offerDiscount) : undefined),
@@ -817,6 +840,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
     const compiled: ProductVariant[] = compiledVariants.map(v => {
       const matchingWc = weightConfigs.find(wc => wc.weight === v.weight);
       const isWeightOfferActive = offerScope === 'all' ? Boolean(hasOffer) : Boolean(matchingWc?.hasOffer);
+      const vPricing = calculateOfferPricing(v.price, isWeightOfferActive ? {
+        hasOffer: true,
+        offerDiscount: offerScope === 'weights' ? (matchingWc?.offerDiscount ? Number(matchingWc.offerDiscount) : undefined) : (offerDiscount ? Number(offerDiscount) : undefined),
+        offerDiscountType: offerScope === 'weights' ? (matchingWc?.offerDiscountType || 'percentage') : offerDiscountType,
+        offerDiscountAmount: offerScope === 'weights' ? (matchingWc?.offerDiscountAmount ? Number(matchingWc.offerDiscountAmount) : undefined) : (offerDiscountAmount ? Number(offerDiscountAmount) : undefined),
+        offerEndDate,
+      } : null);
+
       return {
         weight: v.weight,
         flavor: v.flavor,
@@ -824,9 +855,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
         stock: v.stock,
         sku: v.sku,
         hasOffer: isWeightOfferActive,
-        originalPrice: offerScope === 'weights'
-          ? (matchingWc?.originalPrice ? Number(matchingWc.originalPrice) : undefined)
-          : (originalPrice ? Number(originalPrice) : undefined),
+        originalPrice: v.price,
+        offerPrice: isWeightOfferActive ? vPricing.offerPrice : undefined,
         offerDiscount: offerScope === 'weights'
           ? (matchingWc?.offerDiscount ? Number(matchingWc.offerDiscount) : undefined)
           : (offerDiscount ? Number(offerDiscount) : undefined),
@@ -845,6 +875,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     const derivedWeights = Array.from(new Set(compiled.map(v => v.weight)));
     const derivedFlavors = Array.from(new Set(compiled.map(v => v.flavor)));
+
+    const globalPricing = calculateOfferPricing(startingPrice, isAnyOfferActive ? {
+      hasOffer: true,
+      offerDiscount: offerDiscount ? Number(offerDiscount) : undefined,
+      offerDiscountType,
+      offerDiscountAmount: offerDiscountAmount ? Number(offerDiscountAmount) : undefined,
+      offerEndDate,
+    } : null);
 
     const productPayload: any = {
       ...(product?.id && { id: product.id }),
@@ -873,8 +911,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
       offerDiscountAmount: hasOffer && offerDiscountType === 'fixed' && offerDiscountAmount ? Number(offerDiscountAmount) : undefined,
       offerEndDate: hasOffer && offerEndDate ? new Date(offerEndDate).toISOString() : undefined,
       offerFreeProduct: hasOffer && offerFreeProduct.trim() ? offerFreeProduct.trim() : undefined,
-      originalPrice: hasOffer && originalPrice ? Number(originalPrice) : undefined,
-      offerPrice: hasOffer ? startingPrice : undefined,
+      originalPrice: hasOffer ? startingPrice : undefined,
+      offerPrice: hasOffer ? globalPricing.offerPrice : undefined,
     };
 
     try {
@@ -994,28 +1032,59 @@ const ProductModal: React.FC<ProductModalProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Brand */}
+                {/* Brand with Logo Preview and Quick Creator */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
-                    Brand <span className="text-destructive">*</span>
-                  </label>
-                  <div className="flex gap-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground">
+                      Brand <span className="text-destructive">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsBrandModalOpen(true)}
+                      className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add Brand & Logo
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 items-center">
+                    {/* Brand logo thumbnail preview */}
+                    {selectedBrandObj?.logo && (
+                      <div
+                        className="w-11 h-11 rounded-xl bg-white/95 dark:bg-zinc-900 border border-border flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-xs"
+                        title={`${selectedBrandObj.name} Logo`}
+                      >
+                        <img
+                          src={formatImageUrl(selectedBrandObj.logo)}
+                          alt={selectedBrandObj.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                    )}
+
                     <select
                       value={existingBrands.includes(brand) ? brand : 'custom'}
                       onChange={e => {
-                        if (e.target.value !== 'custom') {
+                        if (e.target.value === 'ADD_NEW') {
+                          setIsBrandModalOpen(true);
+                        } else if (e.target.value !== 'custom') {
                           setBrand(e.target.value);
+                          const matched = dbBrands.find(b => b.name.toLowerCase() === e.target.value.toLowerCase());
+                          if (matched?.countryOfOrigin && !countryOfOrigin) {
+                            setCountryOfOrigin(matched.countryOfOrigin);
+                          }
                         }
                       }}
                       className="h-11 px-3 bg-background border border-border rounded-xl text-sm text-foreground focus:ring-2 focus:ring-primary w-2/5 cursor-pointer"
                     >
-                      <option value="">-- Preset --</option>
+                      <option value="">-- Preset Brand --</option>
                       {existingBrands.map(b => (
                         <option key={b} value={b}>
                           {b}
                         </option>
                       ))}
-                      <option value="custom">Custom...</option>
+                      <option value="custom">Other / Custom...</option>
+                      <option value="ADD_NEW" className="font-bold text-primary">+ New Brand with Logo...</option>
                     </select>
 
                     <input
@@ -1386,14 +1455,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                           type="button"
                                           onClick={() => {
                                             const cur = Number(wc.price || 0);
-                                            if (discType === 'fixed' && wc.offerDiscountAmount) {
-                                              handleUpdateWeightOffer(idx, { originalPrice: String(cur + Number(wc.offerDiscountAmount)) });
-                                            } else if (discType === 'percentage' && wc.offerDiscount) {
-                                              const pct = Number(wc.offerDiscount);
-                                              if (pct < 100) {
-                                                handleUpdateWeightOffer(idx, { originalPrice: String(Math.round(cur / (1 - pct / 100))) });
-                                              }
-                                            }
+                                            handleUpdateWeightOffer(idx, { originalPrice: String(cur) });
                                           }}
                                           className="text-[9px] font-bold text-primary hover:underline"
                                         >
@@ -1585,15 +1647,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    const current = Number(weightConfigs[0].price);
-                                    if (offerDiscountType === 'fixed' && offerDiscountAmount) {
-                                      setOriginalPrice(String(current + Number(offerDiscountAmount)));
-                                    } else if (offerDiscountType === 'percentage' && offerDiscount) {
-                                      const pct = Number(offerDiscount);
-                                      if (pct < 100) {
-                                        setOriginalPrice(String(Math.round(current / (1 - pct / 100))));
-                                      }
-                                    }
+                                    const current = Number(weightConfigs[0]?.price || 0);
+                                    setOriginalPrice(String(current));
                                   }}
                                   className="text-[10px] font-bold text-primary hover:underline"
                                 >
@@ -1612,6 +1667,27 @@ const ProductModal: React.FC<ProductModalProps> = ({
                             <p className="text-[10px] text-muted-foreground mt-1">
                               Shown crossed-out next to offer price
                             </p>
+                            {weightConfigs[0]?.price && (
+                              <div className="mt-2.5 p-2.5 rounded-lg bg-secondary/80 border border-border/70 text-xs">
+                                {(() => {
+                                  const reg = Number(weightConfigs[0].price);
+                                  const p = calculateOfferPricing(reg, {
+                                    hasOffer: true,
+                                    offerDiscount: offerDiscount ? Number(offerDiscount) : undefined,
+                                    offerDiscountType,
+                                    offerDiscountAmount: offerDiscountAmount ? Number(offerDiscountAmount) : undefined,
+                                    offerBadge,
+                                  });
+                                  return (
+                                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                                      <span className="text-muted-foreground">Regular: <strong className="text-foreground">{formatCurrency(p.regularPrice)}</strong></span>
+                                      <span className="text-muted-foreground">Offer Deal: <strong className="text-emerald-500">{formatCurrency(p.offerPrice)}</strong></span>
+                                      <span className="text-rose-500 font-bold">Save {formatCurrency(p.savings)} ({p.discountPercentage}% OFF)</span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </>
@@ -2872,6 +2948,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Brand & Logo Manager Modal */}
+      {isBrandModalOpen && (
+        <AdminBrandsModal
+          isOpen={isBrandModalOpen}
+          onClose={() => setIsBrandModalOpen(false)}
+          onSelectBrand={(newBrandName) => {
+            setBrand(newBrandName);
+            const matched = dbBrands.find(b => b.name.toLowerCase() === newBrandName.toLowerCase());
+            if (matched?.countryOfOrigin) {
+              setCountryOfOrigin(matched.countryOfOrigin);
+            }
+            setIsBrandModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

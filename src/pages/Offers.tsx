@@ -24,6 +24,7 @@ import { useAdminStore } from '@/store/adminStore';
 import { useCartStore, Product } from '@/store/cartStore';
 import { formatCurrency, formatCurrencyParts } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
+import { calculateOfferPricing } from '@/lib/pricing';
 import { toast } from 'sonner';
 
 const Offers = () => {
@@ -36,9 +37,13 @@ const Offers = () => {
 
   // Filter products that have an active offer (and not expired)
   const offerProducts = allProducts.filter((p) => {
-    const hasAnyOffer = p.hasOffer || (p.offerDiscount && p.offerDiscount > 0) || (p.originalPrice && p.originalPrice > p.price);
-    const isExpired = p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now();
-    return hasAnyOffer && !isExpired;
+    const isExpired = Boolean(p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now());
+    if (isExpired) return false;
+    return Boolean(
+      p.hasOffer ||
+      (p.offerDiscount !== undefined && Number(p.offerDiscount) > 0) ||
+      (p.offerDiscountAmount !== undefined && Number(p.offerDiscountAmount) > 0)
+    );
   });
 
   // Live countdown timer state (24-hour cycle)
@@ -67,17 +72,26 @@ const Offers = () => {
     const firstInStockVariant = product.variants?.find((v) => Number(v.stock) > 0) || product.variants?.[0];
     const weight = firstInStockVariant?.weight || product.weights?.[0] || product.weight || '1kg';
     const flavor = firstInStockVariant?.flavor || product.flavors?.[0] || product.flavor || 'Standard';
-    const price = firstInStockVariant?.price || product.price;
+    const regularPrice = firstInStockVariant?.price || product.price || 0;
+
+    const pricing = calculateOfferPricing(regularPrice, {
+      hasOffer: product.hasOffer ?? true,
+      offerDiscount: product.offerDiscount,
+      offerDiscountType: product.offerDiscountType,
+      offerDiscountAmount: product.offerDiscountAmount,
+      offerEndDate: product.offerEndDate,
+      offerBadge: product.offerBadge,
+    });
 
     addItem(product, 1, {
       weight,
       flavor,
-      price,
+      price: pricing.offerPrice,
       stock: firstInStockVariant ? Number(firstInStockVariant.stock) : product.stock,
       variantId: firstInStockVariant?.id || firstInStockVariant?._id,
       sku: firstInStockVariant?.sku,
     });
-    toast.success(`${product.name} added to cart at special offer price!`);
+    toast.success(`${product.name} added to cart at special offer deal (${formatCurrency(pricing.offerPrice)})!`);
   };
 
   return (
@@ -198,13 +212,17 @@ const Offers = () => {
           ) : offerProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {offerProducts.map((product, index) => {
-                const discount = product.offerDiscount || 
-                  (product.originalPrice && product.originalPrice > product.price 
-                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
-                    : 15);
+                const firstInStockVariant = product.variants?.find((v) => Number(v.stock) > 0) || product.variants?.[0];
+                const regularPrice = firstInStockVariant?.price || product.price || 0;
 
-                const origPrice = product.originalPrice || (product.price * (1 + discount / 100));
-                const savings = origPrice - product.price;
+                const pricing = calculateOfferPricing(regularPrice, {
+                  hasOffer: product.hasOffer ?? true,
+                  offerDiscount: product.offerDiscount,
+                  offerDiscountType: product.offerDiscountType,
+                  offerDiscountAmount: product.offerDiscountAmount,
+                  offerEndDate: product.offerEndDate,
+                  offerBadge: product.offerBadge,
+                });
 
                 return (
                   <motion.div
@@ -220,14 +238,10 @@ const Offers = () => {
                       <div className="bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 text-white px-4 py-2 flex items-center justify-between text-xs font-black uppercase tracking-wider shadow-md">
                         <span className="flex items-center gap-1.5">
                           <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
-                          {product.offerBadge || (
-                            product.offerDiscountType === 'fixed' && product.offerDiscountAmount
-                              ? `SAVE Rs. ${Number(product.offerDiscountAmount).toLocaleString()}`
-                              : `${discount}% OFF SPECIAL DEAL`
-                          )}
+                          {pricing.badge}
                         </span>
                         <span className="bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
-                          Save {formatCurrency(savings)}
+                          Save {formatCurrency(pricing.savings)}
                         </span>
                       </div>
 
@@ -280,8 +294,8 @@ const Offers = () => {
                         <div className="p-3.5 rounded-2xl bg-secondary/40 border border-border/60 space-y-2">
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-medium">Regular Price:</span>
-                            <span className="line-through text-muted-foreground font-semibold">
-                              {formatCurrency(origPrice)}
+                            <span className={`font-semibold ${pricing.savings > 0 ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                              {formatCurrency(pricing.regularPrice)}
                             </span>
                           </div>
 
@@ -291,17 +305,21 @@ const Offers = () => {
                             </span>
                             <div className="flex items-baseline gap-1">
                               <span className="text-2xl font-black text-foreground">
-                                {formatCurrencyParts(product.price).whole}
+                                {formatCurrencyParts(pricing.offerPrice).whole}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {formatCurrencyParts(product.price).decimal}
+                                {formatCurrencyParts(pricing.offerPrice).decimal}
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border/40 font-semibold text-emerald-600 dark:text-emerald-400">
                             <span>Your Total Savings:</span>
-                            <span>{product.offerDiscountType === 'fixed' && product.offerDiscountAmount ? `Save Rs. ${Number(product.offerDiscountAmount).toLocaleString()}` : `${formatCurrency(savings)} (${discount}% OFF)`}</span>
+                            <span>
+                              {pricing.savings > 0
+                                ? `${formatCurrency(pricing.savings)} (${pricing.discountPercentage}% OFF)`
+                                : 'Rs. 0.00 (0% OFF)'}
+                            </span>
                           </div>
                         </div>
 

@@ -100,9 +100,7 @@ const Products = () => {
       const matchedBrand = brandOptions.find(
         (b) => b.value.toLowerCase() === brandFromUrl.toLowerCase()
       );
-      if (matchedBrand) {
-        setSelectedBrand(matchedBrand.value);
-      }
+      setSelectedBrand(matchedBrand ? matchedBrand.value : brandFromUrl);
     } else {
       setSelectedBrand('All');
     }

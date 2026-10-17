@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, Flame, Gift, Clock } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, AlertCircle, Flame, Gift, Clock } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import StarRating from '@/components/reviews/StarRating';
 import { useReviews } from '@/hooks/useReviews';
 import { formatCurrency } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
+import { calculateOfferPricing } from '@/lib/pricing';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -125,9 +126,6 @@ const ProductDetails = () => {
     );
   }, [product, selectedWeight, selectedFlavor]);
 
-  const activePrice = activeVariant ? activeVariant.price : (product?.price ?? 0);
-  const activeStock = activeVariant ? activeVariant.stock : (product?.stock ?? 0);
-
   // Compute offer specific to the currently selected weight
   const currentWeightOffer = useMemo(() => {
     if (!product) return null;
@@ -147,6 +145,7 @@ const ProductDetails = () => {
           offerDiscountAmount: match.offerDiscountAmount,
           offerBadge: match.offerBadge,
           offerFreeProduct: match.offerFreeProduct,
+          offerEndDate: product.offerEndDate,
         };
       }
     }
@@ -161,6 +160,7 @@ const ProductDetails = () => {
         offerDiscountAmount: activeVariant.offerDiscountAmount,
         offerBadge: activeVariant.offerBadge,
         offerFreeProduct: activeVariant.offerFreeProduct,
+        offerEndDate: product.offerEndDate,
       };
     }
 
@@ -179,6 +179,7 @@ const ProductDetails = () => {
         offerDiscountAmount: product.offerDiscountAmount,
         offerBadge: product.offerBadge,
         offerFreeProduct: product.offerFreeProduct,
+        offerEndDate: product.offerEndDate,
       };
     }
 
@@ -190,6 +191,18 @@ const ProductDetails = () => {
     currentWeightOffer &&
     currentWeightOffer.hasOffer !== false
   );
+
+  const activeRegularPrice = activeVariant ? activeVariant.price : (product?.price ?? 0);
+  const activeStock = activeVariant ? activeVariant.stock : (product?.stock ?? 0);
+
+  const activePricing = useMemo(() => {
+    return calculateOfferPricing(
+      activeRegularPrice,
+      isCurrentWeightOfferActive ? currentWeightOffer : null
+    );
+  }, [activeRegularPrice, isCurrentWeightOfferActive, currentWeightOffer]);
+
+  const activePrice = activePricing.offerPrice;
 
   const cartItemId = product
     ? `${product.id}-${selectedWeight || product.weight || 'Standard'}-${selectedFlavor || product.flavor || 'default'}`
@@ -355,9 +368,14 @@ const ProductDetails = () => {
             <div className="mb-auto">
               {/* Brand and Origin Tagline */}
               <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-3">
-                <span className="text-xs uppercase tracking-wider font-bold text-primary px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
-                  {brandName}
-                </span>
+                <Link
+                  to={`/products?brand=${encodeURIComponent(brandName)}`}
+                  className="text-xs uppercase tracking-wider font-bold text-primary px-3 py-1 bg-primary/10 rounded-lg border border-primary/20 hover:bg-primary/20 transition-colors inline-flex items-center gap-1 group"
+                  title={`View all products by ${brandName}`}
+                >
+                  <span>{brandName}</span>
+                  <span className="text-[10px] opacity-70 group-hover:translate-x-0.5 transition-transform">→</span>
+                </Link>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary/90 dark:bg-card text-xs font-semibold text-foreground border border-border/80 shadow-xs">
                   <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   <span className="text-muted-foreground font-medium">Origin:</span>
@@ -380,17 +398,11 @@ const ProductDetails = () => {
               </div>
 
               {/* Special Offer Alert Banner if product has an active offer for the selected weight */}
-              {isCurrentWeightOfferActive && (
+              {isCurrentWeightOfferActive && activePricing.hasOffer && (
                 <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-amber-500/15 to-rose-500/15 border-2 border-rose-500/40 flex items-center justify-between gap-3 shadow-sm flex-wrap">
                   <div className="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-wider">
                     <Flame className="w-4 h-4 fill-rose-500 animate-pulse shrink-0" />
-                    <span>Special Offer ({selectedWeight}): {currentWeightOffer?.offerBadge || (
-                      currentWeightOffer?.offerDiscountType === 'fixed' && currentWeightOffer?.offerDiscountAmount
-                        ? `Save Rs. ${Number(currentWeightOffer.offerDiscountAmount).toLocaleString()}`
-                        : currentWeightOffer?.offerDiscount
-                        ? `${currentWeightOffer.offerDiscount}% OFF`
-                        : 'SPECIAL DEAL'
-                    )}</span>
+                    <span>Special Offer ({selectedWeight}): {activePricing.badge}</span>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -410,15 +422,15 @@ const ProductDetails = () => {
               {/* Price display with variant awareness */}
               <div className="flex items-baseline gap-3 mb-6 flex-wrap">
                 <p className="text-3xl sm:text-4xl font-bold font-display text-foreground">
-                  {formatCurrency(activePrice)}
+                  {formatCurrency(activePricing.offerPrice)}
                 </p>
-                {isCurrentWeightOfferActive && currentWeightOffer?.originalPrice && currentWeightOffer.originalPrice > activePrice && (
+                {activePricing.hasOffer && activePricing.savings > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-lg text-muted-foreground line-through font-semibold">
-                      {formatCurrency(currentWeightOffer.originalPrice)}
+                      {formatCurrency(activePricing.regularPrice)}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500/15 text-rose-500 border border-rose-500/30">
-                      Save {formatCurrency(currentWeightOffer.originalPrice - activePrice)} {currentWeightOffer?.offerDiscount ? `(${currentWeightOffer.offerDiscount}% OFF)` : ''}
+                      Save {formatCurrency(activePricing.savings)} ({activePricing.discountPercentage}% OFF)
                     </span>
                   </div>
                 )}
