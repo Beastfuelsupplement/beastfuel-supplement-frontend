@@ -817,19 +817,11 @@ const AdminSettings = () => {
                 </div>
               )}
 
-              {/* Bottom Action Bar */}
+              {/* Bottom Helper Note */}
               <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  Changes made here automatically reflect across the entire store.
+                  All changes are synced live to the database and reflect across the website immediately upon saving.
                 </span>
-                <Button 
-                  onClick={handleSave} 
-                  disabled={isSaving || isApiLoading}
-                  className="gap-2 font-bold uppercase tracking-wider"
-                >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save All Changes
-                </Button>
               </div>
             </motion.div>
           </div>
