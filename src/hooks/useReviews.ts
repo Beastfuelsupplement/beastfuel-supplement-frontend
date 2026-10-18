@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -11,6 +12,7 @@ export interface Review {
   created_at: string;
   updated_at: string;
   user_name?: string;
+  user_email?: string;
 }
 
 export const useReviews = (productId: string) => {
@@ -18,6 +20,7 @@ export const useReviews = (productId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const fetchReviews = async () => {
     setIsLoading(true);
@@ -25,16 +28,22 @@ export const useReviews = (productId: string) => {
 
     try {
       const data = await api.getProductReviews(productId);
-      const mapped = data.map((r: any) => ({
-        id: r._id || r.id,
-        product_id: r.productId || r.product_id,
-        user_id: r.userId || r.user_id,
-        rating: r.rating,
-        review_text: r.reviewText || r.review_text || null,
-        created_at: r.createdAt || r.created_at,
-        updated_at: r.updatedAt || r.updated_at,
-        user_name: r.userName || r.user_name || 'Anonymous User',
-      }));
+      const mapped = data.map((r: any) => {
+        const u = r.userId && typeof r.userId === 'object' ? r.userId : {};
+        const email = r.userEmail || u.email || r.user_email || '';
+        const name = r.userName || u.name || r.user_name || email || 'Customer';
+        return {
+          id: r._id || r.id,
+          product_id: r.productId || r.product_id,
+          user_id: u._id || (typeof r.userId === 'string' ? r.userId : '') || r.user_id,
+          rating: r.rating,
+          review_text: r.reviewText || r.review_text || null,
+          created_at: r.createdAt || r.created_at,
+          updated_at: r.updatedAt || r.updated_at,
+          user_name: name,
+          user_email: email,
+        };
+      });
       setReviews(mapped);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch reviews');
@@ -59,12 +68,14 @@ export const useReviews = (productId: string) => {
     if (!user) throw new Error('Must be logged in to submit a review');
     await api.submitReview(productId, rating, reviewText);
     await fetchReviews();
+    queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
   const deleteReview = async () => {
     if (!user || !userReview) return;
     await api.deleteReview(userReview.id);
     await fetchReviews();
+    queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
   return {

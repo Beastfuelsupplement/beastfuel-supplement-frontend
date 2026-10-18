@@ -135,15 +135,35 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
             {/* Rating Badge - Top Right */}
             <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10">
-              <motion.span 
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 + 0.3 }}
-                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium bg-background/80 dark:bg-background/60 backdrop-blur-md rounded-full border border-border/30 text-foreground"
+              <Link 
+                to={`/products/${productId}#customer-reviews`}
+                onClick={(e) => e.stopPropagation()}
+                title={
+                  (product.reviewsCount ?? 0) > 0
+                    ? `${product.averageRating?.toFixed(1)} rating based on ${product.reviewsCount} reviews • Click to view or rate`
+                    : 'No customer reviews yet • Click to rate this product!'
+                }
               >
-                <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-primary text-primary" />
-                4.9
-              </motion.span>
+                <motion.span 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 + 0.3 }}
+                  className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-background/85 dark:bg-background/70 backdrop-blur-md rounded-full border border-border/40 text-foreground shadow-sm hover:border-primary/50 transition-colors"
+                >
+                  {(product.reviewsCount ?? 0) > 0 ? (
+                    <>
+                      <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-amber-400 text-amber-400" />
+                      <span>{product.averageRating?.toFixed(1)}</span>
+                      <span className="text-[9px] text-muted-foreground font-normal">({product.reviewsCount})</span>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground/60 hover:text-amber-400" />
+                      <span className="text-[10px] text-muted-foreground font-medium">Rate</span>
+                    </>
+                  )}
+                </motion.span>
+              </Link>
             </div>
 
             {/* Sold Out Semi-Transparent Overlay */}

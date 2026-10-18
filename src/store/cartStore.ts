@@ -62,6 +62,8 @@ export interface Product {
   offerFreeProduct?: string;
   originalPrice?: number;
   offerPrice?: number;
+  averageRating?: number;
+  reviewsCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }

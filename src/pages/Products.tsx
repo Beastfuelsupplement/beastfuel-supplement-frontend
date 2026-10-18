@@ -83,6 +83,13 @@ const Products = () => {
     ];
   }, [products]);
 
+  const avgStoreRating = useMemo(() => {
+    const rated = products.filter((p) => (p.reviewsCount ?? 0) > 0 && typeof p.averageRating === 'number');
+    if (rated.length === 0) return '5.0★';
+    const sum = rated.reduce((acc, p) => acc + (p.averageRating || 0), 0);
+    return `${(sum / rated.length).toFixed(1)}★`;
+  }, [products]);
+
   // Sync URL params dynamically with state
   useEffect(() => {
     if (categoryFromUrl) {
@@ -291,7 +298,7 @@ const Products = () => {
               {[
                 { value: `${products.length}+`, label: 'Products' },
                 { value: '99%', label: 'Pure' },
-                { value: '4.9★', label: 'Rating' },
+                { value: avgStoreRating, label: 'Customer Rating' },
               ].map((stat, i) => (
                 <motion.div 
                   key={stat.label}

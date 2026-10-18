@@ -87,55 +87,83 @@ export default function Brands() {
   }, [brands]);
 
   return (
-    <Layout>
+    <Layout accent="orange">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-900 to-background pt-28 pb-14 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(220,38,38,0.12),transparent_50%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.08),transparent_50%)] pointer-events-none" />
+      <section className="relative min-h-[48vh] sm:min-h-[55vh] flex items-center justify-center overflow-hidden py-16 sm:py-20 border-b border-border/40">
+        {/* Ambient lighting & decorative lines matching Products & About */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary/5 dark:bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          <div className="absolute bottom-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+        </div>
 
         <div className="container mx-auto px-4 relative z-10">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-6 uppercase tracking-wider">
+          <nav className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6 uppercase tracking-wider">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-foreground font-semibold">Brands</span>
           </nav>
 
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase mb-4">
-              <ShieldCheck className="w-4 h-4" />
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Pill Badge matching Products / About */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 dark:bg-primary/10 rounded-full border border-primary/10 dark:border-primary/20 text-primary text-xs sm:text-sm uppercase tracking-[0.2em] font-medium mb-6 shadow-xs"
+            >
+              <ShieldCheck className="w-4 h-4 text-primary" />
               100% Verified Authentic Brands
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white leading-[1.05]">
-              Shop By <span className="text-white">Brand</span>
-            </h1>
-            <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            </motion.div>
+
+            {/* Main Heading matching Products / About / Home typography */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-6"
+            >
+              SHOP BY <span className="text-primary/90 dark:text-primary">BRAND</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-10"
+            >
               Explore authentic, lab-tested supplements from globally acclaimed sports nutrition giants. 
               Directly imported with guaranteed purity, manufacturer batch codes, and untamed quality.
-            </p>
-          </div>
+            </motion.p>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8 pt-6 border-t border-border/40">
-            <div className="p-3.5 rounded-xl bg-card/60 border border-border/60 backdrop-blur-sm">
-              <div className="text-2xl font-black text-foreground">{brands.length}</div>
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">World Brands</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-card/60 border border-border/60 backdrop-blur-sm">
-              <div className="text-2xl font-black text-emerald-500">100%</div>
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Imported & Genuine</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-card/60 border border-border/60 backdrop-blur-sm">
-              <div className="text-2xl font-black text-primary">Direct</div>
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Authorized Retailer</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-card/60 border border-border/60 backdrop-blur-sm">
-              <div className="text-2xl font-black text-white">Fast</div>
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Islandwide Delivery</div>
-            </div>
+            {/* Quick Metrics Bar matching About & Products */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto pt-4"
+            >
+              <div className="p-4 rounded-2xl bg-card border border-border shadow-sm text-center">
+                <div className="text-2xl sm:text-3xl font-display font-bold text-foreground">{brands.length}</div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">World Brands</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-card border border-border shadow-sm text-center">
+                <div className="text-2xl sm:text-3xl font-display font-bold text-emerald-500">100%</div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Imported & Genuine</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-card border border-border shadow-sm text-center">
+                <div className="text-2xl sm:text-3xl font-display font-bold text-primary">Direct</div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Authorized Retailer</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-card border border-border shadow-sm text-center">
+                <div className="text-2xl sm:text-3xl font-display font-bold text-foreground">Fast</div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Islandwide Delivery</div>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-10 space-y-10">
@@ -146,7 +174,7 @@ export default function Brands() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                <h2 className="text-lg font-black uppercase tracking-wider text-foreground">
+                <h2 className="text-display text-xl sm:text-2xl font-bold uppercase tracking-wider text-foreground">
                   Featured Top Brands
                 </h2>
               </div>
@@ -404,7 +432,7 @@ export default function Brands() {
 
                     {/* Info */}
                     <div className="space-y-1.5 mb-4 flex-1">
-                      <h2 className="text-lg font-black uppercase tracking-tight text-foreground group-hover:text-primary transition-colors">
+                      <h2 className="text-display text-base sm:text-lg font-bold uppercase tracking-tight text-foreground group-hover:text-primary transition-colors">
                         {brand.name}
                       </h2>
                       {brand.description ? (
@@ -443,16 +471,16 @@ export default function Brands() {
         )}
 
         {/* Bottom Importer Assurance Banner */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-card via-secondary/40 to-card dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 border border-border dark:border-zinc-800 text-foreground dark:text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 text-xs font-black tracking-widest uppercase text-amber-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="inline-flex items-center gap-2 text-xs font-black tracking-widest uppercase text-amber-500 dark:text-amber-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
               Direct Brand Importer Guarantee
             </div>
-            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight">
+            <h3 className="text-display text-xl sm:text-2xl font-bold uppercase tracking-tight text-foreground dark:text-white">
               Can't find a specific supplement brand?
             </h3>
-            <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
+            <p className="text-xs sm:text-sm text-muted-foreground dark:text-zinc-400 max-w-xl leading-relaxed">
               We continuously import verified fresh inventory directly from US and European manufacturers. Contact our team to request custom brand stock.
             </p>
           </div>

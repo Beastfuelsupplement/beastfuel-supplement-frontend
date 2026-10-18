@@ -114,7 +114,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   product,
   isSubmitting = false,
 }) => {
-  const { symbol: currencySymbol } = useCurrency();
+  const { currencySymbol } = useCurrency();
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // ================= STEP 1: BASIC INFO =================

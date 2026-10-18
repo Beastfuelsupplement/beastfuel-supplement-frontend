@@ -97,56 +97,63 @@ const Offers = () => {
   return (
     <Layout accent="orange">
       {/* Hero Banner with Deal Countdown */}
-      <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 overflow-hidden">
+      <section className="relative min-h-[48vh] sm:min-h-[55vh] flex items-center justify-center overflow-hidden py-16 sm:py-20 border-b border-border/40">
+        {/* Ambient lighting & decorative lines matching Products & About */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-rose-500/10 dark:bg-rose-500/5 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          <div className="absolute bottom-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+        </div>
+
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
+            className="text-center max-w-4xl mx-auto"
           >
             {/* Promo Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-500/20 via-amber-500/20 to-rose-500/20 border border-rose-500/40 text-rose-500 dark:text-rose-400 text-xs font-black uppercase tracking-widest mb-4 shadow-sm animate-pulse">
-              <Flame className="w-4 h-4 text-rose-500" />
+            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-6 shadow-xs">
+              <Flame className="w-4 h-4 text-rose-500 animate-pulse" />
               <span>Limited Time Exclusive Promotions</span>
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             </div>
 
-            <h1 className="text-display text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white mb-4">
+            <h1 className="text-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-6">
               SPECIAL OFFERS <br className="hidden sm:block" />
-              <span className="text-white">
+              <span className="text-primary/90 dark:text-primary">
                 & FLASH DEALS
               </span>
             </h1>
 
-            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8">
-              Fuel your ambition with special discounts on top-tier protein powders, pre-workouts, and recovery formulas. Grab these deals before timer runs out!
+            <p className="text-muted-foreground text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-8">
+              Fuel your ambition with special discounts on top-tier protein powders, pre-workouts, and recovery formulas. Grab these deals before the timer runs out!
             </p>
 
             {/* Deal Countdown Clock Card */}
-            <div className="inline-flex items-center gap-3 sm:gap-6 p-4 sm:p-5 rounded-2xl bg-card/80 backdrop-blur-md border border-rose-500/30 shadow-xl">
-              <div className="flex items-center gap-2 text-rose-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            <div className="inline-flex items-center gap-3 sm:gap-6 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-lg">
+              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
                 <Clock className="w-4 h-4 animate-spin text-rose-500" style={{ animationDuration: '6s' }} />
                 <span>Deals Expire In:</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-black font-mono text-foreground">
+                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
+                  <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
                     {String(timeLeft.hours).padStart(2, '0')}
                   </span>
                   <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Hours</span>
                 </div>
-                <span className="text-xl font-black text-rose-500">:</span>
-                <div className="bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-black font-mono text-foreground">
+                <span className="text-xl font-bold text-rose-500">:</span>
+                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
+                  <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
                     {String(timeLeft.minutes).padStart(2, '0')}
                   </span>
                   <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Mins</span>
                 </div>
-                <span className="text-xl font-black text-rose-500">:</span>
-                <div className="bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-black font-mono text-rose-500">
+                <span className="text-xl font-bold text-rose-500">:</span>
+                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
+                  <span className="text-xl sm:text-2xl font-bold font-display text-rose-600 dark:text-rose-400">
                     {String(timeLeft.seconds).padStart(2, '0')}
                   </span>
                   <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Secs</span>
@@ -266,8 +273,18 @@ const Offers = () => {
                         {/* Rating */}
                         <div className="absolute top-3 right-3">
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-background/90 backdrop-blur-md border border-border text-foreground shadow-sm">
-                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                            4.9
+                            {(product.reviewsCount ?? 0) > 0 ? (
+                              <>
+                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                <span>{product.averageRating?.toFixed(1)}</span>
+                                <span className="text-[9px] text-muted-foreground font-normal">({product.reviewsCount})</span>
+                              </>
+                            ) : (
+                              <>
+                                <Star className="w-3 h-3 text-muted-foreground/60" />
+                                <span className="text-[10px] text-muted-foreground font-medium">Rate</span>
+                              </>
+                            )}
                           </span>
                         </div>
                       </Link>
@@ -280,7 +297,7 @@ const Offers = () => {
                           </p>
 
                           <Link to={`/products/${product.id}`}>
-                            <h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                            <h3 className="text-display text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                               {product.name}
                             </h3>
                           </Link>
@@ -304,7 +321,7 @@ const Offers = () => {
                               Offer Deal:
                             </span>
                             <div className="flex items-baseline gap-1">
-                              <span className="text-2xl font-black text-foreground">
+                              <span className="text-2xl font-black font-display text-foreground">
                                 {formatCurrencyParts(pricing.offerPrice).whole}
                               </span>
                               <span className="text-xs text-muted-foreground">

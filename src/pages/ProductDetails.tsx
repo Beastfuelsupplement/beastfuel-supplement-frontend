@@ -23,7 +23,29 @@ const ProductDetails = () => {
 
   const { data: product, isLoading } = useProduct(id);
   const { data: allProducts = [] } = useProducts();
-  const { averageRating, totalReviews } = useReviews(id || '');
+  const { averageRating, totalReviews, userReview } = useReviews(id || '');
+
+  useEffect(() => {
+    if (window.location.hash === '#reviews' || window.location.hash === '#customer-reviews') {
+      setTimeout(() => {
+        const el = document.getElementById('customer-reviews');
+        el?.scrollIntoView({ behavior: 'smooth' });
+      }, 400);
+    }
+  }, [id]);
+
+  const scrollToReviews = (focusForm = false) => {
+    const el = document.getElementById('customer-reviews');
+    el?.scrollIntoView({ behavior: 'smooth' });
+    if (focusForm) {
+      setTimeout(() => {
+        const input = document.getElementById('review-textarea') || document.querySelector('#customer-reviews textarea');
+        if (input instanceof HTMLElement) {
+          input.focus();
+        }
+      }, 500);
+    }
+  };
 
   const isOfferExpired = Boolean(product?.offerEndDate && new Date(product.offerEndDate).getTime() < Date.now());
   const isOfferActive = Boolean(product?.hasOffer && !isOfferExpired);
@@ -388,13 +410,37 @@ const ProductDetails = () => {
               </h1>
 
               {/* Rating */}
-              <div className="flex items-center gap-2 mb-5">
-                <StarRating rating={Math.round(averageRating)} size="md" />
-                <span className="text-muted-foreground text-sm">
-                  {totalReviews > 0
-                    ? `(${totalReviews} ${totalReviews === 1 ? 'review' : 'reviews'})`
-                    : '(4.9 rating • 50+ verified buyers)'}
-                </span>
+              <div className="flex items-center flex-wrap gap-3 mb-5">
+                <button
+                  type="button"
+                  onClick={() => scrollToReviews(false)}
+                  className="flex items-center gap-2 group cursor-pointer text-left focus:outline-none"
+                  title="Click to view all reviews and ratings"
+                >
+                  <StarRating rating={Math.round(averageRating)} size="md" />
+                  {totalReviews > 0 ? (
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <span className="font-bold text-foreground">{averageRating.toFixed(1)}</span>
+                      <span className="text-muted-foreground group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+                        ({totalReviews} {totalReviews === 1 ? 'customer review' : 'customer reviews'})
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+                      No ratings yet • Be the first to rate
+                    </span>
+                  )}
+                </button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => scrollToReviews(true)}
+                  className="text-xs font-semibold h-7 px-3 rounded-full border-primary/30 hover:border-primary hover:bg-primary/10 transition-colors"
+                >
+                  {userReview ? '★ Edit Your Rating' : '★ Rate Product'}
+                </Button>
               </div>
 
               {/* Special Offer Alert Banner if product has an active offer for the selected weight */}

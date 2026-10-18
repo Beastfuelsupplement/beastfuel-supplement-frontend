@@ -134,6 +134,7 @@ const ReviewForm = ({ productId, existingReview, onSubmit, onDelete }: ReviewFor
           Review (optional)
         </label>
         <Textarea
+          id="review-textarea"
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
           placeholder="Share your experience with this product..."

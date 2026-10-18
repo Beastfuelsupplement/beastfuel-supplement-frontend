@@ -22,7 +22,7 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
   } = useReviews(productId);
 
   return (
-    <section className="mt-20 pt-20 border-t border-border">
+    <section id="customer-reviews" className="mt-20 pt-20 border-t border-border scroll-mt-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -30,12 +30,19 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
       >
         <h2 className="text-display text-3xl md:text-4xl mb-4">CUSTOMER REVIEWS</h2>
         
-        {totalReviews > 0 && (
+        {totalReviews > 0 ? (
           <div className="flex items-center gap-4">
             <StarRating rating={Math.round(averageRating)} size="lg" />
-            <span className="text-2xl font-semibold">{averageRating.toFixed(1)}</span>
+            <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
             <span className="text-muted-foreground">
-              Based on {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
+              Based on {totalReviews} {totalReviews === 1 ? 'customer review' : 'customer reviews'}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <StarRating rating={0} size="lg" />
+            <span className="text-muted-foreground">
+              No reviews yet. Be the first customer to rate this product!
             </span>
           </div>
         )}

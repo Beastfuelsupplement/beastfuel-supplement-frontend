@@ -205,6 +205,10 @@ class ApiService {
   }
 
   // Reviews
+  async getReviewStats() {
+    return this.request<Record<string, { averageRating: number; reviewsCount: number }>>('/reviews/stats');
+  }
+
   async getProductReviews(productId: string) {
     return this.request<any[]>(`/reviews/product/${productId}`);
   }

@@ -68,6 +68,8 @@ export const mapApiToProduct = (p: any): Product => {
     offerEndDate: p.offerEndDate || undefined,
     offerFreeProduct: p.offerFreeProduct || undefined,
     offerBadge: p.offerBadge || (p.hasOffer ? 'SPECIAL DEAL' : undefined),
+    averageRating: typeof p.averageRating === 'number' ? p.averageRating : (typeof p.rating === 'number' ? p.rating : 0),
+    reviewsCount: typeof p.reviewsCount === 'number' ? p.reviewsCount : (typeof p.numReviews === 'number' ? p.numReviews : 0),
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
