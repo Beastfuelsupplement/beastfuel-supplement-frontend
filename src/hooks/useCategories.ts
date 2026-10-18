@@ -66,6 +66,26 @@ export const FALLBACK_CATEGORIES: CategoryItem[] = [
     order: 6,
     productCount: 2,
   },
+  {
+    _id: 'fallback-vitamins',
+    name: 'Vitamins & Minerals',
+    slug: 'vitamins-minerals',
+    image: 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=800&auto=format&fit=crop&q=80',
+    description: 'Essential micronutrients and immune support minerals for daily athletic performance.',
+    featured: true,
+    order: 7,
+    productCount: 3,
+  },
+  {
+    _id: 'fallback-energy',
+    name: 'Energy & Endurance',
+    slug: 'energy-endurance',
+    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+    description: 'Clean sustained energy, hydration boosters, and stamina enhancers.',
+    featured: true,
+    order: 8,
+    productCount: 3,
+  },
 ];
 
 export const useCategories = () => {

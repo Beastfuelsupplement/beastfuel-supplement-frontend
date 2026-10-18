@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Truck, Shield, Award, Zap, ChevronDown, Star, Quote, Dumbbell, Flame, Leaf, HeartPulse } from 'lucide-react';
+import { ArrowRight, Truck, Shield, Award, Zap, ChevronDown, Star, Quote, Dumbbell, Flame, Leaf, HeartPulse, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
@@ -8,7 +8,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { formatImageUrl } from '@/lib/api';
 import heroBg from '@/assets/hero-bg.jpg';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { useCurrency, formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
 
 
@@ -17,11 +17,88 @@ const Index = () => {
   const { data: categoriesData = [] } = useCategories();
   const featuredProducts = products.slice(0, 4);
 
-  // Take active featured categories (up to 6)
+  // Take all active categories for the horizontal slider
   const displayCategories = useMemo(() => {
     const featured = categoriesData.filter((c) => c.featured !== false);
-    return featured.length > 0 ? featured.slice(0, 6) : categoriesData.slice(0, 6);
+    return featured.length > 0 ? featured : categoriesData;
   }, [categoriesData]);
+
+  // Category horizontal scroll & pagination state
+  const categoriesScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeDotIndex, setActiveDotIndex] = useState(0);
+
+  // Total dots based on category count
+  const totalDots = useMemo(() => {
+    if (displayCategories.length <= 1) return 1;
+    return Math.max(2, Math.min(6, Math.ceil(displayCategories.length / 2)));
+  }, [displayCategories.length]);
+
+  const updateScrollState = useCallback(() => {
+    if (!categoriesScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = categoriesScrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < maxScroll - 10);
+
+    if (maxScroll > 0) {
+      const progress = Math.max(0, Math.min(1, scrollLeft / maxScroll));
+      setScrollProgress(progress);
+      const activeIdx = Math.min(totalDots - 1, Math.round(progress * (totalDots - 1)));
+      setActiveDotIndex(activeIdx);
+    } else {
+      setScrollProgress(0);
+      setActiveDotIndex(0);
+    }
+  }, [totalDots]);
+
+  useEffect(() => {
+    updateScrollState();
+    const handleResize = () => updateScrollState();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateScrollState, displayCategories]);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (!categoriesScrollRef.current) return;
+    const container = categoriesScrollRef.current;
+    const scrollAmount = Math.max(260, container.clientWidth * 0.7);
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
+  const scrollToDot = (dotIdx: number) => {
+    if (!categoriesScrollRef.current) return;
+    const container = categoriesScrollRef.current;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    if (maxScroll <= 0) return;
+
+    const targetLeft = (dotIdx / (totalDots - 1)) * maxScroll;
+    container.scrollTo({
+      left: targetLeft,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!categoriesScrollRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const container = categoriesScrollRef.current;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    if (maxScroll > 0) {
+      container.scrollTo({
+        left: ratio * maxScroll,
+        behavior: 'smooth',
+      });
+    }
+  };
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -211,7 +288,7 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-12 md:mb-16"
           >
             <span className="inline-block px-4 py-2 rounded-full bg-card text-xs sm:text-sm uppercase tracking-[0.2em] text-foreground font-semibold mb-6 border border-border/80 shadow-sm">
               Browse Collection
@@ -221,44 +298,160 @@ const Index = () => {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-            {displayCategories.map((cat, i) => {
-              const categoryImageUrl = cat.image
-                ? formatImageUrl(cat.image)
-                : 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80';
-              const targetUrl = `/products?category=${encodeURIComponent(cat.name)}`;
+          {/* Carousel Viewport with Floating Controls */}
+          <div className="relative group/carousel">
+            {/* Left Edge Shadow/Gradient */}
+            {canScrollLeft && (
+              <div className="pointer-events-none absolute left-0 top-0 bottom-4 w-12 md:w-20 bg-gradient-to-r from-background via-background/60 to-transparent z-10 hidden sm:block" />
+            )}
 
-              return (
-                <motion.div
-                  key={cat._id || cat.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}
-                >
-                  <Link
-                    to={targetUrl}
-                    className="group block relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift shadow-sm hover:shadow-xl border border-border/80 dark:border-border/50 transition-all bg-zinc-900"
+            {/* Right Edge Shadow/Gradient */}
+            {canScrollRight && (
+              <div className="pointer-events-none absolute right-0 top-0 bottom-4 w-12 md:w-20 bg-gradient-to-l from-background via-background/60 to-transparent z-10 hidden sm:block" />
+            )}
+
+            {/* Floating Left Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              disabled={!canScrollLeft}
+              aria-label="Previous categories"
+              className={`hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${
+                canScrollLeft
+                  ? 'bg-card/90 hover:bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer opacity-80 hover:opacity-100'
+                  : 'bg-card/40 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-0'
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* Horizontally Scrollable Categories */}
+            <div
+              ref={categoriesScrollRef}
+              onScroll={updateScrollState}
+              className="flex gap-4 md:gap-6 overflow-x-auto pb-4 pt-2 scroll-smooth snap-x snap-mandatory select-none no-scrollbar"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {displayCategories.map((cat, i) => {
+                const categoryImageUrl = cat.image
+                  ? formatImageUrl(cat.image)
+                  : 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80';
+                const targetUrl = `/products?category=${encodeURIComponent(cat.name)}`;
+
+                return (
+                  <motion.div
+                    key={cat._id || cat.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: Math.min(i * 0.05, 0.4), duration: 0.5 }}
+                    className="snap-start shrink-0 w-[165px] sm:w-[200px] md:w-[220px] lg:w-[calc((100%-5*1.5rem)/6)] min-w-[165px] sm:min-w-[190px]"
                   >
-                    <img
-                      src={categoryImageUrl}
-                      alt={cat.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                      <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white drop-shadow-sm">
-                        {cat.name}
-                      </h3>
-                      <span className="text-xs text-white/80 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-medium">
-                        Shop Now →
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
+                    <Link
+                      to={targetUrl}
+                      className="group block relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift shadow-sm hover:shadow-xl border border-border/80 dark:border-border/50 transition-all bg-zinc-900"
+                    >
+                      <img
+                        src={categoryImageUrl}
+                        alt={cat.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                        <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white drop-shadow-sm">
+                          {cat.name}
+                        </h3>
+                        <span className="text-xs text-white/80 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-medium">
+                          Shop Now →
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Floating Right Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              disabled={!canScrollRight}
+              aria-label="Next categories"
+              className={`hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${
+                canScrollRight
+                  ? 'bg-card/90 hover:bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer opacity-80 hover:opacity-100'
+                  : 'bg-card/40 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-0'
+              }`}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Interactive Scrollbar & Pagination Dots */}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            {/* Custom Interactive Scrollbar Track */}
+            <div className="w-full max-w-xs sm:max-w-md flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleScroll('left')}
+                disabled={!canScrollLeft}
+                aria-label="Scroll left"
+                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                  canScrollLeft
+                    ? 'bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer shadow-xs'
+                    : 'bg-muted/20 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-40'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Scroll Track & Indicator */}
+              <div
+                onClick={handleTrackClick}
+                className="flex-1 h-2 bg-secondary/80 dark:bg-zinc-800/80 rounded-full relative cursor-pointer overflow-hidden border border-border/50 shadow-inner group/track hover:h-2.5 transition-all"
+                title="Click to scroll categories"
+              >
+                <div
+                  className="absolute top-0 bottom-0 bg-gradient-to-r from-primary via-blue-500 to-amber-500 rounded-full transition-all duration-150 shadow-sm"
+                  style={{
+                    left: `${scrollProgress * 65}%`,
+                    width: '35%',
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleScroll('right')}
+                disabled={!canScrollRight}
+                aria-label="Scroll right"
+                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                  canScrollRight
+                    ? 'bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer shadow-xs'
+                    : 'bg-muted/20 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-40'
+                }`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="flex items-center justify-center gap-2">
+              {Array.from({ length: totalDots }).map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  onClick={() => scrollToDot(dotIdx)}
+                  aria-label={`Go to slide ${dotIdx + 1}`}
+                  className={`transition-all duration-300 rounded-full cursor-pointer ${
+                    activeDotIndex === dotIdx
+                      ? 'w-7 h-2 bg-primary shadow-sm shadow-primary/30'
+                      : 'w-2 h-2 bg-foreground/20 hover:bg-foreground/45 hover:scale-125'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
