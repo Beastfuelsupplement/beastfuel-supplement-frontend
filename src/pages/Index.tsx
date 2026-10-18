@@ -85,20 +85,6 @@ const Index = () => {
     });
   };
 
-  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!categoriesScrollRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    const container = categoriesScrollRef.current;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    if (maxScroll > 0) {
-      container.scrollTo({
-        left: ratio * maxScroll,
-        behavior: 'smooth',
-      });
-    }
-  };
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -388,70 +374,21 @@ const Index = () => {
             </button>
           </div>
 
-          {/* Interactive Scrollbar & Pagination Dots */}
-          <div className="mt-8 flex flex-col items-center gap-4">
-            {/* Custom Interactive Scrollbar Track */}
-            <div className="w-full max-w-xs sm:max-w-md flex items-center gap-3">
+          {/* Pagination Dots */}
+          <div className="mt-8 flex items-center justify-center gap-2.5">
+            {Array.from({ length: totalDots }).map((_, dotIdx) => (
               <button
+                key={dotIdx}
                 type="button"
-                onClick={() => handleScroll('left')}
-                disabled={!canScrollLeft}
-                aria-label="Scroll left"
-                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                  canScrollLeft
-                    ? 'bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer shadow-xs'
-                    : 'bg-muted/20 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-40'
+                onClick={() => scrollToDot(dotIdx)}
+                aria-label={`Go to slide ${dotIdx + 1}`}
+                className={`transition-all duration-300 rounded-full cursor-pointer ${
+                  activeDotIndex === dotIdx
+                    ? 'w-8 h-2.5 bg-primary shadow-sm shadow-primary/40'
+                    : 'w-2.5 h-2.5 bg-foreground/20 hover:bg-foreground/45 hover:scale-125'
                 }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* Scroll Track & Indicator */}
-              <div
-                onClick={handleTrackClick}
-                className="flex-1 h-2 bg-secondary/80 dark:bg-zinc-800/80 rounded-full relative cursor-pointer overflow-hidden border border-border/50 shadow-inner group/track hover:h-2.5 transition-all"
-                title="Click to scroll categories"
-              >
-                <div
-                  className="absolute top-0 bottom-0 bg-gradient-to-r from-primary via-blue-500 to-amber-500 rounded-full transition-all duration-150 shadow-sm"
-                  style={{
-                    left: `${scrollProgress * 65}%`,
-                    width: '35%',
-                  }}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleScroll('right')}
-                disabled={!canScrollRight}
-                aria-label="Scroll right"
-                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                  canScrollRight
-                    ? 'bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer shadow-xs'
-                    : 'bg-muted/20 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-40'
-                }`}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex items-center justify-center gap-2">
-              {Array.from({ length: totalDots }).map((_, dotIdx) => (
-                <button
-                  key={dotIdx}
-                  type="button"
-                  onClick={() => scrollToDot(dotIdx)}
-                  aria-label={`Go to slide ${dotIdx + 1}`}
-                  className={`transition-all duration-300 rounded-full cursor-pointer ${
-                    activeDotIndex === dotIdx
-                      ? 'w-7 h-2 bg-primary shadow-sm shadow-primary/30'
-                      : 'w-2 h-2 bg-foreground/20 hover:bg-foreground/45 hover:scale-125'
-                  }`}
-                />
-              ))}
-            </div>
+              />
+            ))}
           </div>
         </div>
       </section>
