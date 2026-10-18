@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, AlertCircle, Flame, Gift, Clock } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ArrowLeft, Truck, Shield, Globe, Award, Check, Sparkles, AlertTriangle, AlertCircle, Flame, Gift, Clock, Maximize2, ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -64,6 +64,39 @@ const ProductDetails = () => {
   }, [product]);
 
   const [activeImage, setActiveImage] = useState<string>('');
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  const currentImageIndex = useMemo(() => {
+    const current = activeImage || product?.image || '';
+    const idx = allImages.findIndex((img) => img === current);
+    return idx >= 0 ? idx : 0;
+  }, [activeImage, product?.image, allImages]);
+
+  const handleNextImage = () => {
+    if (allImages.length <= 1) return;
+    const nextIdx = (currentImageIndex + 1) % allImages.length;
+    setActiveImage(allImages[nextIdx]);
+    setZoomLevel(1);
+  };
+
+  const handlePrevImage = () => {
+    if (allImages.length <= 1) return;
+    const prevIdx = (currentImageIndex - 1 + allImages.length) % allImages.length;
+    setActiveImage(allImages[prevIdx]);
+    setZoomLevel(1);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isLightboxOpen) return;
+      if (e.key === 'Escape') setIsLightboxOpen(false);
+      if (e.key === 'ArrowRight') handleNextImage();
+      if (e.key === 'ArrowLeft') handlePrevImage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, currentImageIndex, allImages]);
 
   useEffect(() => {
     if (product?.image) {
@@ -327,25 +360,48 @@ const ProductDetails = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col gap-4"
           >
-            <div className="relative aspect-square bg-secondary rounded-2xl overflow-hidden border border-border shadow-lg">
+            <div 
+              onClick={() => {
+                setZoomLevel(1);
+                setIsLightboxOpen(true);
+              }}
+              className="relative aspect-square bg-card/70 dark:bg-card/40 rounded-2xl overflow-hidden border border-border shadow-lg flex items-center justify-center p-3 sm:p-5 cursor-zoom-in group select-none transition-all hover:border-primary/40"
+              title="Click to view full photo and zoom in"
+            >
               <img
                 src={formatImageUrl(activeImage || product.image)}
                 alt={product.name}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder.svg';
                 }}
-                className="w-full h-full object-cover transition-all duration-300"
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
               />
-              {/* Category and Brand Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <span className="px-3.5 py-1.5 bg-primary text-primary-foreground text-xs uppercase tracking-wider font-bold rounded-lg shadow-md">
+
+              {/* Category and Brand Badges - discreetly placed with small padding so they don't cover text */}
+              <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10 pointer-events-none">
+                <span className="px-2.5 py-1 bg-primary/95 text-primary-foreground text-[11px] uppercase tracking-wider font-bold rounded-md shadow-sm">
                   {product.category}
                 </span>
-                <span className="px-3 py-1 bg-background/90 backdrop-blur-md text-foreground text-xs font-semibold rounded-lg border border-border/50 shadow-sm flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                <span className="px-2.5 py-1 bg-background/85 backdrop-blur-md text-foreground text-[11px] font-semibold rounded-md border border-border/60 shadow-xs flex items-center gap-1">
+                  <Award className="w-3 h-3 text-amber-500" />
                   {brandName}
                 </span>
               </div>
+
+              {/* Click to Enlarge Badge */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomLevel(1);
+                  setIsLightboxOpen(true);
+                }}
+                className="absolute top-3 right-3 z-10 px-2.5 py-1.5 rounded-lg bg-background/85 hover:bg-background border border-border/70 backdrop-blur-md shadow-xs text-foreground transition-all flex items-center gap-1.5 text-xs font-semibold hover:scale-105 active:scale-95 cursor-pointer"
+                title="Enlarge & Zoom Photo"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">Zoom Full View</span>
+              </button>
             </div>
 
             {/* All Product Photos / Thumbnail Gallery */}
@@ -358,7 +414,7 @@ const ProductDetails = () => {
                       key={i}
                       type="button"
                       onClick={() => setActiveImage(img)}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-card/80 p-1 flex items-center justify-center ${
                         isSelected
                           ? 'border-primary ring-2 ring-primary/40 shadow-md scale-105'
                           : 'border-border/70 hover:border-border opacity-70 hover:opacity-100'
@@ -371,7 +427,7 @@ const ProductDetails = () => {
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/placeholder.svg';
                         }}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </button>
                   );
@@ -772,6 +828,146 @@ const ProductDetails = () => {
           </section>
         )}
       </div>
+
+      {/* Fullscreen High-Res Image Lightbox Modal */}
+      {isLightboxOpen && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Top Bar */}
+          <div 
+            className="flex items-center justify-between text-white z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-sm sm:text-base font-bold truncate max-w-xs sm:max-w-md">
+                {product?.name}
+              </span>
+              {allImages.length > 1 && (
+                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-medium text-white/80">
+                  {currentImageIndex + 1} / {allImages.length}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Zoom Out */}
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.max(1, z - 0.5))}
+                disabled={zoomLevel <= 1}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-5 h-5 text-white" />
+              </button>
+              {/* Zoom In */}
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.min(3, z + 0.5))}
+                disabled={zoomLevel >= 3}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-5 h-5 text-white" />
+              </button>
+              {/* Reset Zoom */}
+              {zoomLevel > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(1)}
+                  className="px-2.5 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium cursor-pointer"
+                >
+                  Reset ({zoomLevel}x)
+                </button>
+              )}
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors ml-2 cursor-pointer"
+                title="Close (ESC)"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Photo Viewport */}
+          <div 
+            className="flex-1 flex items-center justify-center relative my-4 overflow-auto cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Prev Photo Arrow */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevImage}
+                className="absolute left-2 sm:left-4 z-20 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+                title="Previous Photo (Left Arrow)"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* The Image */}
+            <div className="max-w-5xl max-h-[75vh] flex items-center justify-center p-2">
+              <img
+                src={formatImageUrl(activeImage || product?.image)}
+                alt={product?.name}
+                style={{
+                  transform: `scale(${zoomLevel})`,
+                  transition: 'transform 0.2s ease-out',
+                }}
+                className="max-w-full max-h-[75vh] object-contain select-none rounded-lg"
+              />
+            </div>
+
+            {/* Next Photo Arrow */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handleNextImage}
+                className="absolute right-2 sm:right-4 z-20 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+                title="Next Photo (Right Arrow)"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Strip */}
+          {allImages.length > 1 && (
+            <div 
+              className="flex items-center justify-center gap-2 overflow-x-auto py-2 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {allImages.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setActiveImage(img);
+                    setZoomLevel(1);
+                  }}
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all p-1 bg-zinc-900 cursor-pointer ${
+                    (activeImage || product?.image) === img
+                      ? 'border-primary ring-2 ring-primary/50 scale-105'
+                      : 'border-white/30 hover:border-white/70 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={formatImageUrl(img)}
+                    alt={`Thumbnail ${i + 1}`}
+                    className="w-full h-full object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Layout>
   );
 };
