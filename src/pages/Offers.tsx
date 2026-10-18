@@ -46,24 +46,44 @@ const Offers = () => {
     );
   });
 
-  // Live countdown timer state (24-hour cycle)
-  const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 32, seconds: 45 });
+  // Dynamic countdown timer state
+  // Calculates live time towards nearest offerEndDate if set, otherwise rolling end-of-day countdown
+  const [timeLeft, setTimeLeft] = useState<{ days?: number; hours: number; minutes: number; seconds: number }>({
+    hours: 14,
+    minutes: 32,
+    seconds: 45,
+  });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
+    const updateCountdown = () => {
+      const now = Date.now();
+      const futureDates = offerProducts
+        .map((p) => (p.offerEndDate ? new Date(p.offerEndDate).getTime() : null))
+        .filter((t): t is number => t !== null && t > now);
+
+      if (futureDates.length > 0) {
+        const target = Math.min(...futureDates);
+        const diff = Math.max(0, target - now);
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        const diff = Math.max(0, endOfDay.getTime() - now);
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        setTimeLeft({ hours, minutes, seconds });
+      }
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [offerProducts]);
 
   const handleQuickAdd = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,7 +117,7 @@ const Offers = () => {
   return (
     <Layout accent="orange">
       {/* Hero Banner with Deal Countdown */}
-      <section className="relative min-h-[48vh] sm:min-h-[55vh] flex items-center justify-center overflow-hidden py-16 sm:py-20 border-b border-border/40">
+      <section className="relative flex items-center justify-center overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-14 border-b border-border/40">
         {/* Ambient lighting & decorative lines matching Products & About */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-rose-500/10 dark:bg-rose-500/5 rounded-full blur-[100px] pointer-events-none" />
@@ -113,31 +133,43 @@ const Offers = () => {
             className="text-center max-w-4xl mx-auto"
           >
             {/* Promo Pill */}
-            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-6 shadow-xs">
+            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-4 shadow-xs">
               <Flame className="w-4 h-4 text-rose-500 animate-pulse" />
               <span>Limited Time Exclusive Promotions</span>
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             </div>
 
-            <h1 className="text-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-6">
-              SPECIAL OFFERS <br className="hidden sm:block" />
-              <span className="text-primary/90 dark:text-primary">
-                & FLASH DEALS
+            {/* Title: 1st line 'SPECIAL OFFERS &', 2nd line 'FLASH DEALS' */}
+            <h1 className="text-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.05] tracking-tight mb-4">
+              <span className="block">SPECIAL OFFERS &amp;</span>
+              <span className="block text-primary/90 dark:text-primary">
+                FLASH DEALS
               </span>
             </h1>
 
-            <p className="text-muted-foreground text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-8">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
               Fuel your ambition with special discounts on top-tier protein powders, pre-workouts, and recovery formulas. Grab these deals before the timer runs out!
             </p>
 
-            {/* Deal Countdown Clock Card */}
-            <div className="inline-flex items-center gap-3 sm:gap-6 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-lg">
+            {/* Deal Countdown Clock Card - prominent in Hero */}
+            <div className="inline-flex items-center gap-3 sm:gap-6 p-3.5 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-sm border border-border shadow-xl">
               <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
                 <Clock className="w-4 h-4 animate-spin text-rose-500" style={{ animationDuration: '6s' }} />
                 <span>Deals Expire In:</span>
               </div>
 
               <div className="flex items-center gap-2">
+                {timeLeft.days !== undefined && timeLeft.days > 0 && (
+                  <>
+                    <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
+                      <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
+                        {String(timeLeft.days).padStart(2, '0')}
+                      </span>
+                      <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Days</span>
+                    </div>
+                    <span className="text-xl font-bold text-rose-500">:</span>
+                  </>
+                )}
                 <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
                   <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
                     {String(timeLeft.hours).padStart(2, '0')}

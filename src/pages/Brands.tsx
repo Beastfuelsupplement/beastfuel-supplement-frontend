@@ -98,12 +98,6 @@ export default function Brands() {
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          {/* Breadcrumb */}
-          <nav className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6 uppercase tracking-wider">
-            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-foreground font-semibold">Brands</span>
-          </nav>
 
           <div className="max-w-4xl mx-auto text-center">
             {/* Pill Badge matching Products / About */}

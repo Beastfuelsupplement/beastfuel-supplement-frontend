@@ -372,6 +372,49 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Categories
+  async getCategories(): Promise<CategoryItem[]> {
+    return this.request<CategoryItem[]>('/categories');
+  }
+
+  async getCategory(idOrSlug: string): Promise<{ category: CategoryItem; products: any[] }> {
+    return this.request<{ category: CategoryItem; products: any[] }>(`/categories/${idOrSlug}`);
+  }
+
+  async createCategory(categoryData: Partial<CategoryItem>): Promise<CategoryItem> {
+    return this.request<CategoryItem>('/categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  async updateCategory(id: string, categoryData: Partial<CategoryItem> & { syncProducts?: boolean }): Promise<CategoryItem> {
+    return this.request<CategoryItem>(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  async deleteCategory(id: string, force = false): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/categories/${id}${force ? '?force=true' : ''}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export interface CategoryItem {
+  _id: string;
+  name: string;
+  slug?: string;
+  image?: string;
+  description?: string;
+  featured?: boolean;
+  order?: number;
+  productCount?: number;
+  isDynamic?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BrandItem {

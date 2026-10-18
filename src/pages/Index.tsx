@@ -5,14 +5,23 @@ import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { formatImageUrl } from '@/lib/api';
 import heroBg from '@/assets/hero-bg.jpg';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useCurrency, formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
 
 
 const Index = () => {
   const { data: products = [] } = useProducts();
+  const { data: categoriesData = [] } = useCategories();
   const featuredProducts = products.slice(0, 4);
+
+  // Take active featured categories (up to 6)
+  const displayCategories = useMemo(() => {
+    const featured = categoriesData.filter((c) => c.featured !== false);
+    return featured.length > 0 ? featured.slice(0, 6) : categoriesData.slice(0, 6);
+  }, [categoriesData]);
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -213,41 +222,43 @@ const Index = () => {
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-            {[
-              { name: 'Protein', image: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&auto=format&fit=crop&q=80', slug: 'protein' },
-              { name: 'Pre-Workout', image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=400&auto=format&fit=crop&q=80', slug: 'pre-workout' },
-              { name: 'Performance', image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?w=400&auto=format&fit=crop&q=80', slug: 'performance' },
-              { name: 'Recovery', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&auto=format&fit=crop&q=80', slug: 'recovery' },
-              { name: 'Weight Gain', image: 'https://images.unsplash.com/photo-1612532275214-e4ca76d0e4d1?w=400&auto=format&fit=crop&q=80', slug: 'weight gain' },
-              { name: 'Health', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&auto=format&fit=crop&q=80', slug: 'health' },
-            ].map((cat, i) => (
-              <motion.div
-                key={cat.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-              >
-                <Link
-                  to={`/products?category=${cat.slug}`}
-                  className="group block relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift shadow-sm hover:shadow-xl border border-border/80 dark:border-border/50 transition-all"
+            {displayCategories.map((cat, i) => {
+              const categoryImageUrl = cat.image
+                ? formatImageUrl(cat.image)
+                : 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80';
+              const targetUrl = `/products?category=${encodeURIComponent(cat.name)}`;
+
+              return (
+                <motion.div
+                  key={cat._id || cat.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}
                 >
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                    <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white drop-shadow-sm">{cat.name}</h3>
-                    <span className="text-xs text-white/80 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-medium">
-                      Shop Now →
-                    </span>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  <Link
+                    to={targetUrl}
+                    className="group block relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift shadow-sm hover:shadow-xl border border-border/80 dark:border-border/50 transition-all bg-zinc-900"
+                  >
+                    <img
+                      src={categoryImageUrl}
+                      alt={cat.name}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                      <h3 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white drop-shadow-sm">
+                        {cat.name}
+                      </h3>
+                      <span className="text-xs text-white/80 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-medium">
+                        Shop Now →
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

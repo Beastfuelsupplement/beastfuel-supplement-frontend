@@ -77,6 +77,11 @@ export interface StoreSettings {
   paymentMethods: PaymentMethod[];
   adminEmail: string;
   lowStockThreshold: number;
+  shippingType?: 'free' | 'flat_rate';
+  shippingCost?: number;
+  enableFreeShippingThreshold?: boolean;
+  freeShippingThreshold?: number;
+  shippingEstimatedDays?: string;
 }
 
 interface AdminStore {
@@ -154,6 +159,11 @@ const defaultSettings: StoreSettings = {
   paymentMethods: defaultPaymentMethods,
   adminEmail: 'dilmunasingha91@gmail.com',
   lowStockThreshold: 10,
+  shippingType: 'free',
+  shippingCost: 0,
+  enableFreeShippingThreshold: false,
+  freeShippingThreshold: 50,
+  shippingEstimatedDays: '1-3 Business Days',
 };
 
 const defaultCustomers: Customer[] = [

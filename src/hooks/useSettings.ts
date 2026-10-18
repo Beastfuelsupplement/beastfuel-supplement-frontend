@@ -33,6 +33,11 @@ export interface SiteSettings {
   timezone: string;
   adminEmail: string;
   lowStockThreshold: number;
+  shippingType: 'free' | 'flat_rate';
+  shippingCost: number;
+  enableFreeShippingThreshold: boolean;
+  freeShippingThreshold: number;
+  shippingEstimatedDays?: string;
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
@@ -63,6 +68,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   timezone: 'Asia/Colombo',
   adminEmail: 'admin@beastfuel.com',
   lowStockThreshold: 10,
+  shippingType: 'free',
+  shippingCost: 0,
+  enableFreeShippingThreshold: false,
+  freeShippingThreshold: 50,
+  shippingEstimatedDays: '1-3 Business Days',
 };
 
 const SETTINGS_STORAGE_KEY = 'beastfuel_site_settings';
@@ -84,6 +94,11 @@ export function useSettings() {
             ...DEFAULT_SITE_SETTINGS.socialLinks,
             ...(parsed.socialLinks || {}),
           },
+          shippingType: parsed.shippingType || DEFAULT_SITE_SETTINGS.shippingType,
+          shippingCost: parsed.shippingCost !== undefined ? Number(parsed.shippingCost) : DEFAULT_SITE_SETTINGS.shippingCost,
+          enableFreeShippingThreshold: parsed.enableFreeShippingThreshold !== undefined ? Boolean(parsed.enableFreeShippingThreshold) : DEFAULT_SITE_SETTINGS.enableFreeShippingThreshold,
+          freeShippingThreshold: parsed.freeShippingThreshold !== undefined ? Number(parsed.freeShippingThreshold) : DEFAULT_SITE_SETTINGS.freeShippingThreshold,
+          shippingEstimatedDays: parsed.shippingEstimatedDays || DEFAULT_SITE_SETTINGS.shippingEstimatedDays,
         };
       }
     } catch {
@@ -223,3 +238,43 @@ export function useSettings() {
     refreshSettings: fetchSettings,
   };
 }
+
+/**
+ * Universal shipping fee calculation helper
+ * Evaluates whether shipping is Free or Flat Rate, taking into account optional free shipping thresholds
+ */
+export function calculateShippingFee(
+  subtotal: number,
+  settings?: Partial<SiteSettings>
+): { shippingCost: number; isFree: boolean; remainingForFree?: number } {
+  if (!settings) {
+    return { shippingCost: 0, isFree: true };
+  }
+
+  const type = settings.shippingType || 'free';
+  if (type === 'free') {
+    return { shippingCost: 0, isFree: true };
+  }
+
+  const baseCost = Math.max(0, Number(settings.shippingCost) || 0);
+  if (baseCost === 0) {
+    return { shippingCost: 0, isFree: true };
+  }
+
+  if (settings.enableFreeShippingThreshold) {
+    const threshold = Number(settings.freeShippingThreshold) || 0;
+    if (threshold > 0) {
+      if (subtotal >= threshold) {
+        return { shippingCost: 0, isFree: true };
+      }
+      return {
+        shippingCost: baseCost,
+        isFree: false,
+        remainingForFree: Math.max(0, threshold - subtotal),
+      };
+    }
+  }
+
+  return { shippingCost: baseCost, isFree: false };
+}
+

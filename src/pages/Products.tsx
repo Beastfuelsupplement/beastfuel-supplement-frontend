@@ -93,8 +93,13 @@ const Products = () => {
   // Sync URL params dynamically with state
   useEffect(() => {
     if (categoryFromUrl) {
+      const cleanParam = categoryFromUrl.toLowerCase().trim();
       const matchedCategory = categoryOptions.find(
-        (cat) => cat.value.toLowerCase() === categoryFromUrl.toLowerCase()
+        (cat) =>
+          cat.value.toLowerCase() === cleanParam ||
+          cat.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanParam ||
+          cleanParam.includes(cat.value.toLowerCase()) ||
+          cat.value.toLowerCase().includes(cleanParam)
       );
       if (matchedCategory) {
         setSelectedCategory(matchedCategory.value);

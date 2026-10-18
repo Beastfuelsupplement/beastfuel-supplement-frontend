@@ -11,6 +11,7 @@ import { sendCustomerOrderConfirmation } from '@/utils/customerOrderConfirmation
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
+import { useSettings, calculateShippingFee } from '@/hooks/useSettings';
 import { z } from 'zod';
 import { 
   emailSchema, 
@@ -41,8 +42,9 @@ const Checkout = () => {
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { user, isAuthenticated, session } = useAuth();
   const { addOrder, settings } = useAdminStore();
+  const { settings: storeSettings } = useSettings();
   const totalPrice = getTotalPrice();
-  const freeShipping = totalPrice >= 50;
+  const { shippingCost, isFree } = calculateShippingFee(totalPrice, storeSettings);
 
   const enabledPaymentMethods = settings.paymentMethods.filter(pm => pm.enabled);
 
@@ -200,7 +202,7 @@ const Checkout = () => {
         countryOfOrigin: item.countryOfOrigin,
       }));
 
-      const orderTotal = totalPrice + (freeShipping ? 0 : 9.99);
+      const orderTotal = totalPrice + shippingCost;
       const shippingAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zip}`;
       const customerName = `${formData.firstName} ${formData.lastName}`;
 
@@ -525,7 +527,7 @@ const Checkout = () => {
               )}
 
               <Button variant="hero" size="xl" type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Processing...' : `Place Order - ${formatCurrency(totalPrice + (freeShipping ? 0 : 9.99))}`}
+                {isSubmitting ? 'Processing...' : `Place Order - ${formatCurrency(totalPrice + shippingCost)}`}
               </Button>
             </form>
           </motion.div>
@@ -576,11 +578,13 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span className={freeShipping ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}>{freeShipping ? '✓ FREE' : formatCurrency(9.99)}</span>
+                  <span className={isFree ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-foreground font-semibold'}>
+                    {isFree ? '✓ FREE' : formatCurrency(shippingCost)}
+                  </span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-border">
                   <span className="font-semibold text-lg">Total</span>
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalPrice + (freeShipping ? 0 : 9.99))}</span>
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalPrice + shippingCost)}</span>
                 </div>
               </div>
 

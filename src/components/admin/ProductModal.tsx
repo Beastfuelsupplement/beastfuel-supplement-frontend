@@ -42,7 +42,9 @@ import { api, API_BASE_URL, formatImageUrl } from '@/lib/api';
 import { formatCurrency, useCurrency } from '@/lib/currency';
 import { calculateOfferPricing } from '@/lib/pricing';
 import { useBrands } from '@/hooks/useBrands';
+import { useCategories } from '@/hooks/useCategories';
 import AdminBrandsModal from '@/components/admin/AdminBrandsModal';
+import AdminCategoriesModal from '@/components/admin/AdminCategoriesModal';
 import { toast } from 'sonner';
 
 interface ProductModalProps {
@@ -196,7 +198,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
     return dbBrands.find(b => b.name.toLowerCase() === (brand || '').trim().toLowerCase());
   }, [dbBrands, brand]);
 
-  const existingCategories = useMemo(() => Array.from(new Set(categories.filter(c => c !== 'All'))), []);
+  // Dynamic Categories from backend + static fallbacks
+  const { data: dbCategories = [] } = useCategories();
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+  const existingCategories = useMemo(() => {
+    const list = new Set(dbCategories.map(c => c.name).concat(categories.filter(c => c !== 'All')));
+    return Array.from(list);
+  }, [dbCategories]);
+
+  const selectedCategoryObj = useMemo(() => {
+    return dbCategories.find(c => c.name.toLowerCase() === (category || '').trim().toLowerCase());
+  }, [dbCategories, category]);
 
   // Initialize or reset form state when modal opens or product changes
   useEffect(() => {
@@ -1110,23 +1123,40 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
                     Category <span className="text-destructive">*</span>
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    {/* Category cover preview if available */}
+                    {selectedCategoryObj?.image && (
+                      <div
+                        className="w-11 h-11 rounded-xl bg-zinc-900 border border-border flex items-center justify-center shrink-0 overflow-hidden shadow-xs"
+                        title={`${selectedCategoryObj.name} Cover`}
+                      >
+                        <img
+                          src={formatImageUrl(selectedCategoryObj.image)}
+                          alt={selectedCategoryObj.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
                     <select
                       value={existingCategories.includes(category) ? category : 'custom'}
                       onChange={e => {
-                        if (e.target.value !== 'custom') {
+                        if (e.target.value === 'ADD_NEW') {
+                          setIsCategoryModalOpen(true);
+                        } else if (e.target.value !== 'custom') {
                           setCategory(e.target.value);
                         }
                       }}
                       className="h-11 px-3 bg-background border border-border rounded-xl text-sm text-foreground focus:ring-2 focus:ring-primary w-2/5 cursor-pointer"
                     >
-                      <option value="">-- Preset --</option>
+                      <option value="">-- Preset Category --</option>
                       {existingCategories.map(c => (
                         <option key={c} value={c}>
                           {c}
                         </option>
                       ))}
-                      <option value="custom">Custom...</option>
+                      <option value="custom">Other / Custom...</option>
+                      <option value="ADD_NEW" className="font-bold text-primary">+ New Category with Cover Image...</option>
                     </select>
 
                     <input
@@ -2962,6 +2992,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
               setCountryOfOrigin(matched.countryOfOrigin);
             }
             setIsBrandModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Category & Cover Image Manager Modal */}
+      {isCategoryModalOpen && (
+        <AdminCategoriesModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onSelectCategory={(newCatName) => {
+            setCategory(newCatName);
+            setIsCategoryModalOpen(false);
           }}
         />
       )}

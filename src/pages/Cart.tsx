@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { formatCurrency } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
+import { useSettings, calculateShippingFee } from '@/hooks/useSettings';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, getTotalPrice } = useCartStore();
+  const { settings } = useSettings();
   const totalPrice = getTotalPrice();
-  const shippingThreshold = 50;
-  const freeShipping = totalPrice >= shippingThreshold;
+  const { shippingCost, isFree, remainingForFree } = calculateShippingFee(totalPrice, settings);
 
   if (items.length === 0) {
     return (
@@ -173,20 +174,20 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span className={`font-medium ${freeShipping ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
-                    {freeShipping ? '✓ FREE' : formatCurrency(9.99)}
+                  <span className={`font-medium ${isFree ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-foreground font-semibold'}`}>
+                    {isFree ? '✓ FREE' : formatCurrency(shippingCost)}
                   </span>
                 </div>
-                {!freeShipping && (
-                  <p className="text-sm text-amber-600 dark:text-amber-400">
-                    Add {formatCurrency(shippingThreshold - totalPrice)} more for free shipping
+                {!isFree && remainingForFree !== undefined && remainingForFree > 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    Add {formatCurrency(remainingForFree)} more for free shipping
                   </p>
                 )}
                 <div className="border-t border-border pt-4">
                   <div className="flex justify-between">
                     <span className="font-semibold text-lg">Total</span>
                     <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {formatCurrency(totalPrice + (freeShipping ? 0 : 9.99))}
+                      {formatCurrency(totalPrice + shippingCost)}
                     </span>
                   </div>
                 </div>

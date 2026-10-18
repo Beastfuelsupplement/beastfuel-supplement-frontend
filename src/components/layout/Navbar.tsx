@@ -88,7 +88,7 @@ const Navbar = () => {
             : 'border-b border-zinc-800/40 py-3 sm:py-3.5'
         }`}
       >
-        <nav className="container mx-auto px-4 flex items-center justify-between">
+        <nav className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between">
           <Link to="/" className="flex items-center group">
             <motion.div 
               className="flex items-center"

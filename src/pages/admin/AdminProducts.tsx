@@ -29,6 +29,7 @@ import ProductModal from '@/components/admin/ProductModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { DailyReportModal } from '@/components/admin/DailyReportModal';
 import AdminBrandsModal from '@/components/admin/AdminBrandsModal';
+import AdminCategoriesModal from '@/components/admin/AdminCategoriesModal';
 import { Product } from '@/store/cartStore';
 import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { formatCurrency } from '@/lib/currency';
@@ -61,6 +62,7 @@ const AdminProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isBrandManagerOpen, setIsBrandManagerOpen] = useState(false);
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [viewRestockInputs, setViewRestockInputs] = useState<Record<string, string>>({});
@@ -297,6 +299,14 @@ const AdminProducts = () => {
             >
               <Award className="h-4 w-4 text-amber-500 shrink-0" />
               <span>Manage Brands</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsCategoryManagerOpen(true)}
+              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
+            >
+              <Layers className="h-4 w-4 text-primary shrink-0" />
+              <span>Manage Categories</span>
             </Button>
             <Button 
               onClick={handleAddProduct} 
@@ -1012,6 +1022,12 @@ const AdminProducts = () => {
       <AdminBrandsModal
         isOpen={isBrandManagerOpen}
         onClose={() => setIsBrandManagerOpen(false)}
+      />
+
+      {/* Category & Cover Image Manager Modal */}
+      <AdminCategoriesModal
+        isOpen={isCategoryManagerOpen}
+        onClose={() => setIsCategoryManagerOpen(false)}
       />
     </AdminLayout>
   );

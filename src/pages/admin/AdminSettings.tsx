@@ -28,7 +28,8 @@ import {
   Gamepad2,
   Eye,
   EyeOff,
-  Link2
+  Link2,
+  Truck
 } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,8 @@ import { useSettings, SocialMediaAccount } from '@/hooks/useSettings';
 import { 
   SUPPORTED_CURRENCIES, 
   COUNTRY_DEFAULTS, 
-  TIMEZONE_OPTIONS 
+  TIMEZONE_OPTIONS,
+  formatCurrency
 } from '@/lib/currency';
 
 const AVAILABLE_PLATFORMS = [
@@ -95,6 +97,11 @@ const AdminSettings = () => {
     workingHours: apiSettings.workingHours || settings.workingHours || 'Mon - Fri: 9AM - 6PM',
     weekendHours: apiSettings.weekendHours || settings.weekendHours || 'Sat - Sun: Closed',
     contactSubtext: apiSettings.contactSubtext || settings.contactSubtext || 'We reply within 24 hours',
+    shippingType: apiSettings.shippingType || (settings as any).shippingType || 'free',
+    shippingCost: apiSettings.shippingCost !== undefined ? apiSettings.shippingCost : ((settings as any).shippingCost ?? 0),
+    enableFreeShippingThreshold: apiSettings.enableFreeShippingThreshold !== undefined ? apiSettings.enableFreeShippingThreshold : Boolean((settings as any).enableFreeShippingThreshold),
+    freeShippingThreshold: apiSettings.freeShippingThreshold !== undefined ? apiSettings.freeShippingThreshold : ((settings as any).freeShippingThreshold ?? 50),
+    shippingEstimatedDays: apiSettings.shippingEstimatedDays || (settings as any).shippingEstimatedDays || '1-3 Business Days',
   });
 
   // Dynamic social media accounts list
@@ -134,6 +141,11 @@ const AdminSettings = () => {
         timezone: apiSettings.timezone || prev.timezone,
         adminEmail: apiSettings.adminEmail || prev.adminEmail,
         lowStockThreshold: apiSettings.lowStockThreshold || prev.lowStockThreshold,
+        shippingType: apiSettings.shippingType || prev.shippingType || 'free',
+        shippingCost: apiSettings.shippingCost !== undefined ? apiSettings.shippingCost : prev.shippingCost,
+        enableFreeShippingThreshold: apiSettings.enableFreeShippingThreshold !== undefined ? apiSettings.enableFreeShippingThreshold : prev.enableFreeShippingThreshold,
+        freeShippingThreshold: apiSettings.freeShippingThreshold !== undefined ? apiSettings.freeShippingThreshold : prev.freeShippingThreshold,
+        shippingEstimatedDays: apiSettings.shippingEstimatedDays || prev.shippingEstimatedDays || '1-3 Business Days',
       }));
 
       if (Array.isArray(apiSettings.socialMediaAccounts) && apiSettings.socialMediaAccounts.length > 0) {
@@ -268,6 +280,11 @@ const AdminSettings = () => {
         timezone: localSettings.timezone,
         adminEmail: localSettings.adminEmail,
         lowStockThreshold: localSettings.lowStockThreshold,
+        shippingType: localSettings.shippingType,
+        shippingCost: localSettings.shippingCost,
+        enableFreeShippingThreshold: localSettings.enableFreeShippingThreshold,
+        freeShippingThreshold: localSettings.freeShippingThreshold,
+        shippingEstimatedDays: localSettings.shippingEstimatedDays,
       });
 
       // 2. Update local state store and instant currency cache
@@ -334,6 +351,7 @@ const AdminSettings = () => {
   const tabs = [
     { id: 'contact_social', label: 'Contact & Social Links', icon: Share2 },
     { id: 'general', label: 'General Store', icon: Store },
+    { id: 'shipping', label: 'Shipping & Delivery', icon: Truck },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'payments', label: 'Payments', icon: CreditCard },
@@ -913,6 +931,224 @@ const AdminSettings = () => {
                         <p className="text-[11px] text-muted-foreground mt-1">
                           Used for orders, timestamps & daily email alerts
                         </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: Shipping & Delivery Settings */}
+              {activeTab === 'shipping' && (
+                <div className="space-y-6">
+                  <div className="border-b border-border/80 pb-3">
+                    <h2 className="text-display text-xl flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-primary" />
+                      SHIPPING & DELIVERY CONFIGURATION
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Configure delivery costs, flat fees, free shipping rules, and delivery timelines for Cart & Checkout.
+                    </p>
+                  </div>
+
+                  {/* Mode selector: Free vs Flat Rate */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                      Delivery Pricing Method
+                    </label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Free Shipping Option */}
+                      <label
+                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                          localSettings.shippingType === 'free'
+                            ? 'bg-primary/10 border-primary ring-2 ring-primary/20 shadow-sm'
+                            : 'bg-card border-border hover:border-muted-foreground/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shippingType"
+                          value="free"
+                          checked={localSettings.shippingType === 'free'}
+                          onChange={() => setLocalSettings({ ...localSettings, shippingType: 'free' })}
+                          className="mt-1 text-primary focus:ring-primary"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-foreground">100% Free Shipping</span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                              ✓ FREE
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            All orders receive complimentary free delivery across the store regardless of order amount.
+                          </p>
+                        </div>
+                      </label>
+
+                      {/* Custom Flat Rate Shipping Option */}
+                      <label
+                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                          localSettings.shippingType === 'flat_rate'
+                            ? 'bg-primary/10 border-primary ring-2 ring-primary/20 shadow-sm'
+                            : 'bg-card border-border hover:border-muted-foreground/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shippingType"
+                          value="flat_rate"
+                          checked={localSettings.shippingType === 'flat_rate'}
+                          onChange={() => setLocalSettings({ ...localSettings, shippingType: 'flat_rate' })}
+                          className="mt-1 text-primary focus:ring-primary"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-foreground">Custom Delivery Fee</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                              Fixed Fee
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Charge a fixed shipping cost on orders, with optional free delivery for orders above a threshold.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Settings when Flat Rate is selected */}
+                  {localSettings.shippingType === 'flat_rate' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-5 rounded-xl bg-secondary/30 border border-border/80 space-y-5"
+                    >
+                      {/* Fixed Shipping Fee Input */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+                          Standard Shipping Fee ({localSettings.currency}) <span className="text-destructive">*</span>
+                        </label>
+                        <div className="relative max-w-xs">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={localSettings.shippingCost}
+                            onChange={(e) =>
+                              setLocalSettings({
+                                ...localSettings,
+                                shippingCost: Math.max(0, parseFloat(e.target.value) || 0),
+                              })
+                            }
+                            placeholder="e.g. 500 or 9.99"
+                            className="w-full h-11 px-3.5 bg-background border border-border rounded-xl text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          This fee is automatically added to the cart subtotal when customers proceed to checkout.
+                        </p>
+                      </div>
+
+                      {/* Free Shipping Over Threshold Toggle */}
+                      <div className="p-4 bg-background/80 rounded-xl border border-border/80 space-y-3">
+                        <label className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={localSettings.enableFreeShippingThreshold}
+                            onChange={(e) =>
+                              setLocalSettings({
+                                ...localSettings,
+                                enableFreeShippingThreshold: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded text-primary focus:ring-primary"
+                          />
+                          <div>
+                            <span className="text-xs font-bold text-foreground block">
+                              Offer Free Delivery for Orders Exceeding a Specific Amount
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                              Encourages customers to add more supplements to reach free shipping.
+                            </span>
+                          </div>
+                        </label>
+
+                        {localSettings.enableFreeShippingThreshold && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="pt-2 pl-6"
+                          >
+                            <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+                              Minimum Order Subtotal for Free Shipping ({localSettings.currency})
+                            </label>
+                            <div className="relative max-w-xs">
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                value={localSettings.freeShippingThreshold}
+                                onChange={(e) =>
+                                  setLocalSettings({
+                                    ...localSettings,
+                                    freeShippingThreshold: Math.max(0, parseFloat(e.target.value) || 0),
+                                  })
+                                }
+                                placeholder="e.g. 15000 or 50"
+                                className="w-full h-11 px-3.5 bg-background border border-border rounded-xl text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              When a customer's cart subtotal reaches this amount, shipping automatically becomes FREE.
+                            </p>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Delivery Timeline / Note */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+                      Estimated Delivery Timeline Note
+                    </label>
+                    <input
+                      type="text"
+                      value={localSettings.shippingEstimatedDays || ''}
+                      onChange={(e) => setLocalSettings({ ...localSettings, shippingEstimatedDays: e.target.value })}
+                      placeholder="e.g. 1-3 Business Days Island-wide"
+                      className="w-full h-11 px-3.5 bg-background border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Shown across product pages and checkout to reassure customers.
+                    </p>
+                  </div>
+
+                  {/* Live Order Summary Customer Preview Card */}
+                  <div className="p-4 rounded-xl bg-secondary/20 border border-border/80 space-y-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-primary" /> Customer Cart Order Summary Live Preview
+                    </span>
+                    <div className="max-w-sm p-4 rounded-xl bg-card border border-border shadow-xs space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="font-semibold">{formatCurrency(localSettings.shippingType === 'flat_rate' && localSettings.enableFreeShippingThreshold ? (localSettings.freeShippingThreshold || 100) * 0.8 : 50)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span className={`font-bold ${localSettings.shippingType === 'free' ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
+                          {localSettings.shippingType === 'free' ? '✓ FREE' : formatCurrency(localSettings.shippingCost)}
+                        </span>
+                      </div>
+                      <div className="border-t border-border pt-2 flex justify-between font-bold">
+                        <span>Total</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(
+                            (localSettings.shippingType === 'flat_rate' && localSettings.enableFreeShippingThreshold ? (localSettings.freeShippingThreshold || 100) * 0.8 : 50) +
+                            (localSettings.shippingType === 'free' ? 0 : localSettings.shippingCost)
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>
