@@ -64,14 +64,14 @@ You can control cookie preferences through your browser settings.`
 • Opt-out of marketing communications
 • Export your data in a portable format
       
-To exercise these rights, please contact us at ${settings.storeEmail || 'support@beastfuel.com'}.`
+To exercise these rights, please contact us at ${settings.storeEmail || 'supportbeastfuelsupplement@gmail.com'}.`
     },
     {
       icon: Mail,
       title: 'Contact Us',
       content: `If you have any questions about this Privacy Policy or our data practices, please contact us:
       
-Email: ${settings.storeEmail || 'support@beastfuel.com'}
+Email: ${settings.storeEmail || 'supportbeastfuelsupplement@gmail.com'}
 Address: ${settings.storeAddress || '123 Fitness Street, Gym City, GC 12345'}
 Phone: ${settings.storePhone || '+1 (555) 123-4567'}
 

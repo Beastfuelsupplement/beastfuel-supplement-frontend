@@ -518,7 +518,7 @@ export const printSingleOrderInvoice = (order: Order | DeletedOrder) => {
       <div>
         <h1 class="brand-title">BEASTFUEL SUPPLEMENTS</h1>
         <p class="brand-subtitle">High Performance Nutrition • 123 Fitness Street, Gym City</p>
-        <p style="font-size: 10px; color: #64748b; margin: 3px 0 0 0;">Phone: +1 (555) 123-4567 • Email: support@beastfuel.com</p>
+        <p style="font-size: 10px; color: #64748b; margin: 3px 0 0 0;">Phone: +1 (555) 123-4567 • Email: supportbeastfuelsupplement@gmail.com</p>
       </div>
       <div class="report-meta">
         <h2 class="report-title" style="color: ${isDeleted ? '#dc2626' : '#0f172a'};">
@@ -604,7 +604,7 @@ export const printSingleOrderInvoice = (order: Order | DeletedOrder) => {
       <h4 style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #334155;">Thank you for your purchase!</h4>
       <p style="margin: 0; font-size: 10px; color: #64748b;">
         All BEASTFUEL supplements are 100% lab certified and backed by our satisfaction guarantee.
-        For queries or order modifications, contact support@beastfuel.com with your Order ID.
+        For queries or order modifications, contact supportbeastfuelsupplement@gmail.com with your Order ID.
       </p>
     </div>
 

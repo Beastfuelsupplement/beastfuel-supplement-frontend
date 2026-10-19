@@ -449,7 +449,7 @@ const AdminSettings = () => {
                             type="email"
                             value={localSettings.storeEmail}
                             onChange={(e) => setLocalSettings({ ...localSettings, storeEmail: e.target.value })}
-                            placeholder="support@beastfuel.com"
+                            placeholder="supportbeastfuelsupplement@gmail.com"
                             className="w-full h-11 pl-10 pr-4 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                           />
                         </div>

@@ -135,7 +135,7 @@ const defaultPaymentMethods: PaymentMethod[] = [
 const defaultSettings: StoreSettings = {
   storeName: 'BEASTFUEL Supplements',
   tagline: 'Fuel Your Ascent. Premium supplements for peak performance and optimal recovery.',
-  storeEmail: 'support@beastfuel.com',
+  storeEmail: 'supportbeastfuelsupplement@gmail.com',
   storePhone: '+1 (555) 123-4567',
   storeAddress: '123 Fitness Street, Gym City, GC 12345',
   workingHours: 'Mon - Fri: 9AM - 6PM',

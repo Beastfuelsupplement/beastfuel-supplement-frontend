@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { contactFormSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { useSettings } from '@/hooks/useSettings';
+import { apiService } from '@/lib/api';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -59,23 +60,32 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const res = await apiService.sendContactMessage(formData);
 
-    toast({
-      title: 'Message Sent!',
-      description: "We'll get back to you within 24-48 hours.",
-    });
+      toast({
+        title: 'Message Sent!',
+        description: res?.message || "Thank you! We've received your feedback and will get back to you within 24-48 hours.",
+      });
 
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setIsSubmitting(false);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err: any) {
+      console.error('Contact submission error:', err);
+      toast({
+        title: 'Error Sending Message',
+        description: err.message || 'Could not dispatch your message. Please reach us directly at supportbeastfuelsupplement@gmail.com',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
     {
       icon: Mail,
       title: 'Email',
-      details: settings.storeEmail || 'support@beastfuel.com',
+      details: settings.storeEmail || 'supportbeastfuelsupplement@gmail.com',
       subtext: settings.contactSubtext || 'We reply within 24 hours',
     },
     {

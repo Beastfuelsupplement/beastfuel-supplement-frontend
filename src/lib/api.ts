@@ -226,6 +226,14 @@ class ApiService {
     });
   }
 
+  // Contact & Feedback
+  async sendContactMessage(data: { name: string; email: string; subject: string; message: string }) {
+    return this.request<{ success: boolean; message: string }>('/contact', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Image Upload
   async uploadImage(file: File): Promise<{ imageUrl: string; filename: string }> {
     const token = this.getToken();
