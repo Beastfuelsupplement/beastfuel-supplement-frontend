@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdminStore } from '@/store/adminStore';
 import { sendCustomerOrderConfirmation } from '@/utils/customerOrderConfirmation';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { api, formatImageUrl } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import { useSettings, calculateShippingFee } from '@/hooks/useSettings';
 import { z } from 'zod';
@@ -305,17 +305,17 @@ const Checkout = () => {
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               Complete your order with our secure payment system
             </p>
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Shield className="h-4 w-4 text-emerald-500" />
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 mt-4">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/40 px-2.5 py-1 rounded-full border border-border/40">
+                <Shield className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span>SSL Encrypted</span>
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Lock className="h-4 w-4 text-blue-500" />
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/40 px-2.5 py-1 rounded-full border border-border/40">
+                <Lock className="h-4 w-4 text-blue-500 shrink-0" />
                 <span>Secure Payment</span>
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <CheckCircle className="h-4 w-4 text-violet-500" />
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/40 px-2.5 py-1 rounded-full border border-border/40">
+                <CheckCircle className="h-4 w-4 text-violet-500 shrink-0" />
                 <span>PCI Compliant</span>
               </div>
             </div>
@@ -345,7 +345,7 @@ const Checkout = () => {
           >
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Contact */}
-              <div className="bg-card border border-border rounded-xl p-6">
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <h2 className="text-display text-xl mb-4 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">1</span>
                   CONTACT
@@ -362,7 +362,7 @@ const Checkout = () => {
               </div>
 
               {/* Shipping */}
-              <div className="bg-card border border-border rounded-xl p-6">
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <h2 className="text-display text-xl mb-4 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">2</span>
                   SHIPPING
@@ -442,7 +442,7 @@ const Checkout = () => {
               </div>
 
               {/* Payment Method Selection */}
-              <div className="bg-card border border-border rounded-xl p-6">
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <h2 className="text-display text-xl mb-4 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">3</span>
                   PAYMENT METHOD
@@ -451,7 +451,7 @@ const Checkout = () => {
                   {enabledPaymentMethods.map((method) => (
                     <label
                       key={method.id}
-                      className={`flex items-center gap-4 p-4 bg-secondary border rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center gap-4 p-3.5 sm:p-4 bg-secondary border rounded-lg cursor-pointer transition-all ${
                         formData.paymentMethod === method.type
                           ? 'border-primary ring-2 ring-primary/20'
                           : 'border-border hover:border-muted-foreground'
@@ -466,8 +466,8 @@ const Checkout = () => {
                         className="w-4 h-4 text-primary"
                       />
                       <div className="flex-1">
-                        <p className="font-medium">{method.name}</p>
-                        <p className="text-sm text-muted-foreground">{method.description}</p>
+                        <p className="font-medium text-sm sm:text-base">{method.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{method.description}</p>
                       </div>
                     </label>
                   ))}
@@ -476,14 +476,14 @@ const Checkout = () => {
 
               {/* Card Details (show only for card payment) */}
               {formData.paymentMethod === 'card' && (
-                <div className="bg-card border border-border rounded-xl p-6">
+                <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                   <h2 className="text-display text-xl mb-4 flex items-center gap-2">
                     <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">4</span>
                     CARD DETAILS
                   </h2>
                   <div className="flex items-center gap-2 text-muted-foreground mb-4 p-3 bg-green-500/10 rounded-lg">
-                    <Lock className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-600 dark:text-green-400">Your payment info is encrypted and secure</span>
+                    <Lock className="h-4 w-4 text-green-500 shrink-0" />
+                    <span className="text-xs sm:text-sm text-green-600 dark:text-green-400">Your payment info is encrypted and secure</span>
                   </div>
                   <div className="space-y-4">
                     <div className="relative">
@@ -538,35 +538,40 @@ const Checkout = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="bg-card border border-border rounded-xl p-6 sticky top-24">
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 sticky top-24 shadow-lg">
               <h2 className="text-display text-2xl mb-6">ORDER SUMMARY</h2>
 
               <div className="space-y-4 mb-6">
                 {items.map((item) => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="relative">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                  <div key={item.id} className="flex gap-3 sm:gap-4 items-center">
+                    <div className="relative shrink-0">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-secondary/30 rounded-lg flex items-center justify-center p-1 border border-border/40">
+                        <img
+                          src={formatImageUrl(item.image)}
+                          alt={item.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center font-bold">
                         {item.quantity}
                       </span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {item.brand && (
-                        <p className="text-[10px] font-bold text-primary uppercase">{item.brand}</p>
+                        <p className="text-[10px] font-bold text-primary uppercase truncate">{item.brand}</p>
                       )}
-                      <p className="font-medium text-sm text-foreground">{item.name}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                      <p className="font-medium text-xs sm:text-sm text-foreground truncate">{item.name}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-0.5 text-[11px] sm:text-xs text-muted-foreground">
                         <span>{item.selectedWeight || item.weight}</span>
                         {(item.selectedFlavor || item.flavor) && (
                           <span>• {item.selectedFlavor || item.flavor}</span>
                         )}
                       </div>
                     </div>
-                    <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
+                    <p className="font-semibold text-sm sm:text-base shrink-0">{formatCurrency(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>

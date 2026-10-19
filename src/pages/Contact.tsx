@@ -262,12 +262,12 @@ const Contact = () => {
                 <p className="text-muted-foreground mb-4">
                   Stay connected for the latest products, fitness tips, and exclusive offers.
                 </p>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-2.5 sm:gap-4">
                   {['Instagram', 'Twitter', 'Facebook', 'YouTube'].map((social) => (
                     <a
                       key={social}
                       href="#"
-                      className="px-4 py-2 bg-secondary rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                      className="px-3.5 sm:px-4 py-2 bg-secondary rounded-lg text-xs sm:text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {social}
                     </a>

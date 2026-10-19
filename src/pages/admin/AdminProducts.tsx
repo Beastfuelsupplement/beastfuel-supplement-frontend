@@ -409,7 +409,7 @@ const AdminProducts = () => {
           className="bg-card/70 backdrop-blur-sm border border-border/80 rounded-2xl overflow-hidden shadow-xl"
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[850px]">
               <thead>
                 <tr className="border-b border-border bg-secondary/50 font-bold uppercase tracking-wider text-muted-foreground">
                   <th className="text-left p-4">Product Details</th>

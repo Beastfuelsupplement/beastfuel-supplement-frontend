@@ -119,7 +119,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="w-64 sm:w-72 p-2 rounded-2xl border border-border/80 bg-popover/95 backdrop-blur-xl shadow-2xl z-50 text-popover-foreground"
+        className="w-64 sm:w-72 max-w-[calc(100vw-2rem)] p-2 rounded-2xl border border-border/80 bg-popover/95 backdrop-blur-xl shadow-2xl z-50 text-popover-foreground"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-2.5 py-1.5 mb-1">

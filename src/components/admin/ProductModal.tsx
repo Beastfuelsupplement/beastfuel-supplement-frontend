@@ -969,7 +969,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
           </div>
 
           {/* Stepper Progress Bar */}
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+          <div className="flex sm:grid sm:grid-cols-5 overflow-x-auto gap-1.5 sm:gap-2 pb-1">
             {STEPS.map(step => {
               const isPassed = step.id < currentStep;
               const isCurrent = step.id === currentStep;
@@ -986,7 +986,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                       setCurrentStep(step.id);
                     }
                   }}
-                  className={`flex flex-col text-left py-2 px-2.5 sm:px-3 rounded-xl border transition-all text-xs font-semibold ${
+                  className={`flex flex-col text-left py-2 px-2.5 sm:px-3 rounded-xl border transition-all text-xs font-semibold shrink-0 min-w-[105px] sm:min-w-0 flex-1 ${
                     isCurrent
                       ? 'bg-primary/10 border-primary text-primary shadow-xs ring-1 ring-primary/30'
                       : isPassed

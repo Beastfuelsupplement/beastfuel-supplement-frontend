@@ -386,12 +386,12 @@ const AdminSettings = () => {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Tabs Navigation */}
           <div className="lg:col-span-1">
-            <nav className="space-y-1 bg-card border border-border rounded-xl p-2">
+            <nav className="flex lg:flex-col overflow-x-auto gap-1.5 p-1.5 sm:p-2 bg-card border border-border rounded-xl">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors font-medium text-sm ${
+                  className={`flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-lg text-left transition-colors font-medium text-xs sm:text-sm whitespace-nowrap shrink-0 lg:w-full ${
                     activeTab === tab.id
                       ? 'bg-primary text-primary-foreground font-bold shadow-sm'
                       : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -404,7 +404,7 @@ const AdminSettings = () => {
             </nav>
 
             {/* Quick Helper Note */}
-            <div className="mt-4 p-4 rounded-xl bg-secondary/50 border border-border/60 text-xs text-muted-foreground space-y-2">
+            <div className="hidden lg:block mt-4 p-4 rounded-xl bg-secondary/50 border border-border/60 text-xs text-muted-foreground space-y-2">
               <div className="font-bold text-foreground flex items-center gap-1.5">
                 <Store className="w-3.5 h-3.5 text-primary" /> Dynamic Real-Time Sync
               </div>
@@ -421,7 +421,7 @@ const AdminSettings = () => {
               initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
-              className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6"
+              className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6"
             >
               {/* TAB 1: Contact & Social Media Links */}
               {activeTab === 'contact_social' && (

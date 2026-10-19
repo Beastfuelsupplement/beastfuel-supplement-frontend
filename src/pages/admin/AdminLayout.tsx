@@ -172,8 +172,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 relative">
-        <div className="p-6 pt-20 lg:pt-6 min-h-screen">
+      <main className="flex-1 lg:ml-64 relative w-full max-w-full overflow-x-hidden">
+        <div className="p-3 sm:p-4 md:p-6 pt-20 lg:pt-6 min-h-screen w-full max-w-full">
           {children}
         </div>
       </main>

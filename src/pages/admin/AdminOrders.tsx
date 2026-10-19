@@ -247,7 +247,7 @@ const AdminOrders = () => {
             className="bg-card/50 backdrop-blur-sm border border-blue-500/20 rounded-lg overflow-hidden shadow-lg"
           >
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="border-b border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-violet-500/10">
                     <th className="text-left p-4 text-sm font-semibold text-blue-600 dark:text-blue-400">Order ID</th>
@@ -370,7 +370,7 @@ const AdminOrders = () => {
 
             <div className="bg-card/50 backdrop-blur-sm border border-rose-500/20 rounded-lg overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[750px]">
                   <thead>
                     <tr className="border-b border-rose-500/20 bg-gradient-to-r from-rose-500/10 to-amber-500/10">
                       <th className="text-left p-4 text-sm font-semibold text-rose-600 dark:text-rose-400">Order ID</th>

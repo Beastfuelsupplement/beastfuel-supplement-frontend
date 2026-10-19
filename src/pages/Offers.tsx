@@ -152,43 +152,43 @@ const Offers = () => {
             </p>
 
             {/* Deal Countdown Clock Card - prominent in Hero */}
-            <div className="inline-flex items-center gap-3 sm:gap-6 p-3.5 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-sm border border-border shadow-xl">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-6 p-3 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-sm border border-border shadow-xl max-w-full">
               <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                <Clock className="w-4 h-4 animate-spin text-rose-500" style={{ animationDuration: '6s' }} />
+                <Clock className="w-4 h-4 animate-spin text-rose-500 shrink-0" style={{ animationDuration: '6s' }} />
                 <span>Deals Expire In:</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {timeLeft.days !== undefined && timeLeft.days > 0 && (
                   <>
-                    <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                      <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
+                    <div className="bg-secondary/70 dark:bg-secondary px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-center min-w-[42px] sm:min-w-[50px] border border-border">
+                      <span className="text-lg sm:text-2xl font-bold font-display text-foreground">
                         {String(timeLeft.days).padStart(2, '0')}
                       </span>
-                      <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Days</span>
+                      <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Days</span>
                     </div>
-                    <span className="text-xl font-bold text-rose-500">:</span>
+                    <span className="text-lg sm:text-xl font-bold text-rose-500">:</span>
                   </>
                 )}
-                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
+                <div className="bg-secondary/70 dark:bg-secondary px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-center min-w-[42px] sm:min-w-[50px] border border-border">
+                  <span className="text-lg sm:text-2xl font-bold font-display text-foreground">
                     {String(timeLeft.hours).padStart(2, '0')}
                   </span>
-                  <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Hours</span>
+                  <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Hours</span>
                 </div>
-                <span className="text-xl font-bold text-rose-500">:</span>
-                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-bold font-display text-foreground">
+                <span className="text-lg sm:text-xl font-bold text-rose-500">:</span>
+                <div className="bg-secondary/70 dark:bg-secondary px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-center min-w-[42px] sm:min-w-[50px] border border-border">
+                  <span className="text-lg sm:text-2xl font-bold font-display text-foreground">
                     {String(timeLeft.minutes).padStart(2, '0')}
                   </span>
-                  <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Mins</span>
+                  <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Mins</span>
                 </div>
-                <span className="text-xl font-bold text-rose-500">:</span>
-                <div className="bg-secondary/70 dark:bg-secondary px-3 py-2 rounded-xl text-center min-w-[50px] border border-border">
-                  <span className="text-xl sm:text-2xl font-bold font-display text-rose-600 dark:text-rose-400">
+                <span className="text-lg sm:text-xl font-bold text-rose-500">:</span>
+                <div className="bg-secondary/70 dark:bg-secondary px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-center min-w-[42px] sm:min-w-[50px] border border-border">
+                  <span className="text-lg sm:text-2xl font-bold font-display text-rose-600 dark:text-rose-400">
                     {String(timeLeft.seconds).padStart(2, '0')}
                   </span>
-                  <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Secs</span>
+                  <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Secs</span>
                 </div>
               </div>
             </div>

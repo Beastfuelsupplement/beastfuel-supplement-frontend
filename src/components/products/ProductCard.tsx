@@ -94,12 +94,12 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             <motion.img
               src={formatImageUrl(product.image)}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain p-2.5 sm:p-3.5"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/placeholder.svg';
               }}
-              whileHover={{ scale: 1.08 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             />
             
             {/* Multi-layer gradient overlay - dark mode subtle blend */}

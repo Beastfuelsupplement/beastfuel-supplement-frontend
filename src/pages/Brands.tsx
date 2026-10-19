@@ -248,12 +248,12 @@ export default function Brands() {
 
             {/* Country Selector */}
             {countries.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full md:w-auto">
                 <Globe className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
                 <select
                   value={originFilter}
                   onChange={(e) => setOriginFilter(e.target.value)}
-                  className="h-11 px-3.5 rounded-xl bg-background border border-border text-xs sm:text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer font-medium"
+                  className="w-full md:w-auto h-11 px-3.5 rounded-xl bg-background border border-border text-xs sm:text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer font-medium"
                 >
                   <option value="ALL">All Countries</option>
                   {countries.map((c) => (
@@ -275,7 +275,7 @@ export default function Brands() {
                   setOriginFilter('ALL');
                   setSelectedLetter('ALL');
                 }}
-                className="gap-1.5 h-11 text-xs uppercase tracking-wider font-bold"
+                className="gap-1.5 h-11 text-xs uppercase tracking-wider font-bold w-full md:w-auto"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Reset
@@ -285,7 +285,7 @@ export default function Brands() {
 
           {/* Alphabet A-Z Bar */}
           <div className="pt-2 border-t border-border/50">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 mb-2.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Alphabetical Index:
               </span>
@@ -304,7 +304,7 @@ export default function Brands() {
                     key={letter}
                     onClick={() => setSelectedLetter(letter)}
                     disabled={!hasBrands}
-                    className={`min-w-[32px] sm:min-w-[36px] h-8 sm:h-9 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 flex items-center justify-center ${
+                    className={`min-w-[26px] sm:min-w-[32px] md:min-w-[36px] h-7 sm:h-8 md:h-9 px-1.5 sm:px-2 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all duration-150 flex items-center justify-center ${
                       isSelected
                         ? 'bg-primary text-primary-foreground shadow-md scale-105'
                         : hasBrands

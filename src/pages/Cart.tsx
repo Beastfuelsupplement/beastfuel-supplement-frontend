@@ -65,20 +65,22 @@ const Cart = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex gap-6 p-6 bg-card border border-border rounded-xl hover:border-foreground/20 transition-all shadow-sm"
+                  className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6 bg-card border border-border rounded-xl hover:border-foreground/20 transition-all shadow-sm"
                 >
-                  <Link to={`/products/${item.id}`} className="shrink-0">
-                    <img
-                      src={formatImageUrl(item.image)}
-                      alt={item.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                      className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg"
-                    />
+                  <Link to={`/products/${item.id}`} className="shrink-0 flex justify-center sm:block">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-secondary/30 rounded-lg flex items-center justify-center p-1.5 border border-border/40">
+                      <img
+                        src={formatImageUrl(item.image)}
+                        alt={item.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   </Link>
 
-                  <div className="flex-1 flex flex-col">
+                  <div className="flex-1 flex flex-col justify-between">
                     <div className="flex justify-between items-start gap-4">
                       <div>
                         {item.brand && (
@@ -87,25 +89,25 @@ const Cart = () => {
                           </span>
                         )}
                         <Link to={`/products/${item.id}`}>
-                          <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+                          <h3 className="font-semibold text-base sm:text-lg hover:text-primary transition-colors">
                             {item.name}
                           </h3>
                         </Link>
                         
                         {/* Variant Chips */}
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1.5">
                           {weightDisplay && (
-                            <span className="text-xs px-2.5 py-0.5 bg-secondary text-foreground rounded-md border border-border/60 font-medium">
+                            <span className="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 bg-secondary text-foreground rounded-md border border-border/60 font-medium">
                               Weight: <strong>{weightDisplay}</strong>
                             </span>
                           )}
                           {flavorDisplay && (
-                            <span className="text-xs px-2.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20 font-medium">
+                            <span className="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20 font-medium">
                               Flavor: <strong>{flavorDisplay}</strong>
                             </span>
                           )}
                           {item.countryOfOrigin && (
-                            <span className="text-xs px-2 py-0.5 bg-secondary/60 text-muted-foreground rounded-md">
+                            <span className="text-[11px] sm:text-xs px-2 py-0.5 bg-secondary/60 text-muted-foreground rounded-md">
                               {item.countryOfOrigin}
                             </span>
                           )}
@@ -114,15 +116,15 @@ const Cart = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive shrink-0"
                         onClick={() => removeItem(itemKey)}
                       >
                         <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
 
-                    <div className="mt-auto pt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                    <div className="mt-4 pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <Button
                           variant="outline"
                           size="icon"
@@ -131,7 +133,7 @@ const Cart = () => {
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <span className="w-8 text-center font-bold">{item.quantity}</span>
+                        <span className="w-8 text-center font-bold text-sm sm:text-base">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
@@ -143,7 +145,7 @@ const Cart = () => {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-lg font-bold font-display text-foreground">
+                        <p className="text-base sm:text-lg font-bold font-display text-foreground">
                           {formatCurrency(item.price * item.quantity)}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -163,7 +165,7 @@ const Cart = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-card border border-border rounded-lg p-6 sticky top-24 shadow-lg"
+              className="bg-card border border-border rounded-xl p-4 sm:p-6 sticky top-24 shadow-lg"
             >
               <h2 className="text-display text-2xl mb-6">ORDER SUMMARY</h2>
 

@@ -186,7 +186,7 @@ const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md mx-auto"
         >
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
+          <div className="bg-card border border-border rounded-2xl p-5 sm:p-8 shadow-lg">
             <div className="flex items-center justify-center gap-2 mb-6">
               <Shield className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">Secure Authentication</span>
