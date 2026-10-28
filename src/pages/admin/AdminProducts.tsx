@@ -262,32 +262,32 @@ const AdminProducts = () => {
       <div className="space-y-8">
         {/* Header */}
         <motion.div
-          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+          className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4 pb-1"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div>
-            <h1 className="text-display text-2xl sm:text-3xl md:text-4xl bg-gradient-to-r from-amber-600 via-violet-600 to-rose-600 dark:from-amber-400 dark:via-violet-400 dark:to-rose-400 bg-clip-text text-transparent">
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-display text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-600 via-violet-600 to-rose-600 dark:from-amber-400 dark:via-violet-400 dark:to-rose-400 bg-clip-text text-transparent leading-tight">
               SUPPLEMENT INVENTORY MANAGEMENT
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Manage product details, weight-based pricing, flavor stock matrices, and origins ({products.length} total products)
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <Button
               variant="outline"
               onClick={() => setIsReportModalOpen(true)}
-              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
+              className="h-10 sm:h-11 px-3 sm:px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl whitespace-nowrap"
             >
               <FileSpreadsheet className="h-4 w-4 text-primary shrink-0" />
               <span>Daily Report & Alerts</span>
               {totalSoldOutVariants > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black tracking-wider uppercase animate-pulse shadow-xs">
+                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black tracking-wider uppercase animate-pulse shadow-xs whitespace-nowrap">
                   {totalSoldOutVariants} Sold Out
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold whitespace-nowrap">
                   All Stocked
                 </span>
               )}
@@ -295,7 +295,7 @@ const AdminProducts = () => {
             <Button
               variant="outline"
               onClick={() => setIsBrandManagerOpen(true)}
-              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
+              className="h-10 sm:h-11 px-3 sm:px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl whitespace-nowrap"
             >
               <Award className="h-4 w-4 text-amber-500 shrink-0" />
               <span>Manage Brands</span>
@@ -303,16 +303,16 @@ const AdminProducts = () => {
             <Button
               variant="outline"
               onClick={() => setIsCategoryManagerOpen(true)}
-              className="h-11 px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl"
+              className="h-10 sm:h-11 px-3 sm:px-4 text-xs font-bold border-border/80 bg-card hover:bg-secondary text-foreground hover:border-foreground/30 shadow-xs transition-all flex items-center justify-center gap-2 rounded-xl whitespace-nowrap"
             >
               <Layers className="h-4 w-4 text-primary shrink-0" />
               <span>Manage Categories</span>
             </Button>
             <Button 
               onClick={handleAddProduct} 
-              className="h-11 px-5 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all rounded-xl flex items-center justify-center gap-2"
+              className="h-10 sm:h-11 px-4 sm:px-5 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all rounded-xl flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span>Add New Product</span>
             </Button>
           </div>

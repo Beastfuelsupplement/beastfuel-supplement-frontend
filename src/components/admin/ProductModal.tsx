@@ -188,10 +188,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const { data: dbBrands = [] } = useBrands();
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
 
-  // Brand and Category list
+  // Brand and Category list - primary source is dynamic database, static array is only emergency fallback if DB is empty
   const existingBrands = useMemo(() => {
-    const list = new Set(dbBrands.map(b => b.name).concat(brands.filter(b => b !== 'All')));
-    return Array.from(list);
+    if (dbBrands && dbBrands.length > 0) {
+      return Array.from(new Set(dbBrands.map(b => b.name).filter(Boolean)));
+    }
+    return Array.from(new Set(brands.filter(b => b !== 'All')));
   }, [dbBrands]);
 
   const selectedBrandObj = useMemo(() => {
@@ -203,8 +205,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   const existingCategories = useMemo(() => {
-    const list = new Set(dbCategories.map(c => c.name).concat(categories.filter(c => c !== 'All')));
-    return Array.from(list);
+    if (dbCategories && dbCategories.length > 0) {
+      return Array.from(new Set(dbCategories.map(c => c.name).filter(Boolean)));
+    }
+    return Array.from(new Set(categories.filter(c => c !== 'All')));
   }, [dbCategories]);
 
   const selectedCategoryObj = useMemo(() => {

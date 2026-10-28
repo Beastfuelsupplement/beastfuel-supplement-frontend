@@ -376,7 +376,7 @@ class ApiService {
   }
 
   async deleteBrand(id: string, force = false): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/brands/${id}${force ? '?force=true' : ''}`, {
+    return this.request<{ message: string }>(`/brands/${encodeURIComponent(id)}${force ? '?force=true' : ''}`, {
       method: 'DELETE',
     });
   }
@@ -387,7 +387,7 @@ class ApiService {
   }
 
   async getCategory(idOrSlug: string): Promise<{ category: CategoryItem; products: any[] }> {
-    return this.request<{ category: CategoryItem; products: any[] }>(`/categories/${idOrSlug}`);
+    return this.request<{ category: CategoryItem; products: any[] }>(`/categories/${encodeURIComponent(idOrSlug)}`);
   }
 
   async createCategory(categoryData: Partial<CategoryItem>): Promise<CategoryItem> {
@@ -398,14 +398,14 @@ class ApiService {
   }
 
   async updateCategory(id: string, categoryData: Partial<CategoryItem> & { syncProducts?: boolean }): Promise<CategoryItem> {
-    return this.request<CategoryItem>(`/categories/${id}`, {
+    return this.request<CategoryItem>(`/categories/${encodeURIComponent(id)}`, {
       method: 'PUT',
       body: JSON.stringify(categoryData),
     });
   }
 
   async deleteCategory(id: string, force = false): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/categories/${id}${force ? '?force=true' : ''}`, {
+    return this.request<{ message: string }>(`/categories/${encodeURIComponent(id)}${force ? '?force=true' : ''}`, {
       method: 'DELETE',
     });
   }

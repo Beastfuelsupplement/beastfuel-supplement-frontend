@@ -136,6 +136,7 @@ export const useDeleteBrand = () => {
     mutationFn: ({ id, force }: { id: string; force?: boolean }) => api.deleteBrand(id, force),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: BRANDS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(res.message || 'Brand deleted successfully');
     },
     onError: (error: any) => {

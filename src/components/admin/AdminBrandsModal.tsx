@@ -129,14 +129,10 @@ export const AdminBrandsModal: React.FC<AdminBrandsModalProps> = ({
   };
 
   const handleDelete = async (b: BrandItem) => {
-    if (b._id.startsWith('dynamic-')) {
-      toast.error('This brand is generated from active products. Edit or reassign those products to change it.');
-      return;
-    }
     const count = b.productCount || 0;
     const confirmMsg = count > 0
-      ? `Brand "${b.name}" has ${count} active product(s). Are you sure you want to delete it? Products will still exist but will not have a brand directory entry.`
-      : `Are you sure you want to delete brand "${b.name}"?`;
+      ? `Brand "${b.name}" is currently assigned to ${count} active product(s). Deleting it will permanently remove it from the store, dropdowns, and clear it from these products. Are you sure you want to permanently delete it?`
+      : `Are you sure you want to permanently delete brand "${b.name}"?`;
 
     if (window.confirm(confirmMsg)) {
       try {

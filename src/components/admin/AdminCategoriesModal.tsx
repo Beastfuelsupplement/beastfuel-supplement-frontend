@@ -129,15 +129,11 @@ export const AdminCategoriesModal: React.FC<AdminCategoriesModalProps> = ({
   };
 
   const handleDelete = async (cat: CategoryItem) => {
-    if (cat._id.startsWith('dynamic-')) {
-      toast.error('This category is generated from active products. Edit or reassign those products to remove it.');
-      return;
-    }
     const count = cat.productCount || 0;
     const confirmMsg =
       count > 0
-        ? `Category "${cat.name}" has ${count} active product(s). Are you sure you want to delete it? Products will retain their category name unless reassigned.`
-        : `Are you sure you want to delete category "${cat.name}"?`;
+        ? `Category "${cat.name}" is currently used by ${count} active product(s). Deleting it will permanently remove it from the store, dropdowns, homepage, and clear it from these products. Are you sure you want to permanently delete it?`
+        : `Are you sure you want to permanently delete category "${cat.name}"?`;
 
     if (window.confirm(confirmMsg)) {
       try {
@@ -493,17 +489,15 @@ export const AdminCategoriesModal: React.FC<AdminCategoriesModalProps> = ({
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
-                        {!cat.isDynamic && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(cat)}
-                            className="h-8 w-8 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg"
-                            title="Delete Category"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(cat)}
+                          className="h-8 w-8 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg"
+                          title="Delete Category"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
                   );

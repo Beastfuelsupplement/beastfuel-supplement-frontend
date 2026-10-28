@@ -157,6 +157,7 @@ export const useDeleteCategory = () => {
     mutationFn: ({ id, force }: { id: string; force?: boolean }) => api.deleteCategory(id, force),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(res.message || 'Category deleted successfully');
     },
     onError: (error: any) => {
