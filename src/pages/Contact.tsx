@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { contactFormSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { useSettings } from '@/hooks/useSettings';
-import { apiService } from '@/lib/api';
+import { api } from '@/lib/api';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -61,7 +61,7 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const res = await apiService.sendContactMessage(formData);
+      const res = await api.sendContactMessage(formData);
 
       toast({
         title: 'Message Sent!',

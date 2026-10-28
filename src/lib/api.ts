@@ -457,4 +457,5 @@ export const formatImageUrl = (url?: string): string => {
 };
 
 export const api = new ApiService();
+export const apiService = api;
 export { API_BASE_URL };
