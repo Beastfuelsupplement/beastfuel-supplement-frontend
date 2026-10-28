@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import ProductReviews from '@/components/reviews/ProductReviews';
 import StarRating from '@/components/reviews/StarRating';
 import { useReviews } from '@/hooks/useReviews';
-import { formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
+import { formatCurrency } from '@/lib/currency';
 import { formatImageUrl } from '@/lib/api';
 import { calculateOfferPricing } from '@/lib/pricing';
 
@@ -360,7 +360,7 @@ const ProductDetails = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col gap-4"
           >
-            <div 
+            <div
               onClick={() => {
                 setZoomLevel(1);
                 setIsLightboxOpen(true);
@@ -414,11 +414,10 @@ const ProductDetails = () => {
                       key={i}
                       type="button"
                       onClick={() => setActiveImage(img)}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-card/80 p-1 flex items-center justify-center ${
-                        isSelected
+                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-card/80 p-1 flex items-center justify-center ${isSelected
                           ? 'border-primary ring-2 ring-primary/40 shadow-md scale-105'
                           : 'border-border/70 hover:border-border opacity-70 hover:opacity-100'
-                      }`}
+                        }`}
                       title={`View photo ${i + 1}`}
                     >
                       <img
@@ -584,7 +583,7 @@ const ProductDetails = () => {
                       const isSelected = selectedWeight === w;
                       const matchWo = product?.weightOffers?.find(wo => wo.weight.trim().toLowerCase() === w.trim().toLowerCase());
                       const hasWOffer = !isOfferExpired && (
-                        matchWo 
+                        matchWo
                           ? Boolean(matchWo.hasOffer)
                           : (product?.offerScope !== 'weights' && Boolean(product?.hasOffer))
                       );
@@ -592,8 +591,8 @@ const ProductDetails = () => {
                         matchWo?.offerDiscountType === 'fixed' && matchWo?.offerDiscountAmount
                           ? `${formatCurrency(matchWo.offerDiscountAmount)} OFF`
                           : matchWo?.offerDiscount
-                          ? `${matchWo.offerDiscount}% OFF`
-                          : product?.offerBadge || 'OFFER'
+                            ? `${matchWo.offerDiscount}% OFF`
+                            : product?.offerBadge || 'OFFER'
                       );
 
                       return (
@@ -601,20 +600,18 @@ const ProductDetails = () => {
                           key={w}
                           type="button"
                           onClick={() => setSelectedWeight(w)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                            isSelected
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isSelected
                               ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40 font-bold scale-[1.02]'
                               : 'bg-background hover:bg-secondary text-foreground border border-border/70 hover:border-foreground/30'
-                          }`}
+                            }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{w}</span>
                           {hasWOffer && (
-                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 uppercase ${
-                              isSelected
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 uppercase ${isSelected
                                 ? 'bg-black/30 text-white'
                                 : 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
-                            }`}>
+                              }`}>
                               <Flame className="w-2.5 h-2.5 fill-current" />
                               {wBadge}
                             </span>
@@ -654,15 +651,14 @@ const ProductDetails = () => {
                           key={fl}
                           type="button"
                           onClick={() => setSelectedFlavor(fl)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                            isSelected && isFlSoldOut
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isSelected && isFlSoldOut
                               ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-2 border-rose-500/60 shadow-md ring-2 ring-rose-500/20 font-bold scale-[1.02]'
                               : isSelected
-                              ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40 font-bold scale-[1.02]'
-                              : isFlSoldOut
-                              ? 'bg-background hover:bg-secondary/70 text-foreground/70 border border-border/70 hover:border-rose-500/40'
-                              : 'bg-background hover:bg-secondary text-foreground border border-border/70 hover:border-foreground/30'
-                          }`}
+                                ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40 font-bold scale-[1.02]'
+                                : isFlSoldOut
+                                  ? 'bg-background hover:bg-secondary/70 text-foreground/70 border border-border/70 hover:border-rose-500/40'
+                                  : 'bg-background hover:bg-secondary text-foreground border border-border/70 hover:border-foreground/30'
+                            }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{fl}</span>
@@ -760,11 +756,10 @@ const ProductDetails = () => {
               <Button
                 variant={isOutOfStock ? "outline" : "hero"}
                 size="xl"
-                className={`w-full text-base font-bold shadow-lg transition-all ${
-                  isOutOfStock
+                className={`w-full text-base font-bold shadow-lg transition-all ${isOutOfStock
                     ? 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 cursor-not-allowed'
                     : ''
-                }`}
+                  }`}
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || maxQuantity === 0}
               >
@@ -794,7 +789,7 @@ const ProductDetails = () => {
               <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
                 <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg border border-border/40">
                   <Truck className="h-4 w-4 text-blue-500 shrink-0" />
-                  <span>Free shipping on orders over {formatCurrency(FREE_SHIPPING_THRESHOLD)}</span>
+                  <span>Fast, Tracked Delivery Available</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg border border-border/40">
                   <Shield className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -831,12 +826,12 @@ const ProductDetails = () => {
 
       {/* Fullscreen High-Res Image Lightbox Modal */}
       {isLightboxOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200"
           onClick={() => setIsLightboxOpen(false)}
         >
           {/* Top Bar */}
-          <div 
+          <div
             className="flex items-center justify-between text-white z-10"
             onClick={(e) => e.stopPropagation()}
           >
@@ -895,7 +890,7 @@ const ProductDetails = () => {
           </div>
 
           {/* Main Photo Viewport */}
-          <div 
+          <div
             className="flex-1 flex items-center justify-center relative my-4 overflow-auto cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
@@ -939,7 +934,7 @@ const ProductDetails = () => {
 
           {/* Bottom Thumbnails Strip */}
           {allImages.length > 1 && (
-            <div 
+            <div
               className="flex items-center justify-center gap-2 overflow-x-auto py-2 z-10"
               onClick={(e) => e.stopPropagation()}
             >
@@ -951,11 +946,10 @@ const ProductDetails = () => {
                     setActiveImage(img);
                     setZoomLevel(1);
                   }}
-                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all p-1 bg-zinc-900 cursor-pointer ${
-                    (activeImage || product?.image) === img
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all p-1 bg-zinc-900 cursor-pointer ${(activeImage || product?.image) === img
                       ? 'border-primary ring-2 ring-primary/50 scale-105'
                       : 'border-white/30 hover:border-white/70 opacity-60 hover:opacity-100'
-                  }`}
+                    }`}
                 >
                   <img
                     src={formatImageUrl(img)}

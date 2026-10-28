@@ -9,7 +9,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { formatImageUrl } from '@/lib/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
-import { useCurrency, formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/currency';
+import { useCurrency, formatCurrency } from '@/lib/currency';
 
 
 const Index = () => {
@@ -96,10 +96,9 @@ const Index = () => {
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
   const { currency } = useCurrency();
-  const freeShippingMin = currency === 'LKR' ? 15000 : FREE_SHIPPING_THRESHOLD;
 
   const features = [
-    { icon: Truck, title: 'Free Shipping', description: `Orders over ${formatCurrency(freeShippingMin)}` },
+    { icon: Truck, title: 'Fast Delivery', description: 'Tracked & reliable shipping' },
     { icon: Shield, title: 'Lab Tested', description: '100% quality verified' },
     { icon: Award, title: 'Premium Quality', description: 'Best ingredients' },
     { icon: Zap, title: 'Fast Results', description: 'Feel the difference' },
@@ -118,8 +117,8 @@ const Index = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
     },
   };
@@ -129,11 +128,11 @@ const Index = () => {
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden section-spotlight section-gray-0">
         {/* Animated Background */}
-        <motion.div 
+        <motion.div
           style={{ y: heroY, scale: heroScale }}
           className="absolute inset-0"
         >
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
             style={{ backgroundImage: `url(${heroBg})` }}
           />
@@ -144,8 +143,8 @@ const Index = () => {
         {/* Ambient Hero Lighting Aura & Beam */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
         <div className="ambient-beam" />
-        
-        <motion.div 
+
+        <motion.div
           style={{ opacity: heroOpacity }}
           className="relative container mx-auto px-4 text-center py-16 sm:py-24 z-10"
         >
@@ -165,7 +164,7 @@ const Index = () => {
             </motion.div>
 
             {/* Main Heading */}
-            <motion.h1 
+            <motion.h1
               variants={itemVariants}
               className="text-display text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl leading-[0.9] mb-6 md:mb-8"
             >
@@ -174,16 +173,16 @@ const Index = () => {
             </motion.h1>
 
             {/* Subheading */}
-            <motion.p 
+            <motion.p
               variants={itemVariants}
               className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 md:mb-12 leading-relaxed px-2"
             >
-              Premium supplements engineered for peak performance. 
+              Premium supplements engineered for peak performance.
               <span className="text-foreground font-medium"> Unleash your power</span> with BEASTFUEL nutrition.
             </motion.p>
 
             {/* CTA Buttons */}
-            <motion.div 
+            <motion.div
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
@@ -201,7 +200,7 @@ const Index = () => {
             </motion.div>
 
             {/* Stats */}
-            <motion.div 
+            <motion.div
               variants={itemVariants}
               className="grid grid-cols-3 gap-4 sm:gap-8 mt-10 md:mt-16 max-w-xl mx-auto"
             >
@@ -267,7 +266,7 @@ const Index = () => {
       <section className="py-24 md:py-32 relative section-gray-0 section-spotlight overflow-hidden">
         <div className="ambient-beam" />
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
-        
+
         <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -302,11 +301,10 @@ const Index = () => {
               onClick={() => handleScroll('left')}
               disabled={!canScrollLeft}
               aria-label="Previous categories"
-              className={`hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${
-                canScrollLeft
+              className={`hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${canScrollLeft
                   ? 'bg-card/90 hover:bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer opacity-80 hover:opacity-100'
                   : 'bg-card/40 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-0'
-              }`}
+                }`}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -364,11 +362,10 @@ const Index = () => {
               onClick={() => handleScroll('right')}
               disabled={!canScrollRight}
               aria-label="Next categories"
-              className={`hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${
-                canScrollRight
+              className={`hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all backdrop-blur-md shadow-lg ${canScrollRight
                   ? 'bg-card/90 hover:bg-card border-border hover:border-primary text-foreground hover:scale-105 active:scale-95 cursor-pointer opacity-80 hover:opacity-100'
                   : 'bg-card/40 border-border/30 text-muted-foreground/30 cursor-not-allowed opacity-0'
-              }`}
+                }`}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -382,11 +379,10 @@ const Index = () => {
                 type="button"
                 onClick={() => scrollToDot(dotIdx)}
                 aria-label={`Go to slide ${dotIdx + 1}`}
-                className={`transition-all duration-300 rounded-full cursor-pointer ${
-                  activeDotIndex === dotIdx
+                className={`transition-all duration-300 rounded-full cursor-pointer ${activeDotIndex === dotIdx
                     ? 'w-8 h-2.5 bg-primary shadow-sm shadow-primary/40'
                     : 'w-2.5 h-2.5 bg-foreground/20 hover:bg-foreground/45 hover:scale-125'
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -397,7 +393,7 @@ const Index = () => {
       <section className="py-24 md:py-32 relative section-gray-1 border-y overflow-hidden">
         <div className="ambient-beam" />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent pointer-events-none opacity-50" />
-        
+
         <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -406,7 +402,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -446,7 +442,7 @@ const Index = () => {
       <section className="py-24 md:py-32 relative section-gray-0 section-spotlight overflow-hidden">
         <div className="ambient-beam" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-white/70 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none ambient-glow-aura" />
-        
+
         <div className="relative container mx-auto px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -605,7 +601,7 @@ const Index = () => {
             </h2>
 
             <p className="text-lg md:text-xl text-neutral-400 mb-12 max-w-xl mx-auto">
-              Join thousands of athletes who trust BEASTFUEL for their supplement needs. 
+              Join thousands of athletes who trust BEASTFUEL for their supplement needs.
               <span className="text-white font-medium"> Start your journey today.</span>
             </p>
 

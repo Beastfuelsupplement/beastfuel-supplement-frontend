@@ -25,6 +25,7 @@ import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Cookies from "./pages/Cookies";
+import ReturnPolicy from "./pages/ReturnPolicy";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -62,6 +63,8 @@ const AnimatedRoutes = () => {
         <Route path="/privacy" element={wrap(Privacy)} />
         <Route path="/terms" element={wrap(Terms)} />
         <Route path="/cookies" element={wrap(Cookies)} />
+        <Route path="/returns" element={wrap(ReturnPolicy)} />
+        <Route path="/return-policy" element={wrap(ReturnPolicy)} />
         <Route path="/admin" element={wrap(AdminDashboard)} />
         <Route path="/admin/products" element={wrap(AdminProducts)} />
         <Route path="/admin/orders" element={wrap(AdminOrders)} />
