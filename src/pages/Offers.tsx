@@ -32,18 +32,19 @@ const Offers = () => {
   const storeProducts = useAdminStore((state) => state.products);
   const addItem = useCartStore((state) => state.addItem);
 
-  // Combine products from API or local store
-  const allProducts: Product[] = apiProducts.length > 0 ? apiProducts : storeProducts;
-
-  // Filter products that have an active offer (and not expired)
-  const offerProducts = allProducts.filter((p) => {
+  // Filter products that have an active offer (and not expired) from real database products
+  const offerProducts = apiProducts.filter((p) => {
     const isExpired = Boolean(p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now());
     if (isExpired) return false;
-    return Boolean(
+    const hasProductOffer = Boolean(
       p.hasOffer ||
       (p.offerDiscount !== undefined && Number(p.offerDiscount) > 0) ||
       (p.offerDiscountAmount !== undefined && Number(p.offerDiscountAmount) > 0)
     );
+    const hasVariantOffer = Boolean(
+      p.variants && p.variants.some((v) => v.hasOffer || (v.offerDiscount && Number(v.offerDiscount) > 0) || (v.offerDiscountAmount && Number(v.offerDiscountAmount) > 0))
+    );
+    return hasProductOffer || hasVariantOffer;
   });
 
   // Dynamic countdown timer state

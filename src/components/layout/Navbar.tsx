@@ -3,7 +3,7 @@ import { ShoppingCart, User, Home, Package, Info, Flame, Award, ChevronDown, Spa
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -22,18 +22,24 @@ const Navbar = () => {
   // Brands data for quick navigation
   const { data: brands = [] } = useBrands();
 
-  // Check if any products have an active offer
-  const { data: apiProducts = [] } = useProducts(true);
-  const storeProducts = useAdminStore((state) => state.products);
-  const allProducts = apiProducts.length > 0 ? apiProducts : storeProducts;
-  const hasOffers = allProducts.some((p) => {
-    const isExpired = Boolean(p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now());
-    return !isExpired && Boolean(
-      p.hasOffer ||
-      (p.offerDiscount !== undefined && Number(p.offerDiscount) > 0) ||
-      (p.offerDiscountAmount !== undefined && Number(p.offerDiscountAmount) > 0)
-    );
-  });
+  // Check if any products have an active offer (no fallback to mock data to prevent flicker)
+  const { data: apiProducts = [], isLoading: isLoadingProducts } = useProducts(true);
+  const hasOffers = useMemo(() => {
+    if (isLoadingProducts && apiProducts.length === 0) return false;
+    return apiProducts.some((p) => {
+      const isExpired = Boolean(p.offerEndDate && new Date(p.offerEndDate).getTime() < Date.now());
+      if (isExpired) return false;
+      const hasProductOffer = Boolean(
+        p.hasOffer ||
+        (p.offerDiscount !== undefined && Number(p.offerDiscount) > 0) ||
+        (p.offerDiscountAmount !== undefined && Number(p.offerDiscountAmount) > 0)
+      );
+      const hasVariantOffer = Boolean(
+        p.variants && p.variants.some((v) => v.hasOffer || (v.offerDiscount && Number(v.offerDiscount) > 0) || (v.offerDiscountAmount && Number(v.offerDiscountAmount) > 0))
+      );
+      return hasProductOffer || hasVariantOffer;
+    });
+  }, [apiProducts, isLoadingProducts]);
 
   useEffect(() => {
     const handleScroll = () => {
