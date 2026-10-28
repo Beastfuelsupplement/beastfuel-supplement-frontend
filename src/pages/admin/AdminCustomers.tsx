@@ -3,14 +3,20 @@ import { motion } from 'framer-motion';
 import { Search, Mail, Edit, Trash2, User, Plus } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
-import { useAdminStore, Customer } from '@/store/adminStore';
+import { useAdminStore, Customer, isMockCustomer } from '@/store/adminStore';
+import { useCustomers, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
 import CustomerModal from '@/components/admin/CustomerModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 
 const AdminCustomers = () => {
-  const { customers, addCustomer, updateCustomer, deleteCustomer } = useAdminStore();
+  const { data: dbCustomers = [] } = useCustomers();
+  const updateCustomerMutation = useUpdateCustomer();
+  const deleteCustomerMutation = useDeleteCustomer();
+
+  const { customers: storeCustomers = [], addCustomer, updateCustomer, deleteCustomer } = useAdminStore();
+  const customers = (dbCustomers.length > 0 ? dbCustomers : storeCustomers).filter(c => !isMockCustomer(c));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);

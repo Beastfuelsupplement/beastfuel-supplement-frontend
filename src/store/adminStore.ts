@@ -104,6 +104,8 @@ interface AdminStore {
   restoreOrder: (id: string) => void;
   permanentlyDeleteOrder: (id: string) => void;
   clearDeletedOrders: () => void;
+  setOrders: (orders: Order[]) => void;
+  setCustomers: (customers: Customer[]) => void;
   
   // Customers
   addCustomer: (customer: Omit<Customer, 'id' | 'orders' | 'totalSpent' | 'joinedAt'>) => void;
@@ -166,19 +168,16 @@ const defaultSettings: StoreSettings = {
   shippingEstimatedDays: '1-3 Business Days',
 };
 
-const defaultCustomers: Customer[] = [
-  { id: 'cust-1', name: 'John Doe', email: 'john@example.com', orders: 12, totalSpent: 1249.99, joinedAt: '2023-06-15', status: 'Active' },
-  { id: 'cust-2', name: 'Jane Smith', email: 'jane@example.com', orders: 8, totalSpent: 879.99, joinedAt: '2023-07-22', status: 'Active' },
-  { id: 'cust-3', name: 'Mike Johnson', email: 'mike@example.com', orders: 5, totalSpent: 459.99, joinedAt: '2023-08-10', status: 'Active' },
-  { id: 'cust-4', name: 'Sarah Wilson', email: 'sarah@example.com', orders: 3, totalSpent: 299.99, joinedAt: '2023-09-05', status: 'Inactive' },
-];
+export const isMockOrder = (o: Order) =>
+  ['ORD-001', 'ORD-002', 'ORD-003', 'ORD-004'].includes(o.id) &&
+  (o.customerEmail?.includes('@example.com') || o.customerName === 'John Doe');
 
-const defaultOrders: Order[] = [
-  { id: 'ORD-001', customerId: 'cust-1', customerName: 'John Doe', customerEmail: 'john@example.com', items: [{ productId: '1', productName: 'Whey Protein Isolate', quantity: 2, price: 59.99 }], total: 119.98, status: 'Completed', paymentStatus: 'Paid', paymentDetails: { method: 'card', cardLast4: '4242', cardBrand: 'Visa', transactionId: 'txn_001', paidAt: '2024-01-15' }, createdAt: '2024-01-15' },
-  { id: 'ORD-002', customerId: 'cust-2', customerName: 'Jane Smith', customerEmail: 'jane@example.com', items: [{ productId: '2', productName: 'Pre-Workout Surge', quantity: 1, price: 44.99 }], total: 44.99, status: 'Processing', paymentStatus: 'Paid', paymentDetails: { method: 'paypal', transactionId: 'pp_002', paidAt: '2024-01-14' }, createdAt: '2024-01-14' },
-  { id: 'ORD-003', customerId: 'cust-3', customerName: 'Mike Johnson', customerEmail: 'mike@example.com', items: [{ productId: '3', productName: 'Creatine Monohydrate', quantity: 3, price: 29.99 }], total: 89.97, status: 'Shipped', paymentStatus: 'Paid', paymentDetails: { method: 'card', cardLast4: '1234', cardBrand: 'MasterCard', transactionId: 'txn_003', paidAt: '2024-01-14' }, createdAt: '2024-01-14' },
-  { id: 'ORD-004', customerId: 'cust-4', customerName: 'Sarah Wilson', customerEmail: 'sarah@example.com', items: [{ productId: '4', productName: 'BCAA Recovery', quantity: 1, price: 34.99 }], total: 34.99, status: 'Pending', paymentStatus: 'Pending', createdAt: '2024-01-13' },
-];
+export const isMockCustomer = (c: Customer) =>
+  ['cust-1', 'cust-2', 'cust-3', 'cust-4'].includes(c.id) &&
+  (c.email?.includes('@example.com') || c.name === 'John Doe');
+
+const defaultCustomers: Customer[] = [];
+const defaultOrders: Order[] = [];
 
 export const useAdminStore = create<AdminStore>()(
   persist(
@@ -353,6 +352,14 @@ export const useAdminStore = create<AdminStore>()(
         set({ deletedOrders: [] });
       },
 
+      setOrders: (orders) => {
+        set({ orders: orders.filter((o) => !isMockOrder(o)) });
+      },
+
+      setCustomers: (customers) => {
+        set({ customers: customers.filter((c) => !isMockCustomer(c)) });
+      },
+
       // Customers
       addCustomer: (customer) => {
         const newCustomer: Customer = {
@@ -422,20 +429,32 @@ export const useAdminStore = create<AdminStore>()(
       // Stats
       getStats: () => {
         const state = get();
-        const totalRevenue = state.orders
-          .filter(o => o.status === 'Completed')
-          .reduce((sum, o) => sum + o.total, 0);
-        
+        const validOrders = (state.orders || []).filter((o) => !isMockOrder(o));
+        const validCustomers = (state.customers || []).filter((c) => !isMockCustomer(c));
+        const totalRevenue = validOrders
+          .filter((o) => o.status === 'Completed' || o.paymentStatus === 'Paid')
+          .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
         return {
-          totalRevenue,
-          totalOrders: state.orders.length,
-          totalCustomers: state.customers.length,
-          totalProducts: state.products.length,
+          totalRevenue: Number(totalRevenue.toFixed(2)),
+          totalOrders: validOrders.length,
+          totalCustomers: validCustomers.length,
+          totalProducts: (state.products || []).length,
         };
       },
     }),
     {
       name: 'admin-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (Array.isArray(state.orders)) {
+            state.orders = state.orders.filter((o) => !isMockOrder(o));
+          }
+          if (Array.isArray(state.customers)) {
+            state.customers = state.customers.filter((c) => !isMockCustomer(c));
+          }
+        }
+      },
     }
   )
 );

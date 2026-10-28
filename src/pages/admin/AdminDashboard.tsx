@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Package, 
@@ -19,12 +19,17 @@ import {
   PieChart as PieChartIcon,
   Sparkles,
   FileSpreadsheet,
+  RefreshCw,
+  Inbox,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AdminLayout from './AdminLayout';
-import { useAdminStore } from '@/store/adminStore';
+import { useAdminStore, isMockOrder, isMockCustomer } from '@/store/adminStore';
 import { DailyReportModal } from '@/components/admin/DailyReportModal';
+import { useProducts } from '@/hooks/useProducts';
+import { useOrders } from '@/hooks/useOrders';
+import { useCustomers } from '@/hooks/useCustomers';
 import {
   AreaChart,
   Area,
@@ -40,36 +45,155 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 import { formatCurrency } from '@/lib/currency';
 
 const AdminDashboard = () => {
-  const { getStats, orders, customers, products } = useAdminStore();
-  const stats = getStats();
+  const { 
+    orders: storeOrders, 
+    customers: storeCustomers, 
+    products: storeProducts,
+    setOrders, 
+    setCustomers 
+  } = useAdminStore();
+
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  // Generate monthly revenue data from orders
+  // 1. Fetch real actual data from MongoDB backend via React Query hooks
+  const { 
+    data: dbProducts = [], 
+    isLoading: isLoadingProducts, 
+    refetch: refetchProducts, 
+    isFetching: isFetchingProducts 
+  } = useProducts(false);
+
+  const { 
+    data: dbOrders = [], 
+    isLoading: isLoadingOrders, 
+    refetch: refetchOrders, 
+    isFetching: isFetchingOrders 
+  } = useOrders();
+
+  const { 
+    data: dbCustomers = [], 
+    isLoading: isLoadingCustomers, 
+    refetch: refetchCustomers, 
+    isFetching: isFetchingCustomers 
+  } = useCustomers();
+
+  // Sync fresh backend data into admin store when loaded
+  useEffect(() => {
+    if (dbOrders && dbOrders.length > 0) {
+      setOrders(dbOrders);
+    }
+  }, [dbOrders, setOrders]);
+
+  useEffect(() => {
+    if (dbCustomers && dbCustomers.length > 0) {
+      setCustomers(dbCustomers);
+    }
+  }, [dbCustomers, setCustomers]);
+
+  // Priority: Actual DB data > local non-mock store data
+  const orders = useMemo(() => {
+    if (dbOrders && dbOrders.length > 0) return dbOrders;
+    return (storeOrders || []).filter(o => !isMockOrder(o));
+  }, [dbOrders, storeOrders]);
+
+  const customers = useMemo(() => {
+    if (dbCustomers && dbCustomers.length > 0) return dbCustomers;
+    return (storeCustomers || []).filter(c => !isMockCustomer(c));
+  }, [dbCustomers, storeCustomers]);
+
+  const products = useMemo(() => {
+    if (dbProducts && dbProducts.length > 0) return dbProducts;
+    return storeProducts || [];
+  }, [dbProducts, storeProducts]);
+
+  const isRefreshing = isFetchingProducts || isFetchingOrders || isFetchingCustomers;
+
+  const handleRefreshAll = () => {
+    refetchProducts();
+    refetchOrders();
+    refetchCustomers();
+  };
+
+  // 2. Real Metrics & Dynamic Trends
+  const { totalRevenue, revenueGrowth, orderGrowth, activeCustomerCount, inStockProductCount } = useMemo(() => {
+    const validOrders = orders.filter(o => o.status !== 'Cancelled');
+    const rev = validOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    const thisMonthOrders = validOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const lastMonthOrders = validOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
+    });
+
+    const thisMonthRev = thisMonthOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const lastMonthRev = lastMonthOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+    const revGrowth = lastMonthRev > 0
+      ? ((thisMonthRev - lastMonthRev) / lastMonthRev) * 100
+      : (thisMonthRev > 0 ? 100 : 0);
+
+    const ordGrowth = lastMonthOrders.length > 0
+      ? ((thisMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100
+      : (thisMonthOrders.length > 0 ? 100 : 0);
+
+    const activeCust = customers.filter(c => c.status === 'Active').length || customers.length;
+    const inStock = products.filter(p => (Number(p.stock) || 0) > 0).length;
+
+    return {
+      totalRevenue: Number(rev.toFixed(2)),
+      revenueGrowth: revGrowth,
+      orderGrowth: ordGrowth,
+      activeCustomerCount: activeCust,
+      inStockProductCount: inStock,
+    };
+  }, [orders, customers, products]);
+
+  // 3. Real Monthly Revenue & Order trends (No Math.random)
   const revenueData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+
     return months.map((month, i) => {
       const monthOrders = orders.filter(o => {
         const d = new Date(o.createdAt);
-        return d.getMonth() === i;
+        return d.getMonth() === i && d.getFullYear() === currentYear && o.status !== 'Cancelled';
       });
-      const revenue = monthOrders.reduce((sum, o) => sum + o.total, 0);
-      const count = monthOrders.length;
-      return { name: month, revenue: revenue || Math.floor(Math.random() * 800 + 200), orders: count || Math.floor(Math.random() * 15 + 2) };
+      const monthRev = monthOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+      return { 
+        name: month, 
+        revenue: Number(monthRev.toFixed(2)), 
+        orders: monthOrders.length 
+      };
     });
   }, [orders]);
 
-  // Order status distribution
+  // 4. Real Order status distribution
   const orderStatusData = useMemo(() => {
     const statusMap: Record<string, number> = {};
     orders.forEach(o => {
-      statusMap[o.status] = (statusMap[o.status] || 0) + 1;
+      const st = o.status || 'Pending';
+      statusMap[st] = (statusMap[st] || 0) + 1;
     });
-    return Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+
+    const entries = Object.entries(statusMap);
+    if (entries.length === 0) {
+      return [{ name: 'No Orders', value: 0 }];
+    }
+    return entries.map(([name, value]) => ({ name, value }));
   }, [orders]);
 
   const PIE_COLORS = [
@@ -80,11 +204,12 @@ const AdminDashboard = () => {
     'hsl(var(--chart-rose))',
   ];
 
-  // Top products by category
+  // 5. Real categories breakdown from actual products
   const categoryData = useMemo(() => {
     const catMap: Record<string, number> = {};
     products.forEach(p => {
-      catMap[p.category] = (catMap[p.category] || 0) + 1;
+      const cat = p.category || 'General';
+      catMap[cat] = (catMap[cat] || 0) + 1;
     });
     return Object.entries(catMap).map(([name, count]) => ({ name, count }));
   }, [products]);
@@ -98,7 +223,7 @@ const AdminDashboard = () => {
     'hsl(var(--chart-orange))',
   ];
 
-  // Stock health radial (accurate variant-level awareness)
+  // 6. Real Stock health radial based on actual product variant inventory
   const stockHealth = useMemo(() => {
     let outOfStock = 0;
     let lowStock = 0;
@@ -109,8 +234,8 @@ const AdminDashboard = () => {
       const totalStock = Number(p.stock ?? 0);
       const variants = p.variants || [];
 
-      const hasSoldOut = totalStock === 0 || variants.some((v) => Number(v.stock) === 0);
-      const hasLow = totalStock <= threshold || variants.some((v) => Number(v.stock) <= threshold);
+      const hasSoldOut = totalStock === 0 || (variants.length > 0 && variants.some((v) => Number(v.stock) === 0));
+      const hasLow = totalStock <= threshold || (variants.length > 0 && variants.some((v) => Number(v.stock) <= threshold));
 
       if (hasSoldOut) {
         outOfStock++;
@@ -129,21 +254,31 @@ const AdminDashboard = () => {
     ];
   }, [products]);
 
-  // Customer growth (simulated monthly)
+  // 7. Real customer registration distribution across last 6 months
   const customerGrowth = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    return months.map((m, i) => ({
-      name: m,
-      customers: Math.floor(customers.length * (0.4 + i * 0.12)),
-    }));
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+
+    const result = [];
+    for (let i = 5; i >= 0; i--) {
+      const mIndex = (currentMonth - i + 12) % 12;
+      const count = customers.filter(c => {
+        const d = new Date(c.joinedAt || (c as any).createdAt || Date.now());
+        return d.getMonth() <= mIndex;
+      }).length;
+      result.push({ name: months[mIndex], customers: count });
+    }
+    return result;
   }, [customers]);
 
+  // 8. Dynamic Stat Cards with real computed trends
   const statCards = [
     {
       title: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
-      change: '+12.5%',
-      trend: 'up' as const,
+      value: formatCurrency(totalRevenue),
+      change: `${revenueGrowth >= 0 ? '+' : ''}${revenueGrowth.toFixed(1)}% MoM`,
+      trend: revenueGrowth >= 0 ? ('up' as const) : ('down' as const),
       icon: DollarSign,
       color: 'chart-emerald',
       bgClass: 'from-chart-emerald/20 to-chart-emerald/5',
@@ -154,9 +289,9 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Orders',
-      value: stats.totalOrders.toString(),
-      change: '+8.2%',
-      trend: 'up' as const,
+      value: orders.length.toString(),
+      change: `${orderGrowth >= 0 ? '+' : ''}${orderGrowth.toFixed(1)}% MoM`,
+      trend: orderGrowth >= 0 ? ('up' as const) : ('down' as const),
       icon: ShoppingCart,
       color: 'chart-blue',
       bgClass: 'from-chart-blue/20 to-chart-blue/5',
@@ -167,8 +302,8 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Customers',
-      value: stats.totalCustomers.toString(),
-      change: '+5.1%',
+      value: customers.length.toString(),
+      change: `${activeCustomerCount} Active`,
       trend: 'up' as const,
       icon: Users,
       color: 'chart-violet',
@@ -180,8 +315,8 @@ const AdminDashboard = () => {
     },
     {
       title: 'Products',
-      value: stats.totalProducts.toString(),
-      change: '+2.4%',
+      value: products.length.toString(),
+      change: `${inStockProductCount} in stock`,
       trend: 'up' as const,
       icon: Package,
       color: 'chart-amber',
@@ -247,10 +382,21 @@ const AdminDashboard = () => {
             </h1>
             <p className="text-muted-foreground flex items-center gap-2 mt-1">
               <Activity className="h-4 w-4 text-chart-blue" />
-              Real-time overview of your store performance
+              Live store performance from database
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshAll}
+              disabled={isRefreshing}
+              className="border-border hover:bg-muted/50 h-10 px-3 text-xs"
+              title="Refresh live data from server"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefreshing ? 'animate-spin text-chart-blue' : ''}`} />
+              {isRefreshing ? 'Syncing...' : 'Sync Data'}
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsReportModalOpen(true)}
@@ -282,22 +428,22 @@ const AdminDashboard = () => {
                 </div>
                 <span className={`flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${stat.badgeClass}`}>
                   {stat.change}
-                  {stat.trend === 'up'
-                    ? <ArrowUpRight className="h-3.5 w-3.5 ml-0.5" />
-                    : <ArrowDownRight className="h-3.5 w-3.5 ml-0.5" />
-                  }
+                  {stat.trend === 'up' ? (
+                    <ArrowUpRight className="h-3.5 w-3.5 ml-0.5" />
+                  ) : (
+                    <ArrowDownRight className="h-3.5 w-3.5 ml-0.5" />
+                  )}
                 </span>
               </div>
               <div className="mt-5">
                 <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
                 <p className="text-sm text-muted-foreground mt-1">{stat.title}</p>
               </div>
-              {/* Mini sparkline decoration */}
               <div className="mt-4 h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
                 <motion.div
                   className={`h-full rounded-full ${stat.barColor}`}
                   initial={{ width: 0 }}
-                  animate={{ width: `${60 + index * 10}%` }}
+                  animate={{ width: `${Math.min(100, Math.max(15, (index + 1) * 25))}%` }}
                   transition={{ delay: 0.5 + index * 0.1, duration: 1, ease: 'easeOut' }}
                 />
               </div>
@@ -317,7 +463,7 @@ const AdminDashboard = () => {
                   <TrendingUp className="h-5 w-5 text-chart-emerald" />
                   REVENUE OVERVIEW
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">Monthly revenue & order trends</p>
+                <p className="text-sm text-muted-foreground mt-1">Monthly revenue & order trends ({new Date().getFullYear()})</p>
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
@@ -389,41 +535,51 @@ const AdminDashboard = () => {
               </h2>
             </div>
             <div className="h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={orderStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
-                    strokeWidth={0}
-                  >
-                    {orderStatusData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {orders.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                  <Inbox className="h-10 w-10 mb-2 opacity-40" />
+                  <p className="text-sm font-medium">No orders yet</p>
+                  <p className="text-xs text-muted-foreground/80 mt-0.5">Order statuses will appear here once orders are placed</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={orderStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={80}
+                      paddingAngle={4}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {orderStatusData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
-            <div className="flex flex-wrap gap-3 mt-2 justify-center">
-              {orderStatusData.map((entry, i) => (
-                <span key={entry.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                  {entry.name} ({entry.value})
-                </span>
-              ))}
-            </div>
+            {orders.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-2 justify-center">
+                {orderStatusData.map((entry, i) => (
+                  <span key={entry.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    {entry.name} ({entry.value})
+                  </span>
+                ))}
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -436,26 +592,33 @@ const AdminDashboard = () => {
               CATEGORIES
             </h2>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                    {categoryData.map((_, index) => (
-                      <Cell key={`cat-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} fillOpacity={0.85} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {categoryData.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                  <Package className="h-10 w-10 mb-2 opacity-40" />
+                  <p className="text-sm">No products added</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                      {categoryData.map((_, index) => (
+                        <Cell key={`cat-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} fillOpacity={0.85} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </motion.div>
 
@@ -548,44 +711,54 @@ const AdminDashboard = () => {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</th>
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</th>
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Items</th>
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order, i) => (
-                  <motion.tr
-                    key={order.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 + i * 0.05 }}
-                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="p-4 font-mono text-sm font-medium">{order.id}</td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium text-sm">{order.customerName}</p>
-                        <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{order.items.length} item(s)</td>
-                    <td className="p-4 font-semibold text-sm">{formatCurrency(order.total)}</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                        {getStatusIcon(order.status)}
-                        {order.status}
-                      </span>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+            {recentOrders.length === 0 ? (
+              <div className="py-12 px-4 flex flex-col items-center justify-center text-center text-muted-foreground">
+                <ShoppingCart className="h-10 w-10 mb-3 opacity-30 text-chart-blue" />
+                <p className="text-base font-semibold text-foreground">No customer orders recorded yet</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                  As soon as customers place orders on the store, they will automatically appear here with real-time status tracking.
+                </p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</th>
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</th>
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Items</th>
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order, i) => (
+                    <motion.tr
+                      key={order.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + i * 0.05 }}
+                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="p-4 font-mono text-sm font-medium">{order.id}</td>
+                      <td className="p-4">
+                        <div>
+                          <p className="font-medium text-sm">{order.customerName}</p>
+                          <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{order.items?.length || 0} item(s)</td>
+                      <td className="p-4 font-semibold text-sm">{formatCurrency(order.total)}</td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {getStatusIcon(order.status)}
+                          {order.status}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </motion.div>
 

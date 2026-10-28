@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { Search, Eye, Trash2, Printer, RotateCcw, Package, Archive, AlertTriangle, FileText } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
-import { useAdminStore, Order, DeletedOrder, PaymentDetails } from '@/store/adminStore';
+import { useAdminStore, Order, DeletedOrder, PaymentDetails, isMockOrder } from '@/store/adminStore';
+import { useOrders, useUpdateOrderStatus, useDeleteOrder } from '@/hooks/useOrders';
 import OrderModal from '@/components/admin/OrderModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { toast } from 'sonner';
@@ -11,8 +12,12 @@ import { formatCurrency } from '@/lib/currency';
 import { printOrdersReport, printDeletedOrdersReport, printSingleOrderInvoice } from '@/utils/orderReportPrinter';
 
 const AdminOrders = () => {
+  const { data: dbOrders = [] } = useOrders();
+  const updateOrderStatusMutation = useUpdateOrderStatus();
+  const deleteOrderMutation = useDeleteOrder();
+
   const { 
-    orders, 
+    orders: storeOrders = [], 
     deletedOrders = [], 
     updateOrderStatus, 
     updatePaymentStatus, 
@@ -20,6 +25,8 @@ const AdminOrders = () => {
     restoreOrder, 
     permanentlyDeleteOrder 
   } = useAdminStore();
+
+  const orders = (dbOrders.length > 0 ? dbOrders : storeOrders).filter(o => !isMockOrder(o));
 
   const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [searchQuery, setSearchQuery] = useState('');
