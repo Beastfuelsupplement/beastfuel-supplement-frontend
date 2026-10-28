@@ -90,3 +90,84 @@ export const useReviews = (productId: string) => {
     refetch: fetchReviews,
   };
 };
+
+export interface FeaturedReview {
+  id?: string;
+  name: string;
+  role: string;
+  rating: number;
+  quote: string;
+  isReal?: boolean;
+}
+
+export const HARDCODED_TESTIMONIALS: FeaturedReview[] = [
+  { name: 'Marcus R.', role: 'Competitive Bodybuilder', rating: 5, quote: "BEASTFUEL whey protein is hands down the cleanest I've tried. No bloating, amazing mixability, and the chocolate flavor actually tastes incredible." },
+  { name: 'Sarah K.', role: 'CrossFit Athlete', rating: 5, quote: "The pre-workout gives me insane focus without the jitters. I've PR'd three times since switching to BEASTFUEL. Absolutely love it!" },
+  { name: 'David T.', role: 'Marathon Runner', rating: 4, quote: "Their BCAA recovery blend has cut my recovery time in half. I can train harder and more consistently now. Great quality supplements." },
+  { name: 'Amaya L.', role: 'Fitness Coach', rating: 5, quote: "I recommend BEASTFUEL to all my clients. Lab-tested, transparent ingredients, and results you can actually feel. Top tier brand." },
+  { name: 'Jake W.', role: 'Powerlifter', rating: 5, quote: "The creatine monohydrate is pure and effective. Noticed strength gains within the first two weeks. Shipping was lightning fast too." },
+  { name: 'Nina P.', role: 'Yoga Instructor', rating: 4, quote: "Love the plant-based protein option. It's gentle on my stomach and keeps me fueled through back-to-back classes. Highly recommend!" },
+];
+
+/**
+ * Hook to retrieve up to 6 high-rating (4-star or 5-star) reviews for the homepage.
+ * Mainly prioritizes actual customer reviews, and fills any remaining slots
+ * with the hardcoded testimonials so there are always up to 6 high-rating reviews.
+ */
+export const useFeaturedReviews = (maxReviews = 6) => {
+  const [reviews, setReviews] = useState<FeaturedReview[]>(HARDCODED_TESTIMONIALS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReviews = async () => {
+      try {
+        let realReviews: FeaturedReview[] = [];
+
+        try {
+          const data = await api.getFeaturedReviews(maxReviews, 4);
+          if (Array.isArray(data) && data.length > 0) {
+            realReviews = data
+              .filter((r: any) => r.rating >= 4 && (r.quote || r.reviewText))
+              .map((r: any) => ({
+                id: r._id || r.id,
+                name: r.name || r.userName || 'Verified Customer',
+                role: r.role || 'Verified Buyer',
+                rating: Number(r.rating) || 5,
+                quote: (r.quote || r.reviewText || '').trim(),
+                isReal: true,
+              }));
+          }
+        } catch {
+          // Fallback seamlessly if endpoint not yet reachable
+        }
+
+        if (!isMounted) return;
+
+        if (realReviews.length >= maxReviews) {
+          setReviews(realReviews.slice(0, maxReviews));
+        } else if (realReviews.length > 0) {
+          const needed = maxReviews - realReviews.length;
+          setReviews([...realReviews, ...HARDCODED_TESTIMONIALS.slice(0, needed)]);
+        } else {
+          setReviews(HARDCODED_TESTIMONIALS);
+        }
+      } catch {
+        if (isMounted) {
+          setReviews(HARDCODED_TESTIMONIALS);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadReviews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [maxReviews]);
+
+  return { reviews, isLoading };
+};

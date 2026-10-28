@@ -213,6 +213,10 @@ class ApiService {
     return this.request<any[]>(`/reviews/product/${productId}`);
   }
 
+  async getFeaturedReviews(limit = 6, minRating = 4) {
+    return this.request<any[]>(`/reviews/featured?limit=${limit}&minRating=${minRating}`);
+  }
+
   async submitReview(productId: string, rating: number, reviewText: string) {
     return this.request<any>('/reviews', {
       method: 'POST',

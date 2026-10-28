@@ -6,6 +6,7 @@ import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useFeaturedReviews } from '@/hooks/useReviews';
 import { formatImageUrl } from '@/lib/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
@@ -15,6 +16,7 @@ import { useCurrency, formatCurrency, FREE_SHIPPING_THRESHOLD } from '@/lib/curr
 const Index = () => {
   const { data: products = [] } = useProducts();
   const { data: categoriesData = [] } = useCategories();
+  const { reviews: featuredReviews } = useFeaturedReviews(6);
   const featuredProducts = products.slice(0, 4);
 
   // Take all active categories for the horizontal slider
@@ -527,16 +529,9 @@ const Index = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {[
-              { name: 'Marcus R.', role: 'Competitive Bodybuilder', rating: 5, quote: 'BEASTFUEL whey protein is hands down the cleanest I\'ve tried. No bloating, amazing mixability, and the chocolate flavor actually tastes incredible.' },
-              { name: 'Sarah K.', role: 'CrossFit Athlete', rating: 5, quote: 'The pre-workout gives me insane focus without the jitters. I\'ve PR\'d three times since switching to BEASTFUEL. Absolutely love it!' },
-              { name: 'David T.', role: 'Marathon Runner', rating: 4, quote: 'Their BCAA recovery blend has cut my recovery time in half. I can train harder and more consistently now. Great quality supplements.' },
-              { name: 'Amaya L.', role: 'Fitness Coach', rating: 5, quote: 'I recommend BEASTFUEL to all my clients. Lab-tested, transparent ingredients, and results you can actually feel. Top tier brand.' },
-              { name: 'Jake W.', role: 'Powerlifter', rating: 5, quote: 'The creatine monohydrate is pure and effective. Noticed strength gains within the first two weeks. Shipping was lightning fast too.' },
-              { name: 'Nina P.', role: 'Yoga Instructor', rating: 4, quote: 'Love the plant-based protein option. It\'s gentle on my stomach and keeps me fueled through back-to-back classes. Highly recommend!' },
-            ].map((testimonial, i) => (
+            {featuredReviews.map((testimonial, i) => (
               <motion.div
-                key={testimonial.name}
+                key={testimonial.id || `${testimonial.name}-${i}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -551,10 +546,19 @@ const Index = () => {
                 </div>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-6 italic">"{testimonial.quote}"</p>
                 <div className="flex items-center gap-3 pt-4 border-t border-border/60">
-                  <div className="w-10 h-10 rounded-full bg-secondary border border-border/80 flex items-center justify-center text-foreground font-bold text-sm shadow-xs">{testimonial.name.charAt(0)}</div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-foreground">{testimonial.name}</h4>
-                    <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                  <div className="w-10 h-10 rounded-full bg-secondary border border-border/80 flex items-center justify-center text-foreground font-bold text-sm shadow-xs shrink-0">
+                    {testimonial.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-semibold text-sm text-foreground truncate">{testimonial.name}</h4>
+                      {testimonial.isReal && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                          Verified Buyer
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{testimonial.role}</p>
                   </div>
                 </div>
               </motion.div>

@@ -17,7 +17,6 @@ import {
   Gamepad2 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -201,28 +200,8 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter Section */}
-        <div className="mt-12 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-center md:text-left">
-              <h4 className="text-display text-lg tracking-wider text-foreground mb-2">Subscribe to Newsletter</h4>
-              <p className="text-sm text-muted-foreground">Get 10% off your first order and stay updated.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row w-full md:w-auto max-w-md gap-2.5 sm:gap-2">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full sm:flex-1 h-11 px-4 rounded-lg bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              />
-              <Button className="h-11 px-6 w-full sm:w-auto whitespace-nowrap">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+        <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <p className="text-xs sm:text-sm text-muted-foreground">
             © {currentYear} {settings.storeName || 'BEASTFUEL Supplements'}. All rights reserved.
           </p>
