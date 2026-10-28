@@ -138,7 +138,6 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { name: 'FAQ', path: '/faq' },
-                { name: 'Return Policy', path: '/returns' },
                 { name: 'My Account', path: '/dashboard' },
                 { name: 'My Cart', path: '/cart' },
                 { name: 'Contact', path: '/contact' },
@@ -230,7 +229,6 @@ const Footer = () => {
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link to="/returns" className="hover:text-primary transition-colors">Return Policy</Link>
             <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
           </div>
         </div>

@@ -18,8 +18,8 @@ const FAQ = () => {
           answer: 'Standard shipping typically takes 5-7 business days. Express shipping is available for 2-3 business day delivery. International orders may take 10-14 business days depending on destination.',
         },
         {
-          question: 'What are your delivery options and shipping rates?',
-          answer: 'We provide prompt, tracked delivery across the country with standard (3-5 business days) and express (1-2 business days) options. Shipping fees are calculated and displayed at checkout.',
+          question: 'Do you offer free shipping?',
+          answer: 'Yes! We offer free standard shipping on all orders over $75. Orders under $75 have a flat rate shipping fee of $5.99.',
         },
         {
           question: 'Can I track my order?',
@@ -27,7 +27,7 @@ const FAQ = () => {
         },
         {
           question: 'What is your return policy?',
-          answer: 'We offer a 7-day satisfaction guarantee. If you are not completely satisfied with your purchase, contact our support team within 7 days of delivery for return instructions. Products must be unopened, with original safety seals intact, and in pristine condition.',
+          answer: 'We offer a 30-day satisfaction guarantee. If you\'re not completely satisfied with your purchase, contact us for a full refund or exchange. Products must be unopened and in original packaging.',
         },
       ],
     },
@@ -57,7 +57,7 @@ const FAQ = () => {
       questions: [
         {
           question: 'What payment methods do you accept?',
-          answer: 'We accept all major credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay. All transactions are encrypted and processed in British Pound Sterling (GBP / £).',
+          answer: 'We accept all major credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay. All transactions are encrypted and secure.',
         },
         {
           question: 'How do I create an account?',

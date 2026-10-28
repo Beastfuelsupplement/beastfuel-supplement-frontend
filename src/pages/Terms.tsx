@@ -28,8 +28,8 @@ Orders are binding once confirmed. We will send an email confirmation upon order
       title: 'Payment Terms',
       content: `• Payment is due at the time of order
 • We accept major credit cards, PayPal, and bank transfers
-• All transactions are processed in British Pound Sterling (GBP / £)
-• Prices include applicable taxes (such as UK VAT) unless otherwise stated
+• All transactions are processed in sterling pound
+• Prices include applicable taxes unless otherwise stated
 • Payment information is encrypted and processed securely
 • Failed payments may result in order cancellation`
     },
@@ -37,24 +37,23 @@ Orders are binding once confirmed. We will send an email confirmation upon order
       icon: Truck,
       title: 'Shipping Policy',
       content: `• Orders are processed within 1-2 business days
-• Standard shipping: 3-5 business days
-• Express shipping: 1-2 business days
-• International shipping may take 7-14 business days depending on destination
-• Tracking information will be provided via email upon dispatch
-• Shipping rates are calculated and displayed at checkout
-• BEASTFUEL is not responsible for postal carrier delays or customs inspections`
+• Standard shipping: 5-7 business days
+• Express shipping: 2-3 business days
+• International shipping may take 10-14 business days
+• Tracking information will be provided via email
+• BEASTFUEL is not responsible for delays caused by carriers or customs`
     },
     {
       icon: RotateCcw,
       title: 'Returns and Refunds',
-      content: `• 7-day satisfaction guarantee on all products from the date of delivery
-• Products must be unopened, untampered, and in their original sealed packaging
-• Return shipping costs are the customer's responsibility (unless an item arrived damaged or defective)
-• Refunds are processed within 5-7 business days of receipt and warehouse inspection
+      content: `• 7-day satisfaction guarantee on all products
+• Products must be unopened and in original packaging
+• Return shipping costs are the customer's responsibility
+• Refunds are processed within 5-7 business days
 • Original shipping costs are non-refundable
-• Damaged, defective, or incorrect products will be replaced or refunded at no additional cost
+• Damaged or defective products will be replaced at no cost
 
-To initiate a return or exchange, please contact our customer support team within 7 days of receiving your order. Please refer to our full Return Policy for complete return procedures and hygiene guidelines.`
+To initiate a return, contact our customer support team.`
     },
     {
       icon: AlertCircle,
@@ -69,9 +68,9 @@ To initiate a return or exchange, please contact our customer support team withi
     {
       icon: Scale,
       title: 'Governing Law',
-      content: `These Terms of Service and any separate agreements whereby we provide you goods or services shall be governed by and construed in accordance with the laws of England and Wales.
+      content: `These Terms of Service are governed by the laws of England. Any disputes arising from these terms shall be resolved in the courts of England.
 
-Any disputes, claims, or proceedings arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts of England and Wales. By using our services, you consent to this jurisdiction and venue.`
+By using our services, you consent to this jurisdiction and venue.`
     }
   ];
 
