@@ -51,7 +51,8 @@ Orders are binding once confirmed. We will send an email confirmation upon order
 • Return shipping costs are the customer's responsibility
 • Refunds are processed within 5-7 business days
 • Original shipping costs are non-refundable
-• Damaged or defective products will be replaced at no cost
+• The company does not take responsibility for damages occurring during courier transit (this must be handled by the courier company)
+• The company takes full responsibility for other issues such as expired products or manufacturer defects, which will be replaced or refunded at no cost
 
 To initiate a return, contact our customer support team.`
     },

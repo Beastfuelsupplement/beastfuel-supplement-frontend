@@ -38,7 +38,8 @@ const Privacy = () => {
 • Return shipping costs are the customer's responsibility (unless item is damaged or defective)
 • Refunds are processed within 5-7 business days of inspection
 • Original shipping costs are non-refundable
-• Damaged or defective products will be replaced or refunded at no cost
+• The company does not take responsibility for damages occurring during courier transit (this must be handled by the courier company)
+• The company takes full responsibility for other issues such as expired products or manufacturer defects, which will be replaced or refunded at no cost
 
 To initiate a return, contact our customer support team at ${settings.storeEmail || 'supportbeastfuelsupplement@gmail.com'}.`
     },
